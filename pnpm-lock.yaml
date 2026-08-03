@@ -27,7 +27,7 @@ importers:
         specifier: 11.11.4
         version: 11.11.4(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       read-excel-file:
-        specifier: ^9.3.5
+        specifier: 9.3.5
         version: 9.3.5
     devDependencies:
       '@cloudflare/vite-plugin':
