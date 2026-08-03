@@ -1,115 +1,55 @@
 # Scalengi Views
 
-Première version de l’application web autonome Scalengi Views.
+Application web autonome et bibliothèque de vues spécialisées pour l’architecture d’entreprise. Ce dépôt ne dépend pas du frontend ni du backend de Scalengi.
 
-Le dossier `library/` contient la partie destinée à devenir la bibliothèque open source. L’application dans `app/` consomme cette bibliothèque sans dépendre du frontend ou du backend Scalengi.
+## Principe
 
-## Fonctionnalités
+Scalengi Views n’embarque pas de référentiel global. L’utilisateur crée des **instances de vues indépendantes** : chaque instance a un nom, un type, une configuration, son propre fichier Excel et ses propres données locales.
 
-- catalogue de vues ;
-- vue centrée collaborateur ;
-- plan d’occupation du sol ;
-- canvas React Flow avec cadrage automatique et mode plein écran pour chaque vue ;
-- ajout de données dans l’interface ;
-- import et export JSON ;
-- stockage local dans le navigateur ;
-- thèmes clair et sombre.
+- les instances sont conservées dans IndexedDB, sur l’appareil courant ;
+- le fichier Excel est lu dans le navigateur et n’est pas envoyé à un serveur ;
+- importer un fichier dans une vue n’affecte aucune autre vue ;
+- un futur adaptateur pourra remplacer cette source locale par Scalengi, une base de données ou un outil de cartographie.
 
-## Base technique
+Les préférences d’interface (thème et couleur) restent dans `localStorage`. Aucune donnée métier n’y est stockée.
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+## Vues disponibles
 
-## Prerequisites
+- Vue Collaborateurs sur un canvas React Flow ;
+- Plan d’occupation du sol sur un canvas React Flow ;
+- mode plein écran, guide intégré et modèle Excel propres à chaque type de vue.
 
-- Node.js `>=22.13.0`
+## Créer un nouveau type de vue
 
-## Quick Start
+La bibliothèque ouverte se trouve dans `library/src`. Un type de vue implémente le contrat `ViewDefinition` dans `view-registry.ts` :
+
+```ts
+const myView: ViewDefinition = {
+  id: "my-view",
+  title: "Ma vue",
+  component: MyReactView,
+  guide: { purpose: "…", questions: [], steps: [], sheets: [] },
+  template: { filename: "modele.xlsx", url: "/templates/modele.xlsx" },
+  createEmptyData: () => emptyData,
+  createDemoData: () => demoData,
+  importExcel: importMyExcel,
+  // métadonnées du catalogue…
+};
+
+viewRegistry.register(myView);
+```
+
+Le contrat regroupe donc le rendu, la documentation, le modèle d’entrée et la validation de données. L’application consomme le registre sans connaître le détail de chaque vue.
+
+## Développement
+
+Prérequis : Node.js `>=22.13.0`.
 
 ```bash
-npm install
-npm run dev
-npm run build
+pnpm install
+pnpm dev
+pnpm lint
+pnpm test
 ```
 
-This starter does not use `wrangler.jsonc`.
-
-## Included Shape
-
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
-
-## Workspace Auth Headers
-
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
-```
-
-## Optional Dispatch-Owned ChatGPT Sign-In
-
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
-
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
-
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+Les modèles téléchargeables sont dans `public/templates/`.
