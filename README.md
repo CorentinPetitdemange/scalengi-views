@@ -16,7 +16,8 @@ Les préférences d’interface (thème et couleur) restent dans `localStorage`.
 ## Vues disponibles
 
 - Vue Collaborateurs sur un canvas React Flow ;
-- Plan d’occupation du sol sur un canvas React Flow ;
+- Cartographie des capacités fonctionnelles, de leur maturité et de leur couverture ;
+- POS urbain structuré en zones, quartiers, îlots et applications ;
 - mode plein écran, guide intégré et modèle Excel propres à chaque type de vue.
 
 ## Créer un nouveau type de vue

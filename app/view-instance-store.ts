@@ -46,7 +46,8 @@ export async function listViewInstances() {
       const feedbacks = missingFeedbackLayer && instance.type === "collaborator-journey" && !instance.source
         ? structuredClone(sampleDataset.feedbacks)
         : instance.data.feedbacks ?? [];
-      return { ...instance, data: { ...instance.data, feedbacks } };
+      const name = instance.type === "pos" && instance.name === "POS — Démonstration" ? "Capacités fonctionnelles — Démonstration" : instance.name;
+      return { ...instance, name, data: { ...instance.data, feedbacks, urbanZones: instance.data.urbanZones ?? [], urbanDistricts: instance.data.urbanDistricts ?? [], urbanBlocks: instance.data.urbanBlocks ?? [] } };
     }).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   } finally {
     database.close();

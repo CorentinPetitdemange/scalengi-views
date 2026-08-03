@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import type { ViewDataset } from "./types";
 
-export type BuiltInViewType = "collaborator-journey" | "pos";
+export type BuiltInViewType = "collaborator-journey" | "pos" | "urban-pos";
 
 export interface ViewGuide {
   purpose: string;
@@ -27,8 +27,8 @@ export interface ViewDefinition<TType extends string = string> {
   shortTitle: string;
   category: string;
   description: string;
-  icon: "users" | "boxes";
-  accent: "violet" | "blue";
+  icon: "users" | "boxes" | "map";
+  accent: "violet" | "blue" | "emerald";
   insights: string[];
   guide: ViewGuide;
   template: ViewTemplate;

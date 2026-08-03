@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Boxes, CheckCircle2, CircleHelp, Database, Download, FileSpreadsheet, GalleryVerticalEnd, LayoutDashboard, Moon, PanelLeftClose, PanelLeftOpen, Plus, Settings, Sun, Upload, Users, X } from "lucide-react";
+import { ArrowLeft, Boxes, CheckCircle2, CircleHelp, Database, Download, FileSpreadsheet, GalleryVerticalEnd, LayoutDashboard, MapPinned, Moon, PanelLeftClose, PanelLeftOpen, Plus, Settings, Sun, Upload, Users, X } from "lucide-react";
 import { viewRegistry, type ViewDefinition } from "../library/src";
 import { listViewInstances, saveViewInstance, type ViewInstance } from "./view-instance-store";
 
@@ -11,13 +11,15 @@ const SETTINGS_KEY = "scalengi-view-settings-v1";
 
 const now = () => new Date().toISOString();
 const makeId = () => globalThis.crypto?.randomUUID?.() ?? `view-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-const iconFor = (definition: ViewDefinition) => definition.icon === "users" ? Users : Boxes;
+const iconFor = (definition: ViewDefinition) => definition.icon === "users" ? Users : definition.icon === "map" ? MapPinned : Boxes;
 const formatDate = (value: string) => new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 
-function demoInstances(): ViewInstance[] {
+const demoName = (definition: ViewDefinition) => definition.id === "urban-pos" ? "POS urbain — Démonstration" : definition.id === "pos" ? "Capacités fonctionnelles — Démonstration" : "Collaboration — Démonstration";
+
+function demoInstances(definitions = viewRegistry.list()): ViewInstance[] {
   const createdAt = now();
-  return viewRegistry.list().map((definition) => ({
-    id: makeId(), type: definition.id, name: definition.id === "pos" ? "POS — Démonstration" : "Collaboration — Démonstration",
+  return definitions.map((definition) => ({
+    id: makeId(), type: definition.id, name: demoName(definition),
     data: definition.createDemoData(), createdAt, updatedAt: createdAt,
   }));
 }
@@ -49,6 +51,13 @@ export function ScalengiViewsApp() {
         if (!stored.length) {
           stored = demoInstances();
           await Promise.all(stored.map(saveViewInstance));
+        } else {
+          const missingDefinitions = viewRegistry.list().filter((definition) => !stored.some((instance) => instance.type === definition.id));
+          if (missingDefinitions.length) {
+            const missingDemos = demoInstances(missingDefinitions);
+            await Promise.all(missingDemos.map(saveViewInstance));
+            stored = [...missingDemos, ...stored];
+          }
         }
         setInstances(stored);
       } finally { setReady(true); }
@@ -108,7 +117,7 @@ export function ScalengiViewsApp() {
 
 function ViewCatalog({ instances, onOpen, onCreate }: { instances: ViewInstance[]; onOpen: (id: string) => void; onCreate: () => void }) {
   return <div className="catalog-screen">
-    <section className="catalog-hero"><div><p className="eyebrow">Espace de travail local</p><h1>Une vue, une question,<br /><span>ses propres données.</span></h1><p>Créez plusieurs analyses indépendantes. Chaque vue garde son fichier source et son contexte, sans imposer de référentiel global.</p></div><div className="hero-metrics"><div><strong>{instances.length}</strong><span>vues créées</span></div><div><strong>{instances.filter((item) => item.source).length}</strong><span>fichiers liés</span></div><div><strong>2</strong><span>types de vues</span></div></div></section>
+    <section className="catalog-hero"><div><p className="eyebrow">Espace de travail local</p><h1>Une vue, une question,<br /><span>ses propres données.</span></h1><p>Créez plusieurs analyses indépendantes. Chaque vue garde son fichier source et son contexte, sans imposer de référentiel global.</p></div><div className="hero-metrics"><div><strong>{instances.length}</strong><span>vues créées</span></div><div><strong>{instances.filter((item) => item.source).length}</strong><span>fichiers liés</span></div><div><strong>{viewRegistry.list().length}</strong><span>types de vues</span></div></div></section>
     <div className="section-heading"><div><h2>Mes vues</h2><p>Vos analyses enregistrées sur cet appareil.</p></div><button className="primary-button" onClick={onCreate}><Plus size={16} /> Nouvelle vue</button></div>
     <div className="instance-grid">{instances.map((instance) => { const definition = viewRegistry.get(instance.type); if (!definition) return null; const Icon = iconFor(definition); return <button className={`instance-card view-${definition.accent}`} key={instance.id} onClick={() => onOpen(instance.id)}><span className="view-icon"><Icon size={21} /></span><div><p className="eyebrow">{definition.shortTitle}</p><h3>{instance.name}</h3><p>{instance.source ? `Source : ${instance.source.filename}` : "Aucun fichier Excel lié"}</p></div><span className={instance.source ? "instance-state ready" : "instance-state"}>{instance.source ? "Données prêtes" : "À alimenter"}</span><small>Mis à jour {formatDate(instance.updatedAt)}</small></button>; })}</div>
     <div className="section-heading catalog-library-heading"><div><h2>Catalogue de vues</h2><p>Choisissez un type pour créer une nouvelle instance indépendante.</p></div><span>{viewRegistry.list().length} disponibles</span></div>
@@ -119,7 +128,7 @@ function ViewCatalog({ instances, onOpen, onCreate }: { instances: ViewInstance[
 function InstanceWorkspace({ instance, definition, tab, onTab, onSave, onFlash }: { instance: ViewInstance; definition: ViewDefinition; tab: InstanceTab; onTab: (tab: InstanceTab) => void; onSave: (instance: ViewInstance) => Promise<void>; onFlash: (message: string) => void }) {
   const ViewComponent = definition.component;
   return <div className="instance-workspace">
-    <div className="instance-tabs"><div><span className={`mini-view-icon view-${definition.accent}`}>{definition.icon === "users" ? <Users size={15} /> : <Boxes size={15} />}</span><strong>{instance.name}</strong></div><nav aria-label="Menu de la vue"><button className={tab === "view" ? "active" : ""} onClick={() => onTab("view")}><LayoutDashboard size={15} /> Vue</button><button className={tab === "data" ? "active" : ""} onClick={() => onTab("data")}><Database size={15} /> Données</button><button className={tab === "guide" ? "active" : ""} onClick={() => onTab("guide")}><CircleHelp size={15} /> Comment ça fonctionne</button></nav></div>
+    <div className="instance-tabs"><div><span className={`mini-view-icon view-${definition.accent}`}>{definition.icon === "users" ? <Users size={15} /> : definition.icon === "map" ? <MapPinned size={15} /> : <Boxes size={15} />}</span><strong>{instance.name}</strong></div><nav aria-label="Menu de la vue"><button className={tab === "view" ? "active" : ""} onClick={() => onTab("view")}><LayoutDashboard size={15} /> Vue</button><button className={tab === "data" ? "active" : ""} onClick={() => onTab("data")}><Database size={15} /> Données</button><button className={tab === "guide" ? "active" : ""} onClick={() => onTab("guide")}><CircleHelp size={15} /> Comment ça fonctionne</button></nav></div>
     {tab === "view" && <ViewComponent data={instance.data} />}
     {tab === "data" && <InstanceDataScreen instance={instance} definition={definition} onSave={onSave} onFlash={onFlash} />}
     {tab === "guide" && <ViewGuideScreen definition={definition} />}
@@ -131,7 +140,11 @@ function InstanceDataScreen({ instance, definition, onSave, onFlash }: { instanc
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const counts = useMemo(() => definition.id === "pos" ? [{ label: "Capacités", value: instance.data.capabilities.length }, { label: "Applications", value: instance.data.applications.length }] : [{ label: "Collaborateurs", value: instance.data.collaborators.length }, { label: "Processus", value: instance.data.processes.length }, { label: "Responsabilités", value: instance.data.responsibilities.length }, { label: "Retours", value: instance.data.feedbacks?.length ?? 0 }], [definition.id, instance.data]);
+  const counts = useMemo(() => definition.id === "pos"
+    ? [{ label: "Capacités", value: instance.data.capabilities.length }, { label: "Applications", value: instance.data.applications.length }]
+    : definition.id === "urban-pos"
+      ? [{ label: "Zones", value: instance.data.urbanZones.length }, { label: "Quartiers", value: instance.data.urbanDistricts.length }, { label: "Îlots", value: instance.data.urbanBlocks.length }, { label: "Applications", value: instance.data.applications.length }]
+      : [{ label: "Collaborateurs", value: instance.data.collaborators.length }, { label: "Processus", value: instance.data.processes.length }, { label: "Responsabilités", value: instance.data.responsibilities.length }, { label: "Retours", value: instance.data.feedbacks?.length ?? 0 }], [definition.id, instance.data]);
   const handleFile = async (file?: File) => {
     if (!file) return;
     setImporting(true); setError(null); setWarnings([]);

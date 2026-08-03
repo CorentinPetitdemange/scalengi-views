@@ -1,10 +1,10 @@
 import readXlsxFile, { type CellValue, type Sheet } from "read-excel-file/browser";
-import type { Application, Capability, Collaborator, Feedback, Process, Responsibility, ViewDataset } from "./types";
+import type { Application, Capability, Collaborator, Feedback, Process, Responsibility, UrbanBlock, UrbanDistrict, UrbanZone, ViewDataset } from "./types";
 import type { ViewImportResult } from "./view-registry";
 
 type RecordRow = Record<string, CellValue | null>;
 
-const emptyDataset = (): ViewDataset => ({ collaborators: [], processes: [], responsibilities: [], feedbacks: [], applications: [], capabilities: [] });
+const emptyDataset = (): ViewDataset => ({ collaborators: [], processes: [], responsibilities: [], feedbacks: [], applications: [], capabilities: [], urbanZones: [], urbanDistricts: [], urbanBlocks: [] });
 const asText = (value: CellValue | null) => value == null ? "" : String(value).trim();
 const makeInitials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
 
@@ -106,4 +106,43 @@ export async function importPosExcel(file: File): Promise<ViewImportResult> {
   }
   const warnings = capabilities.filter((item) => item.applicationIds.length === 0).length ? ["Certaines capacités ne sont couvertes par aucune application."] : [];
   return { data: { ...emptyDataset(), applications, capabilities }, rowCount: applications.length + capabilities.length + coverage.length, warnings };
+}
+
+export async function importUrbanPosExcel(file: File): Promise<ViewImportResult> {
+  const sheets = await readXlsxFile(file);
+  const zoneRows = recordsFromSheet(sheets, "Zones", ["id", "nom", "description"]);
+  const districtRows = recordsFromSheet(sheets, "Quartiers", ["id", "nom", "zone_id", "description"]);
+  const blockRows = recordsFromSheet(sheets, "Ilots", ["id", "nom", "quartier_id", "statut", "responsable"]);
+  const applicationRows = recordsFromSheet(sheets, "Applications", ["id", "nom", "ilot_id", "sante", "cycle_de_vie"]);
+  const healthMap: Record<string, Application["health"]> = { Sain: "healthy", "À surveiller": "watch", Critique: "critical" };
+  const lifecycles: Application["lifecycle"][] = ["Investir", "Maintenir", "Migrer", "Retirer"];
+  const statuses: UrbanBlock["status"][] = ["Cible", "À rationaliser", "À construire"];
+
+  const urbanZones: UrbanZone[] = zoneRows.map((row) => ({ id: asText(row.id), name: asText(row.nom), description: asText(row.description) }));
+  const urbanDistricts: UrbanDistrict[] = districtRows.map((row) => ({ id: asText(row.id), name: asText(row.nom), zoneId: asText(row.zone_id), description: asText(row.description) }));
+  const urbanBlocks: UrbanBlock[] = blockRows.map((row) => {
+    const status = asText(row.statut) as UrbanBlock["status"];
+    if (!statuses.includes(status)) throw new Error(`Ilots : statut invalide "${status}".`);
+    return { id: asText(row.id), name: asText(row.nom), districtId: asText(row.quartier_id), status, owner: asText(row.responsable) };
+  });
+  const applications: Application[] = applicationRows.map((row) => {
+    const healthLabel = asText(row.sante);
+    const lifecycle = asText(row.cycle_de_vie) as Application["lifecycle"];
+    if (!healthMap[healthLabel]) throw new Error(`Applications : santé invalide "${healthLabel}".`);
+    if (!lifecycles.includes(lifecycle)) throw new Error(`Applications : cycle de vie invalide "${lifecycle}".`);
+    return { id: asText(row.id), name: asText(row.nom), urbanBlockId: asText(row.ilot_id), health: healthMap[healthLabel], lifecycle };
+  });
+  ensureUniqueIds(urbanZones, "Zones");
+  ensureUniqueIds(urbanDistricts, "Quartiers");
+  ensureUniqueIds(urbanBlocks, "Ilots");
+  ensureUniqueIds(applications, "Applications");
+  const zoneIds = new Set(urbanZones.map((item) => item.id));
+  const districtIds = new Set(urbanDistricts.map((item) => item.id));
+  const blockIds = new Set(urbanBlocks.map((item) => item.id));
+  for (const district of urbanDistricts) if (!zoneIds.has(district.zoneId)) throw new Error(`Quartiers : zone inconnue ${district.zoneId}.`);
+  for (const block of urbanBlocks) if (!districtIds.has(block.districtId)) throw new Error(`Ilots : quartier inconnu ${block.districtId}.`);
+  for (const application of applications) if (!application.urbanBlockId || !blockIds.has(application.urbanBlockId)) throw new Error(`Applications : îlot inconnu ${application.urbanBlockId || "(vide)"}.`);
+  const emptyBlocks = urbanBlocks.filter((block) => !applications.some((application) => application.urbanBlockId === block.id)).length;
+  const warnings = emptyBlocks ? [`${emptyBlocks} îlot${emptyBlocks > 1 ? "s" : ""} ne contient aucune application.`] : [];
+  return { data: { ...emptyDataset(), applications, urbanZones, urbanDistricts, urbanBlocks }, rowCount: urbanZones.length + urbanDistricts.length + urbanBlocks.length + applications.length, warnings };
 }

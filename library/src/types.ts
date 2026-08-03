@@ -39,6 +39,7 @@ export interface Application {
   name: string;
   health: Health;
   lifecycle: "Investir" | "Maintenir" | "Migrer" | "Retirer";
+  urbanBlockId?: string;
 }
 
 export interface Capability {
@@ -51,6 +52,27 @@ export interface Capability {
   applicationIds: string[];
 }
 
+export interface UrbanZone {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface UrbanDistrict {
+  id: string;
+  name: string;
+  zoneId: string;
+  description: string;
+}
+
+export interface UrbanBlock {
+  id: string;
+  name: string;
+  districtId: string;
+  status: "Cible" | "À rationaliser" | "À construire";
+  owner: string;
+}
+
 export interface ViewDataset {
   collaborators: Collaborator[];
   processes: Process[];
@@ -58,4 +80,7 @@ export interface ViewDataset {
   feedbacks: Feedback[];
   applications: Application[];
   capabilities: Capability[];
+  urbanZones: UrbanZone[];
+  urbanDistricts: UrbanDistrict[];
+  urbanBlocks: UrbanBlock[];
 }

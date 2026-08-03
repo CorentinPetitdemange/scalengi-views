@@ -98,7 +98,7 @@ function PosCanvas({ data, filtered, domains, onSelect, fullscreen }: {
   );
 }
 
-export function PosView({ data }: { data: ViewDataset }) {
+export function CapabilityMapView({ data }: { data: ViewDataset }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | Health | "uncovered">("all");
   const [selected, setSelected] = useState<Capability | null>(null);
@@ -127,7 +127,7 @@ export function PosView({ data }: { data: ViewDataset }) {
   return (
     <section ref={frameRef} className="view-workspace rf-view-workspace rf-pos-workspace">
       <div className="rf-pos-header">
-        <div className="rf-pos-title"><p className="eyebrow">Plan d’occupation du sol</p><h1>Couverture fonctionnelle du SI</h1></div>
+        <div className="rf-pos-title"><p className="eyebrow">Cartographie des capacités</p><h1>Couverture fonctionnelle du SI</h1></div>
         <div className="rf-pos-filters">
           <label className="search-control"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher une capacité…" /></label>
           <label className="filter-control"><select value={filter} onChange={(event) => setFilter(event.target.value as typeof filter)}><option value="all">Tous les états</option><option value="healthy">Applications saines</option><option value="watch">À surveiller</option><option value="critical">Critiques</option><option value="uncovered">Non couvertes</option></select><ChevronDown size={15} /></label>

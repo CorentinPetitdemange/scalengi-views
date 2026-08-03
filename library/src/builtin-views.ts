@@ -1,13 +1,15 @@
 import { CollaboratorJourneyView } from "./CollaboratorJourneyView";
-import { importCollaboratorExcel, importPosExcel } from "./excel-import";
-import { PosView } from "./PosView";
+import { importCollaboratorExcel, importPosExcel, importUrbanPosExcel } from "./excel-import";
+import { CapabilityMapView } from "./CapabilityMapView";
 import { sampleDataset } from "./sample-data";
 import type { ViewDataset } from "./types";
+import { UrbanPosView } from "./UrbanPosView";
 import { ViewRegistry, type ViewDefinition } from "./view-registry";
 
-const empty = (): ViewDataset => ({ collaborators: [], processes: [], responsibilities: [], feedbacks: [], applications: [], capabilities: [] });
+const empty = (): ViewDataset => ({ collaborators: [], processes: [], responsibilities: [], feedbacks: [], applications: [], capabilities: [], urbanZones: [], urbanDistricts: [], urbanBlocks: [] });
 const collaboratorDemo = (): ViewDataset => ({ ...empty(), collaborators: structuredClone(sampleDataset.collaborators), processes: structuredClone(sampleDataset.processes), responsibilities: structuredClone(sampleDataset.responsibilities), feedbacks: structuredClone(sampleDataset.feedbacks) });
 const posDemo = (): ViewDataset => ({ ...empty(), applications: structuredClone(sampleDataset.applications), capabilities: structuredClone(sampleDataset.capabilities) });
+const urbanPosDemo = (): ViewDataset => ({ ...empty(), applications: structuredClone(sampleDataset.applications), urbanZones: structuredClone(sampleDataset.urbanZones), urbanDistricts: structuredClone(sampleDataset.urbanDistricts), urbanBlocks: structuredClone(sampleDataset.urbanBlocks) });
 
 export const collaboratorJourneyDefinition: ViewDefinition<"collaborator-journey"> = {
   id: "collaborator-journey",
@@ -42,20 +44,20 @@ export const collaboratorJourneyDefinition: ViewDefinition<"collaborator-journey
 
 export const posDefinition: ViewDefinition<"pos"> = {
   id: "pos",
-  title: "Plan d’occupation du sol",
-  shortTitle: "POS",
+  title: "Cartographie des capacités fonctionnelles",
+  shortTitle: "Capacités",
   category: "Architecture d’entreprise",
   description: "Lire la couverture fonctionnelle du SI, identifier les fragilités et les capacités non couvertes.",
   icon: "boxes",
   accent: "blue",
   insights: ["Couverture", "Santé applicative", "Maturité"],
-  component: PosView,
+  component: CapabilityMapView,
   createEmptyData: empty,
   createDemoData: posDemo,
   importExcel: importPosExcel,
-  template: { filename: "modele-vue-pos.xlsx", url: "/templates/modele-vue-pos.xlsx" },
+  template: { filename: "modele-vue-capacites.xlsx", url: "/templates/modele-vue-capacites.xlsx" },
   guide: {
-    purpose: "Le POS organise les capacités métier par domaine et superpose leur couverture applicative, leur maturité et leur criticité pour faire ressortir les zones à traiter.",
+    purpose: "Cette vue organise les capacités métier par domaine et superpose leur couverture applicative, leur maturité et leur criticité pour faire ressortir les zones fonctionnelles à traiter.",
     questions: ["Quelles capacités sont mal ou non couvertes ?", "Où se trouvent les applications critiques ?", "Quels domaines cumulent faible maturité et forte criticité ?"],
     steps: [
       { title: "Télécharger le modèle", description: "Le modèle sépare les capacités, les applications et leurs liens de couverture." },
@@ -70,4 +72,35 @@ export const posDefinition: ViewDefinition<"pos"> = {
   },
 };
 
-export const viewRegistry = new ViewRegistry().register(collaboratorJourneyDefinition).register(posDefinition);
+export const urbanPosDefinition: ViewDefinition<"urban-pos"> = {
+  id: "urban-pos",
+  title: "Plan d’occupation du sol urbain",
+  shortTitle: "POS urbain",
+  category: "Urbanisation du SI",
+  description: "Positionner les applications dans un découpage hiérarchique en zones, quartiers et îlots.",
+  icon: "map",
+  accent: "emerald",
+  insights: ["Zones & quartiers", "Îlots applicatifs", "Rationalisation"],
+  component: UrbanPosView,
+  createEmptyData: empty,
+  createDemoData: urbanPosDemo,
+  importExcel: importUrbanPosExcel,
+  template: { filename: "modele-pos-urbain.xlsx", url: "/templates/modele-pos-urbain.xlsx" },
+  guide: {
+    purpose: "Le POS urbain montre où se situe chaque application dans l’architecture fonctionnelle : une zone contient des quartiers, un quartier contient des îlots et chaque application occupe un îlot.",
+    questions: ["Où chaque application est-elle positionnée ?", "Quels îlots doivent être rationalisés ou construits ?", "Où se concentrent les applications critiques ou en retrait ?"],
+    steps: [
+      { title: "Définir les zones", description: "Créez le découpage stable du SI, puis rattachez chaque quartier à une zone." },
+      { title: "Décrire les îlots", description: "Rattachez chaque îlot à un quartier et qualifiez son statut d’urbanisation." },
+      { title: "Positionner les applications", description: "Chaque application référence exactement un îlot, avec sa santé et son cycle de vie." },
+    ],
+    sheets: [
+      { name: "Zones", columns: ["id", "nom", "description"], description: "Les grands ensembles fonctionnels du SI." },
+      { name: "Quartiers", columns: ["id", "nom", "zone_id", "description"], description: "Les subdivisions fonctionnelles rattachées à une zone." },
+      { name: "Ilots", columns: ["id", "nom", "quartier_id", "statut", "responsable"], description: "Les unités d’urbanisation qui accueillent les applications." },
+      { name: "Applications", columns: ["id", "nom", "ilot_id", "sante", "cycle_de_vie"], description: "Les applications positionnées dans les îlots." },
+    ],
+  },
+};
+
+export const viewRegistry = new ViewRegistry().register(collaboratorJourneyDefinition).register(posDefinition).register(urbanPosDefinition);
