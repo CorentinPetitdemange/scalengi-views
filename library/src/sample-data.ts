@@ -1,0 +1,53 @@
+import type { ViewDataset } from "./types";
+
+export const sampleDataset: ViewDataset = {
+  collaborators: [
+    { id: "c1", name: "Camille Martin", role: "Architecte d'entreprise", initials: "CM" },
+    { id: "c2", name: "Lina Moreau", role: "Responsable opérations", initials: "LM" },
+    { id: "c3", name: "Nicolas Leroy", role: "Product manager", initials: "NL" },
+    { id: "c4", name: "Sarah Bernard", role: "Responsable data", initials: "SB" },
+    { id: "c5", name: "Yanis Petit", role: "Responsable sécurité", initials: "YP" },
+  ],
+  processes: [
+    { id: "p1", name: "Intégrer un collaborateur", status: "Actif" },
+    { id: "p2", name: "Traiter une commande", status: "En transformation" },
+    { id: "p3", name: "Piloter la performance", status: "Actif" },
+    { id: "p4", name: "Gérer les incidents", status: "À revoir" },
+    { id: "p5", name: "Déployer un service", status: "En transformation" },
+  ],
+  responsibilities: [
+    { id: "r1", collaboratorId: "c1", processId: "p1", kind: "Contributeur" },
+    { id: "r2", collaboratorId: "c1", processId: "p2", kind: "Validation" },
+    { id: "r3", collaboratorId: "c1", processId: "p3", kind: "Pilote" },
+    { id: "r4", collaboratorId: "c1", processId: "p4", kind: "Consulté" },
+    { id: "r5", collaboratorId: "c1", processId: "p5", kind: "Contributeur" },
+    { id: "r6", collaboratorId: "c2", processId: "p2", kind: "Pilote" },
+    { id: "r7", collaboratorId: "c2", processId: "p4", kind: "Contributeur" },
+    { id: "r8", collaboratorId: "c3", processId: "p2", kind: "Contributeur" },
+    { id: "r9", collaboratorId: "c3", processId: "p5", kind: "Pilote" },
+    { id: "r10", collaboratorId: "c4", processId: "p3", kind: "Contributeur" },
+    { id: "r11", collaboratorId: "c5", processId: "p4", kind: "Validation" },
+    { id: "r12", collaboratorId: "c5", processId: "p5", kind: "Consulté" },
+  ],
+  applications: [
+    { id: "a1", name: "Salesforce", health: "healthy", lifecycle: "Investir" },
+    { id: "a2", name: "Portail Client", health: "watch", lifecycle: "Maintenir" },
+    { id: "a3", name: "SAP S/4", health: "healthy", lifecycle: "Investir" },
+    { id: "a4", name: "Legacy Billing", health: "critical", lifecycle: "Migrer" },
+    { id: "a5", name: "Workday", health: "healthy", lifecycle: "Maintenir" },
+    { id: "a6", name: "DataHub", health: "watch", lifecycle: "Investir" },
+    { id: "a7", name: "ServiceNow", health: "healthy", lifecycle: "Maintenir" },
+    { id: "a8", name: "Access DB", health: "critical", lifecycle: "Retirer" },
+    { id: "a9", name: "Marketing Cloud", health: "watch", lifecycle: "Maintenir" },
+  ],
+  capabilities: [
+    { id: "cap1", name: "Connaissance client", domain: "Expérience client", maturity: 4, criticality: "Forte", owner: "Direction client", applicationIds: ["a1", "a2"] },
+    { id: "cap2", name: "Animation commerciale", domain: "Expérience client", maturity: 3, criticality: "Moyenne", owner: "Direction commerciale", applicationIds: ["a1", "a9"] },
+    { id: "cap3", name: "Facturation", domain: "Opérations", maturity: 2, criticality: "Forte", owner: "Direction financière", applicationIds: ["a3", "a4"] },
+    { id: "cap4", name: "Gestion des commandes", domain: "Opérations", maturity: 4, criticality: "Forte", owner: "Direction opérations", applicationIds: ["a3"] },
+    { id: "cap5", name: "Gestion des talents", domain: "Ressources", maturity: 4, criticality: "Moyenne", owner: "DRH", applicationIds: ["a5"] },
+    { id: "cap6", name: "Pilotage par la donnée", domain: "Ressources", maturity: 2, criticality: "Forte", owner: "Direction data", applicationIds: ["a6", "a8"] },
+    { id: "cap7", name: "Support aux utilisateurs", domain: "Socle SI", maturity: 3, criticality: "Moyenne", owner: "DSI", applicationIds: ["a7"] },
+    { id: "cap8", name: "Gestion des identités", domain: "Socle SI", maturity: 1, criticality: "Forte", owner: "RSSI", applicationIds: [] },
+  ],
+};
