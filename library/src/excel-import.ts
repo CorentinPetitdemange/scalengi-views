@@ -1,10 +1,10 @@
 import readXlsxFile, { type CellValue, type Sheet } from "read-excel-file/browser";
-import type { Application, Capability, Collaborator, Process, Responsibility, ViewDataset } from "./types";
+import type { Application, Capability, Collaborator, Feedback, Process, Responsibility, ViewDataset } from "./types";
 import type { ViewImportResult } from "./view-registry";
 
 type RecordRow = Record<string, CellValue | null>;
 
-const emptyDataset = (): ViewDataset => ({ collaborators: [], processes: [], responsibilities: [], applications: [], capabilities: [] });
+const emptyDataset = (): ViewDataset => ({ collaborators: [], processes: [], responsibilities: [], feedbacks: [], applications: [], capabilities: [] });
 const asText = (value: CellValue | null) => value == null ? "" : String(value).trim();
 const makeInitials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
 
@@ -32,6 +32,7 @@ export async function importCollaboratorExcel(file: File): Promise<ViewImportRes
   const collaboratorRows = recordsFromSheet(sheets, "Collaborateurs", ["id", "nom", "fonction", "initiales"]);
   const processRows = recordsFromSheet(sheets, "Processus", ["id", "nom", "statut"]);
   const responsibilityRows = recordsFromSheet(sheets, "Responsabilites", ["id", "collaborateur_id", "processus_id", "role"]);
+  const feedbackRows = recordsFromSheet(sheets, "Retours", ["id", "processus_id", "element_id", "contenu", "date_creation"]);
   const statuses: Process["status"][] = ["Actif", "À revoir", "En transformation"];
   const roles: Responsibility["kind"][] = ["Pilote", "Contributeur", "Validation", "Consulté"];
 
@@ -49,16 +50,25 @@ export async function importCollaboratorExcel(file: File): Promise<ViewImportRes
     if (!roles.includes(kind)) throw new Error(`Responsabilites : rôle invalide "${kind}".`);
     return { id: asText(row.id), collaboratorId: asText(row.collaborateur_id), processId: asText(row.processus_id), kind };
   });
+  const feedbacks: Feedback[] = feedbackRows.map((row) => ({
+    id: asText(row.id), processId: asText(row.processus_id), elementId: asText(row.element_id) || undefined,
+    content: asText(row.contenu), createdAt: row.date_creation instanceof Date ? row.date_creation.toISOString() : asText(row.date_creation),
+  }));
   ensureUniqueIds(collaborators, "Collaborateurs");
   ensureUniqueIds(processes, "Processus");
   ensureUniqueIds(responsibilities, "Responsabilites");
+  ensureUniqueIds(feedbacks, "Retours");
   const collaboratorIds = new Set(collaborators.map((item) => item.id));
   const processIds = new Set(processes.map((item) => item.id));
   for (const responsibility of responsibilities) {
     if (!collaboratorIds.has(responsibility.collaboratorId)) throw new Error(`Responsabilites : collaborateur inconnu ${responsibility.collaboratorId}.`);
     if (!processIds.has(responsibility.processId)) throw new Error(`Responsabilites : processus inconnu ${responsibility.processId}.`);
   }
-  return { data: { ...emptyDataset(), collaborators, processes, responsibilities }, rowCount: collaborators.length + processes.length + responsibilities.length, warnings: [] };
+  for (const feedback of feedbacks) {
+    if (!processIds.has(feedback.processId)) throw new Error(`Retours : processus inconnu ${feedback.processId}.`);
+    if (!feedback.content) throw new Error(`Retours : le contenu est obligatoire.`);
+  }
+  return { data: { ...emptyDataset(), collaborators, processes, responsibilities, feedbacks }, rowCount: collaborators.length + processes.length + responsibilities.length + feedbacks.length, warnings: [] };
 }
 
 export async function importPosExcel(file: File): Promise<ViewImportResult> {

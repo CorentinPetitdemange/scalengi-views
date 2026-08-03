@@ -29,6 +29,13 @@ export const sampleDataset: ViewDataset = {
     { id: "r11", collaboratorId: "c5", processId: "p4", kind: "Validation" },
     { id: "r12", collaboratorId: "c5", processId: "p5", kind: "Consulté" },
   ],
+  feedbacks: [
+    { id: "f1", processId: "p1", content: "Clarifier le parcours d’arrivée et les responsabilités dès la première semaine.", createdAt: "2026-07-08" },
+    { id: "f2", processId: "p2", content: "Réduire les doubles saisies entre le portail client et le traitement des commandes.", createdAt: "2026-07-14" },
+    { id: "f3", processId: "p3", content: "Rendre les indicateurs de performance accessibles aux responsables opérationnels.", createdAt: "2026-07-21" },
+    { id: "f4", processId: "p4", content: "Mieux expliciter le niveau d’urgence et le propriétaire de chaque incident.", createdAt: "2026-07-25" },
+    { id: "f5", processId: "p5", content: "Automatiser les contrôles avant le passage en production.", createdAt: "2026-07-30" },
+  ],
   applications: [
     { id: "a1", name: "Salesforce", health: "healthy", lifecycle: "Investir" },
     { id: "a2", name: "Portail Client", health: "watch", lifecycle: "Maintenir" },

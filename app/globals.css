@@ -213,8 +213,36 @@ button { cursor: pointer; }
 .react-flow__node-orbit { pointer-events: none !important; }
 .rf-orbit { position: relative; border: 1px dashed var(--border); border-radius: 50%; }
 .rf-orbit-primary { border-color: color-mix(in srgb, var(--primary) 28%, var(--border)); }
+.rf-orbit-feedback { border-color: color-mix(in srgb, #ec4899 28%, var(--border)); }
 .rf-orbit span { position: absolute; left: 50%; top: -9px; translate: -50% 0; padding: 3px 8px; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); background: var(--background); font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
 .rf-context-panel { top: 104px; }
+
+.galaxy-display-toolbar { position: absolute; z-index: 12; right: 16px; top: 14px; width: 236px; display: flex; flex-direction: column; gap: 4px; padding: 6px; border: 1px solid var(--border); border-radius: 12px; background: color-mix(in srgb, var(--surface) 96%, transparent); box-shadow: var(--shadow); backdrop-filter: blur(12px); transition: width .2s ease; }
+.galaxy-display-toolbar.is-collapsed { width: 44px; align-items: center; }
+.galaxy-display-toolbar header { min-height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 0 3px 5px 8px; border-bottom: 1px solid var(--border); }
+.galaxy-display-toolbar.is-collapsed header { justify-content: center; padding: 0 0 4px; border-bottom: 0; }
+.galaxy-display-toolbar header strong { color: var(--muted); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+.galaxy-display-toolbar button { min-height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 8px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; font-size: 9px; text-align: left; }
+.galaxy-display-toolbar.is-collapsed button { width: 34px; justify-content: center; padding: 0; }
+.galaxy-display-toolbar button:hover { color: var(--foreground); background: var(--sidebar-accent); }
+.galaxy-display-toolbar button.active { color: var(--primary); }
+.galaxy-display-toolbar button > span { flex: 1; color: var(--foreground); }
+.galaxy-layer-list { width: 100%; display: flex; flex-direction: column; gap: 2px; }
+.galaxy-toolbar-separator { width: calc(100% - 8px); height: 1px; margin: 2px 4px; background: var(--border); }
+.galaxy-radius-control { margin-top: 3px; padding: 9px 8px 6px; border-top: 1px solid var(--border); }
+.galaxy-radius-control label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 8px; font-weight: 650; text-transform: uppercase; letter-spacing: .07em; }
+.galaxy-radius-control label span { margin-left: auto; color: var(--foreground); font-variant-numeric: tabular-nums; }
+.galaxy-radius-control input { width: 100%; height: 4px; margin-top: 10px; accent-color: var(--primary); }
+.rf-responsibility-node { width: 84px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.rf-responsibility-avatar { width: 48px; height: 48px; display: grid; place-items: center; border: 3px solid var(--surface); outline: 1px solid currentColor; border-radius: 14px; box-shadow: 0 7px 18px rgba(20,30,50,.11); font-size: 10px; font-weight: 750; }
+.rf-responsibility-node strong { width: 130px; margin-top: 7px; color: var(--foreground); font-size: 8px; white-space: nowrap; }
+.rf-responsibility-node span { margin-top: 2px; color: var(--muted); font-size: 7px; }
+.rf-feedback-node { position: relative; width: 44px; height: 44px; display: grid; place-items: center; border: 2px solid #fbcfe8; border-radius: 12px; color: #db2777; background: #fdf2f8; box-shadow: 0 7px 18px rgba(190,24,93,.1); }
+.theme-dark .rf-feedback-node { border-color: #831843; color: #f9a8d4; background: color-mix(in srgb, #831843 32%, var(--surface)); }
+.rf-feedback-node:hover, .rf-feedback-node.is-open { border-color: #ec4899; transform: scale(1.07); }
+.rf-feedback-node > span { position: absolute; z-index: 20; top: 52px; left: 50%; translate: -50% 0; width: 210px; display: flex; flex-direction: column; gap: 5px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--foreground); background: var(--surface); box-shadow: var(--shadow); font-size: 8px; line-height: 1.45; text-align: left; }
+.rf-feedback-node > span strong { color: #db2777; font-size: 8px; }.rf-feedback-node > span small { color: var(--muted); font-size: 7px; text-align: right; }
+.journey-feedback-row { margin-top: 7px; padding: 8px; border: 1px solid var(--border); border-radius: 7px; color: var(--muted); background: var(--surface-soft); font-size: 8px; line-height: 1.45; }
 
 /* POS on React Flow: structured matrix with a viewport rather than a scrolling page */
 .rf-pos-header { flex: 0 0 104px; display: grid; grid-template-columns: minmax(190px, 1fr) minmax(280px, 1.3fr) auto auto; align-items: center; gap: 16px; padding: 14px 22px; border-bottom: 1px solid var(--border); background: var(--surface); }

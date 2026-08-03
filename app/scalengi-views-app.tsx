@@ -131,7 +131,7 @@ function InstanceDataScreen({ instance, definition, onSave, onFlash }: { instanc
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const counts = useMemo(() => definition.id === "pos" ? [{ label: "Capacités", value: instance.data.capabilities.length }, { label: "Applications", value: instance.data.applications.length }] : [{ label: "Collaborateurs", value: instance.data.collaborators.length }, { label: "Processus", value: instance.data.processes.length }, { label: "Responsabilités", value: instance.data.responsibilities.length }], [definition.id, instance.data]);
+  const counts = useMemo(() => definition.id === "pos" ? [{ label: "Capacités", value: instance.data.capabilities.length }, { label: "Applications", value: instance.data.applications.length }] : [{ label: "Collaborateurs", value: instance.data.collaborators.length }, { label: "Processus", value: instance.data.processes.length }, { label: "Responsabilités", value: instance.data.responsibilities.length }, { label: "Retours", value: instance.data.feedbacks?.length ?? 0 }], [definition.id, instance.data]);
   const handleFile = async (file?: File) => {
     if (!file) return;
     setImporting(true); setError(null); setWarnings([]);

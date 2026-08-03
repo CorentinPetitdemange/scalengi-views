@@ -5,8 +5,8 @@ import { sampleDataset } from "./sample-data";
 import type { ViewDataset } from "./types";
 import { ViewRegistry, type ViewDefinition } from "./view-registry";
 
-const empty = (): ViewDataset => ({ collaborators: [], processes: [], responsibilities: [], applications: [], capabilities: [] });
-const collaboratorDemo = (): ViewDataset => ({ ...empty(), collaborators: structuredClone(sampleDataset.collaborators), processes: structuredClone(sampleDataset.processes), responsibilities: structuredClone(sampleDataset.responsibilities) });
+const empty = (): ViewDataset => ({ collaborators: [], processes: [], responsibilities: [], feedbacks: [], applications: [], capabilities: [] });
+const collaboratorDemo = (): ViewDataset => ({ ...empty(), collaborators: structuredClone(sampleDataset.collaborators), processes: structuredClone(sampleDataset.processes), responsibilities: structuredClone(sampleDataset.responsibilities), feedbacks: structuredClone(sampleDataset.feedbacks) });
 const posDemo = (): ViewDataset => ({ ...empty(), applications: structuredClone(sampleDataset.applications), capabilities: structuredClone(sampleDataset.capabilities) });
 
 export const collaboratorJourneyDefinition: ViewDefinition<"collaborator-journey"> = {
@@ -28,13 +28,14 @@ export const collaboratorJourneyDefinition: ViewDefinition<"collaborator-journey
     questions: ["Sur quels processus cette personne intervient-elle ?", "Avec qui travaille-t-elle réellement ?", "Où se concentrent ses responsabilités et dépendances ?"],
     steps: [
       { title: "Télécharger le modèle", description: "Le classeur contient les feuilles et les colonnes attendues, avec une ligne d’exemple." },
-      { title: "Renseigner les relations", description: "Les identifiants relient les collaborateurs aux processus dans la feuille Responsabilites." },
+      { title: "Renseigner les relations", description: "Les identifiants relient collaborateurs, processus, responsabilités et retours dans les feuilles correspondantes." },
       { title: "Importer dans cette vue", description: "Le fichier est contrôlé puis enregistré uniquement dans cette instance de vue." },
     ],
     sheets: [
       { name: "Collaborateurs", columns: ["id", "nom", "fonction", "initiales"], description: "Les personnes représentées." },
       { name: "Processus", columns: ["id", "nom", "statut"], description: "Les processus à faire apparaître." },
       { name: "Responsabilites", columns: ["id", "collaborateur_id", "processus_id", "role"], description: "Le rôle d’une personne dans un processus." },
+      { name: "Retours", columns: ["id", "processus_id", "element_id", "contenu", "date_creation"], description: "Les retours associés aux processus et, facultativement, à un élément précis." },
     ],
   },
 };

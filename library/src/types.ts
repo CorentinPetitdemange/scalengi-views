@@ -26,6 +26,14 @@ export interface Responsibility {
   kind: ResponsibilityKind;
 }
 
+export interface Feedback {
+  id: string;
+  processId: string;
+  elementId?: string;
+  content: string;
+  createdAt: string;
+}
+
 export interface Application {
   id: string;
   name: string;
@@ -47,7 +55,7 @@ export interface ViewDataset {
   collaborators: Collaborator[];
   processes: Process[];
   responsibilities: Responsibility[];
+  feedbacks: Feedback[];
   applications: Application[];
   capabilities: Capability[];
 }
-

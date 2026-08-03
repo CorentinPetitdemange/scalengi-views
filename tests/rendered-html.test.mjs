@@ -22,11 +22,12 @@ test("server-renders the Scalengi Views shell", async () => {
 });
 
 test("keeps data, guides and Excel contracts scoped per view", async () => {
-  const [app, registry, builtins, storage] = await Promise.all([
+  const [app, registry, builtins, storage, collaboratorView] = await Promise.all([
     readFile(new URL("../app/scalengi-views-app.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/view-registry.ts", import.meta.url), "utf8"),
     readFile(new URL("../library/src/builtin-views.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/view-instance-store.ts", import.meta.url), "utf8"),
+    readFile(new URL("../library/src/CollaboratorJourneyView.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(app, /Comment ça fonctionne/);
   assert.match(app, /Données de cette vue uniquement/);
@@ -36,6 +37,10 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(builtins, /modele-vue-collaborateurs\.xlsx/);
   assert.match(builtins, /modele-vue-pos\.xlsx/);
   assert.match(storage, /indexedDB\.open/);
+  assert.match(builtins, /name: "Retours"/);
+  assert.match(collaboratorView, /Affichage des anneaux/);
+  assert.match(collaboratorView, /Noms des processus/);
+  assert.doesNotMatch(collaboratorView, /source:\s*["']current["']/);
   await access(new URL("../public/templates/modele-vue-collaborateurs.xlsx", import.meta.url));
   await access(new URL("../public/templates/modele-vue-pos.xlsx", import.meta.url));
 });

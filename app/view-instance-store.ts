@@ -1,4 +1,4 @@
-import type { ViewDataset } from "../library/src";
+import { sampleDataset, type ViewDataset } from "../library/src";
 
 export interface ViewInstance {
   id: string;
@@ -41,7 +41,13 @@ export async function listViewInstances() {
       request.onsuccess = () => resolve(request.result as ViewInstance[]);
       request.onerror = () => reject(request.error);
     });
-    return instances.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return instances.map((instance) => {
+      const missingFeedbackLayer = !Array.isArray(instance.data.feedbacks);
+      const feedbacks = missingFeedbackLayer && instance.type === "collaborator-journey" && !instance.source
+        ? structuredClone(sampleDataset.feedbacks)
+        : instance.data.feedbacks ?? [];
+      return { ...instance, data: { ...instance.data, feedbacks } };
+    }).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   } finally {
     database.close();
   }
