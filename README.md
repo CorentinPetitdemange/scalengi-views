@@ -9,6 +9,7 @@ Le dossier `library/` contient la partie destinée à devenir la bibliothèque o
 - catalogue de vues ;
 - vue centrée collaborateur ;
 - plan d’occupation du sol ;
+- canvas React Flow avec cadrage automatique et mode plein écran pour chaque vue ;
 - ajout de données dans l’interface ;
 - import et export JSON ;
 - stockage local dans le navigateur ;
