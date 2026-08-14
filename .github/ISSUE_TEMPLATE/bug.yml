@@ -1,11 +1,13 @@
 name: Signaler un bug
 description: Signaler un comportement reproductible de Scalengi Views.
 title: "[Bug]: "
-labels: [bug]
+labels: [bug, "status: review"]
 body:
   - type: markdown
     attributes:
-      value: Merci de vérifier qu’aucune donnée métier ou personnelle n’est jointe au signalement.
+      value: |
+        Merci de vérifier qu’aucune donnée métier ou personnelle n’est jointe au signalement.
+        Attendez la validation du mainteneur et le label `status: accepted` avant de proposer une implémentation.
   - type: textarea
     id: problem
     attributes:
