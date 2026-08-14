@@ -41,7 +41,3 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
-
-# codespaces runtime
-/.devcontainer/*.log
-/.devcontainer/*.pid

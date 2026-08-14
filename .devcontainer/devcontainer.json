@@ -2,6 +2,7 @@
   "name": "Scalengi Views Demo",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22.19.0",
       "pnpmVersion": "10.17.0"
@@ -22,7 +23,6 @@
   },
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "postStartCommand": "bash .devcontainer/start-demo.sh",
-  "waitFor": "postStartCommand",
   "customizations": {
     "codespaces": {
       "openFiles": [".devcontainer/WELCOME.md"]
