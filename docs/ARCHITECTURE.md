@@ -2,7 +2,7 @@
 
 ## Objectif
 
-Scalengi Views est composé d’une bibliothèque ouverte de moteurs de vues et d’un shell web local. Le shell peut être utilisé seul aujourd’hui et la bibliothèque pourra être intégrée dans Scalengi plus tard.
+Scalengi Views est composé d’une bibliothèque ouverte de moteurs de vues et d’un shell web local. La bibliothèque expose le même contrat public au shell autonome et à ses intégrations.
 
 L’unité fonctionnelle est une **instance de vue** :
 
@@ -79,6 +79,6 @@ Le modèle XLSX est généré dans le navigateur depuis la configuration active.
 - Les textes importés restent des chaînes rendues par React ; aucun HTML importé n’est interprété.
 - Les identifiants réservés (`__proto__`, `prototype`, `constructor`) sont refusés.
 
-## Extension future
+## Contrat des sources
 
-Un connecteur Scalengi devra produire exactement le même couple `{ configuration, data }` qu’un import Excel. Il sera placé derrière une interface de source, sans modifier les moteurs de vues. Cette interface n’est volontairement pas implémentée tant que le contrat du référentiel Scalengi n’est pas stabilisé.
+Une source externe produit le même couple `{ configuration, data }` qu’un import Excel. Elle reste derrière l’interface de source et ne modifie pas les moteurs de vues.

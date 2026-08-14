@@ -15,9 +15,7 @@ Aucune installation locale n’est nécessaire. Lancez un environnement de démo
 2. Attendez le téléchargement et le démarrage automatique du conteneur de démonstration.
 3. Le port **3000** s’ouvre automatiquement dans le navigateur.
 
-Aucun compte Scalengi n’est nécessaire. Les vues et données d’exemple sont initialisées localement dans le navigateur. Tant que ce dépôt reste privé, l’accès au Codespace est réservé aux personnes autorisées sur le dépôt ; lorsqu’il deviendra public, toute personne connectée à GitHub pourra utiliser ce bouton.
-
-> GitHub Codespaces utilise le quota du compte qui lance l’environnement. Arrêtez ou supprimez le Codespace après le test.
+Aucun compte Scalengi n’est nécessaire. Les vues et données d’exemple sont initialisées localement dans le navigateur.
 
 ## Principe
 
@@ -27,7 +25,7 @@ Scalengi Views n’embarque pas de référentiel global. L’utilisateur crée d
 - le fichier Excel est lu dans le navigateur et n’est pas envoyé à un serveur ;
 - une instance possède une seule source active : jeu d’exemple, fichier Excel ou aucune donnée ;
 - importer un fichier dans une vue n’affecte aucune autre vue ;
-- un futur adaptateur pourra remplacer cette source locale par Scalengi, une base de données ou un outil de cartographie.
+- les sources de données utilisent un contrat commun, indépendant des moteurs de vues.
 
 Les préférences d’interface (thème et couleur) restent dans `localStorage`. Aucune donnée métier n’y est stockée.
 
