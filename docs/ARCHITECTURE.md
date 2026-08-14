@@ -82,3 +82,18 @@ Le modèle XLSX est généré dans le navigateur depuis la configuration active.
 ## Contrat des sources
 
 Une source externe produit le même couple `{ configuration, data }` qu’un import Excel. Elle reste derrière l’interface de source et ne modifie pas les moteurs de vues.
+
+## Connecteurs et collaboration
+
+Scalengi Views est ouvert aux contributions visant à implémenter des connecteurs tiers. Afin de préserver la cohérence du contrat de données, la sécurité des échanges et la compatibilité entre les moteurs de vues, ces travaux sont menés en collaboration avec Scalengi.
+
+Pour proposer un connecteur ou échanger sur une intégration : [corentin@scalengi.com](mailto:corentin@scalengi.com).
+
+Les extensions de connectivité prévues couvrent notamment :
+
+- un connecteur natif avec le référentiel Scalengi ;
+- une intégration MCP pour exposer et consommer des données via le Model Context Protocol ;
+- une API REST pour les outils et référentiels tiers ;
+- des adaptateurs de bases de données pour utiliser un autre type de référentiel.
+
+Quel que soit le transport employé, un connecteur fournit la configuration de la vue et ses données dans le contrat commun, sans introduire de dépendance spécifique dans les moteurs de rendu.
