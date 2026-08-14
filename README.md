@@ -12,7 +12,7 @@ Aucune installation locale n’est nécessaire. Lancez un environnement de démo
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CorentinPetitdemange/scalengi-view?quickstart=1)
 
 1. Cliquez sur le bouton et créez le Codespace avec la configuration proposée.
-2. Attendez l’installation des dépendances et le démarrage du serveur.
+2. Attendez l’installation, le build et le démarrage automatique du serveur de démonstration.
 3. Le port **3000** s’ouvre automatiquement dans le navigateur.
 
 Aucun compte Scalengi n’est nécessaire. Les vues et données d’exemple sont initialisées localement dans le navigateur. Tant que ce dépôt reste privé, l’accès au Codespace est réservé aux personnes autorisées sur le dépôt ; lorsqu’il deviendra public, toute personne connectée à GitHub pourra utiliser ce bouton.
