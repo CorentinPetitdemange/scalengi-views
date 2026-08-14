@@ -1,6 +1,6 @@
 # Scalengi Views — environnement de démonstration
 
-Le Codespace installe les dépendances, construit la version de démonstration puis démarre automatiquement l’application. L’environnement attend que la page soit réellement disponible avant d’être déclaré prêt. Le port **3000** doit alors s’ouvrir dans un nouvel onglet.
+Le Codespace télécharge l’image officielle de démonstration puis la démarre dans un conteneur Docker persistant. Une construction locale sert de secours si l’image est momentanément indisponible. Le script attend que le healthcheck confirme une vraie page HTML avant d’annoncer l’application prête. Le port **3000** doit alors s’ouvrir dans un nouvel onglet.
 
 ## Tester l’application
 
@@ -14,11 +14,14 @@ Si l’onglet ne s’ouvre pas automatiquement, ouvrez le panneau **Ports** de V
 ## Commandes utiles
 
 ```bash
-# Suivre le journal du serveur
-tail -f .devcontainer/dev-server.log
+# Suivre le journal du conteneur
+docker compose -f .devcontainer/compose.yaml logs -f
 
-# Relancer le serveur si nécessaire
-bash .devcontainer/start-demo.sh
+# Redémarrer l’application
+docker compose -f .devcontainer/compose.yaml restart
+
+# Voir son état et son healthcheck
+docker compose -f .devcontainer/compose.yaml ps
 
 # Vérifier le projet
 pnpm exec tsc --noEmit

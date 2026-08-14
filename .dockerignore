@@ -1,0 +1,13 @@
+.git
+.github
+.next
+.openai
+.wrangler
+dist
+node_modules
+outputs
+work
+.env
+.env.*
+.devcontainer/*.log
+.devcontainer/*.pid
