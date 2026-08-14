@@ -5,6 +5,20 @@
 
 Application web autonome et bibliothèque de vues spécialisées pour l’architecture d’entreprise. Ce dépôt ne dépend pas du frontend ni du backend de Scalengi.
 
+## Tester en un clic
+
+Aucune installation locale n’est nécessaire. Lancez un environnement de démonstration complet dans GitHub Codespaces :
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CorentinPetitdemange/scalengi-view?quickstart=1)
+
+1. Cliquez sur le bouton et créez le Codespace avec la configuration proposée.
+2. Attendez l’installation des dépendances et le démarrage du serveur.
+3. Le port **3000** s’ouvre automatiquement dans le navigateur.
+
+Aucun compte Scalengi n’est nécessaire. Les vues et données d’exemple sont initialisées localement dans le navigateur. Tant que ce dépôt reste privé, l’accès au Codespace est réservé aux personnes autorisées sur le dépôt ; lorsqu’il deviendra public, toute personne connectée à GitHub pourra utiliser ce bouton.
+
+> GitHub Codespaces utilise le quota du compte qui lance l’environnement. Arrêtez ou supprimez le Codespace après le test.
+
 ## Principe
 
 Scalengi Views n’embarque pas de référentiel global. L’utilisateur crée des **instances de vues indépendantes** : chaque instance a un nom, un type, une configuration, son propre fichier Excel et ses propres données locales.
