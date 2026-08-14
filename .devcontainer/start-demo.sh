@@ -7,7 +7,20 @@ readonly LOG_FILE=".devcontainer/dev-server.log"
 readonly PID_FILE=".devcontainer/dev-server.pid"
 readonly APP_URL="http://localhost:3000"
 
-if curl --silent --fail --max-time 2 "$APP_URL" > /dev/null; then
+codespaces_host=""
+if [[ -n "${CODESPACE_NAME:-}" && -n "${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-}" ]]; then
+  codespaces_host="${CODESPACE_NAME}-3000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+fi
+
+app_is_ready() {
+  if [[ -n "$codespaces_host" ]]; then
+    curl --silent --fail --max-time 2 --header "Host: $codespaces_host" "$APP_URL" > /dev/null
+  else
+    curl --silent --fail --max-time 2 "$APP_URL" > /dev/null
+  fi
+}
+
+if app_is_ready; then
   echo "Scalengi Views fonctionne déjà sur le port 3000."
   exit 0
 fi
@@ -28,7 +41,7 @@ if [[ ! -f "$PID_FILE" ]]; then
 fi
 
 for attempt in $(seq 1 60); do
-  if curl --silent --fail --max-time 2 "$APP_URL" > /dev/null; then
+  if app_is_ready; then
     echo ""
     echo "======================================"
     echo "  Scalengi Views est prêt"
