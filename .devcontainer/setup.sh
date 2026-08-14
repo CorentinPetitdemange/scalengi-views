@@ -10,6 +10,7 @@ echo "======================================"
 echo "Node $(node --version)"
 echo "pnpm $(pnpm --version)"
 pnpm install --frozen-lockfile
+pnpm build
 
 echo ""
-echo "Installation terminée. L’application démarrera automatiquement sur le port 3000."
+echo "Installation et build terminées. L’application démarrera automatiquement sur le port 3000."

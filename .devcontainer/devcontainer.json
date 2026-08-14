@@ -22,6 +22,7 @@
   },
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "postStartCommand": "bash .devcontainer/start-demo.sh",
+  "waitFor": "postStartCommand",
   "customizations": {
     "codespaces": {
       "openFiles": [".devcontainer/WELCOME.md"]
