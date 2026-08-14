@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { getCodespacesForwardedHost } from "../vite.config.ts";
@@ -22,4 +23,20 @@ test("does not broaden the Vite allowlist outside Codespaces", () => {
     }),
     undefined,
   );
+});
+
+test("waits for a production demo that serves an HTML page", async () => {
+  const [devcontainerSource, setupScript, startScript] = await Promise.all([
+    readFile(new URL("../.devcontainer/devcontainer.json", import.meta.url), "utf8"),
+    readFile(new URL("../.devcontainer/setup.sh", import.meta.url), "utf8"),
+    readFile(new URL("../.devcontainer/start-demo.sh", import.meta.url), "utf8"),
+  ]);
+  const devcontainer = JSON.parse(devcontainerSource);
+
+  assert.equal(devcontainer.waitFor, "postStartCommand");
+  assert.equal(devcontainer.portsAttributes["3000"].onAutoForward, "openBrowserOnce");
+  assert.match(setupScript, /pnpm build/);
+  assert.match(startScript, /pnpm start -- -H 0\.0\.0\.0 -p 3000/);
+  assert.match(startScript, /200 text\/html/);
+  assert.doesNotMatch(startScript, /pnpm dev/);
 });
