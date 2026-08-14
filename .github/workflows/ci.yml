@@ -35,6 +35,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate Codespaces configuration
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('.devcontainer/devcontainer.json', 'utf8'))"
+          bash -n .devcontainer/setup.sh
+          bash -n .devcontainer/start-demo.sh
+
       - name: Typecheck
         run: pnpm exec tsc --noEmit
 
