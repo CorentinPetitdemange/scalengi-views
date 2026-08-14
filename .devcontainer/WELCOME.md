@@ -28,5 +28,3 @@ pnpm exec tsc --noEmit
 pnpm lint
 pnpm test
 ```
-
-Pensez à arrêter ou supprimer le Codespace après votre test afin de ne pas consommer inutilement votre quota GitHub Codespaces.
