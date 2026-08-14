@@ -1,0 +1,30 @@
+name: Proposer une évolution
+description: Proposer une vue, une capacité ou une amélioration UX.
+title: "[Évolution]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: decision
+    attributes:
+      label: Décision ou problème à traiter
+      description: Quelle décision d’architecture ou difficulté utilisateur cette évolution améliore-t-elle ?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposition
+      description: Décrivez la solution envisagée sans imposer une implémentation prématurée.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considérées
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Vérification du périmètre
+      options:
+        - label: Cette proposition ne duplique pas la modélisation de processus de Scalengi.
+          required: true

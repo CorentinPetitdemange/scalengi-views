@@ -1,0 +1,36 @@
+name: Signaler un bug
+description: Signaler un comportement reproductible de Scalengi Views.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Merci de vérifier qu’aucune donnée métier ou personnelle n’est jointe au signalement.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problème observé
+      description: Décrivez le comportement actuel et le comportement attendu.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes de reproduction
+      placeholder: |
+        1. Ouvrir…
+        2. Sélectionner…
+        3. Observer…
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Navigateur et version
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte complémentaire
+      description: Captures anonymisées, logs sans secrets ou autre information utile.
