@@ -1,5 +1,8 @@
 # Scalengi Views
 
+[![CI](https://github.com/CorentinPetitdemange/scalengi-view/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinPetitdemange/scalengi-view/actions/workflows/ci.yml)
+[![License: PolyForm Shield 1.0.0](https://img.shields.io/badge/License-PolyForm Shield 1.0.0-blue.svg)](LICENSE)
+
 Application web autonome et bibliothèque de vues spécialisées pour l’architecture d’entreprise. Ce dépôt ne dépend pas du frontend ni du backend de Scalengi.
 
 ## Principe
@@ -53,3 +56,15 @@ pnpm test
 ```
 
 Les modèles Excel sont générés dans le navigateur à partir de la structure active ; aucun classeur statique n’est maintenu dans le dépôt.
+
+## Contribuer et sécurité
+
+- [Guide de contribution](CONTRIBUTING.md)
+- [Code de conduite](CODE_OF_CONDUCT.md)
+- [Politique de sécurité](SECURITY.md)
+
+Les changements passent par une branche dédiée et une pull request validée par la CI. Les vulnérabilités ne doivent jamais être publiées dans une issue publique.
+
+## Licence
+
+Scalengi Views est distribué sous [licence PolyForm Shield 1.0.0](LICENSE). Copyright © 2026 Corentin Petitdemange.

@@ -2,6 +2,16 @@
   "name": "scalengi-view",
   "version": "0.1.0",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE",
+  "packageManager": "pnpm@10.17.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CorentinPetitdemange/scalengi-view.git"
+  },
+  "bugs": {
+    "url": "https://github.com/CorentinPetitdemange/scalengi-view/issues"
+  },
+  "homepage": "https://github.com/CorentinPetitdemange/scalengi-view#readme",
   "engines": {
     "node": ">=22.13.0"
   },
