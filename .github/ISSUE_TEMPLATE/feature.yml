@@ -1,8 +1,12 @@
 name: Proposer une évolution
 description: Proposer une vue, une capacité ou une amélioration UX.
 title: "[Évolution]: "
-labels: [enhancement]
+labels: [enhancement, "status: review"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Attendez la validation du mainteneur et le label `status: accepted` avant de commencer l’implémentation ou d’ouvrir une pull request.
   - type: textarea
     id: decision
     attributes:
