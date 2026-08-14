@@ -20,6 +20,7 @@ import {
   Search,
   ShieldCheck,
 } from "lucide-react";
+import { sectionOf, type ViewConfiguration } from "./configuration";
 import type { Application, Capability, Health, ViewDataset } from "./types";
 
 const healthLabel: Record<Health, string> = { healthy: "Sain", watch: "À surveiller", critical: "Critique" };
@@ -98,21 +99,23 @@ function PosCanvas({ data, filtered, domains, onSelect, fullscreen }: {
   );
 }
 
-export function CapabilityMapView({ data }: { data: ViewDataset }) {
+export function CapabilityMapView({ data, configuration }: { data: ViewDataset; configuration?: ViewConfiguration }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | Health | "uncovered">("all");
   const [selected, setSelected] = useState<Capability | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const frameRef = useRef<HTMLElement>(null);
-  const domains = [...new Set(data.capabilities.map((capability) => capability.domain))];
-  const filtered = useMemo(() => data.capabilities.filter((capability) => {
+  const domainItems = sectionOf(configuration, "domains")?.items;
+  const capabilities = useMemo(() => domainItems ? data.capabilities.filter((capability) => domainItems.some((domain) => domain.id === capability.domain)).map((capability) => ({ ...capability, domain: String(domainItems.find((domain) => domain.id === capability.domain)?.label ?? capability.domain) })) : data.capabilities, [data.capabilities, domainItems]);
+  const domains = domainItems ? domainItems.map((domain) => String(domain.label ?? domain.id)) : [...new Set(capabilities.map((capability) => capability.domain))];
+  const filtered = useMemo(() => capabilities.filter((capability) => {
     const applications = capability.applicationIds.map((id) => data.applications.find((application) => application.id === id)).filter(Boolean);
     const matchesQuery = `${capability.name} ${capability.domain} ${applications.map((app) => app?.name).join(" ")}`.toLowerCase().includes(query.toLowerCase());
     return matchesQuery && (filter === "all" || (filter === "uncovered" && applications.length === 0) || applications.some((app) => app?.health === filter));
-  }), [data, filter, query]);
-  const covered = Math.round((data.capabilities.filter((capability) => capability.applicationIds.length > 0).length / Math.max(data.capabilities.length, 1)) * 100);
+  }), [capabilities, data.applications, filter, query]);
+  const covered = Math.round((capabilities.filter((capability) => capability.applicationIds.length > 0).length / Math.max(capabilities.length, 1)) * 100);
   const criticalApplications = data.applications.filter((application) => application.health === "critical").length;
-  const fragileCapabilities = data.capabilities.filter((capability) => capability.maturity <= 2 || capability.applicationIds.length === 0).length;
+  const fragileCapabilities = capabilities.filter((capability) => capability.maturity <= 2 || capability.applicationIds.length === 0).length;
 
   useEffect(() => {
     const update = () => setFullscreen(document.fullscreenElement === frameRef.current);
@@ -136,12 +139,12 @@ export function CapabilityMapView({ data }: { data: ViewDataset }) {
           <span><Layers3 size={15} /><small>Couverture</small><strong>{covered}%</strong></span>
           <span><AlertTriangle size={15} /><small>Fragilités</small><strong>{fragileCapabilities}</strong></span>
           <span><AppWindow size={15} /><small>Critiques</small><strong>{criticalApplications}</strong></span>
-          <span><ShieldCheck size={15} /><small>Maîtrisées</small><strong>{data.capabilities.filter((item) => item.maturity >= 4).length}</strong></span>
+          <span><ShieldCheck size={15} /><small>Maîtrisées</small><strong>{capabilities.filter((item) => item.maturity >= 4).length}</strong></span>
         </div>
         <button className="rf-fullscreen-button" onClick={() => void toggleFullscreen()}>{fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<span>{fullscreen ? "Quitter" : "Plein écran"}</span></button>
       </div>
       <div className="rf-pos-legend"><span><i className="health-dot healthy" /> Sain</span><span><i className="health-dot watch" /> À surveiller</span><span><i className="health-dot critical" /> Critique</span><span><i className="health-dot uncovered" /> Non couvert</span></div>
-      <div className="rf-canvas-area rf-pos-canvas"><ReactFlowProvider><PosCanvas data={data} filtered={filtered} domains={domains} onSelect={setSelected} fullscreen={fullscreen} /></ReactFlowProvider></div>
+      <div className="rf-canvas-area rf-pos-canvas" data-view-export-content><ReactFlowProvider><PosCanvas data={data} filtered={filtered} domains={domains} onSelect={setSelected} fullscreen={fullscreen} /></ReactFlowProvider></div>
 
       {selected && <aside className="context-panel rf-context-panel rf-pos-detail"><button className="panel-close" onClick={() => setSelected(null)} aria-label="Fermer le détail">×</button><p className="eyebrow">Capacité métier</p><h2>{selected.name}</h2><div className="detail-score"><span>Maturité</span><strong>{selected.maturity}/5</strong></div><dl className="detail-list"><div><dt>Domaine</dt><dd>{selected.domain}</dd></div><div><dt>Responsable</dt><dd>{selected.owner}</dd></div><div><dt>Criticité</dt><dd>{selected.criticality}</dd></div></dl><div className="panel-section"><h3>Applications de couverture</h3>{selected.applicationIds.length ? selected.applicationIds.map((id) => { const app = data.applications.find((item) => item.id === id); return app ? <div className="application-row" key={id}><i className={`health-dot ${app.health}`} /><div><strong>{app.name}</strong><small>{healthLabel[app.health]} · {app.lifecycle}</small></div></div> : null; }) : <div className="warning-box">Cette capacité n’est couverte par aucune application.</div>}</div></aside>}
     </section>

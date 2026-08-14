@@ -8,6 +8,7 @@ Scalengi Views n’embarque pas de référentiel global. L’utilisateur crée d
 
 - les instances sont conservées dans IndexedDB, sur l’appareil courant ;
 - le fichier Excel est lu dans le navigateur et n’est pas envoyé à un serveur ;
+- une instance possède une seule source active : jeu d’exemple, fichier Excel ou aucune donnée ;
 - importer un fichier dans une vue n’affecte aucune autre vue ;
 - un futur adaptateur pourra remplacer cette source locale par Scalengi, une base de données ou un outil de cartographie.
 
@@ -18,29 +19,27 @@ Les préférences d’interface (thème et couleur) restent dans `localStorage`.
 - Vue Collaborateurs sur un canvas React Flow ;
 - Cartographie des capacités fonctionnelles, de leur maturité et de leur couverture ;
 - POS urbain structuré en zones, quartiers, îlots et applications ;
+- Diagnostic d’urbanisation configurable : radar, écarts pondérés, preuves, responsables et actions ;
+- Cartographie du SI par couches : métier, données, applications, technologies et dépendances ciblées ;
+- Cockpit TOGAF : phases ADM, avancement, gates, livrables, décisions, risques et blocages ;
 - mode plein écran, guide intégré et modèle Excel propres à chaque type de vue.
+
+## Structure d’une instance
+
+Chaque vue créée possède deux documents distincts :
+
+- une configuration de structure portable en YAML (axes, couches, niveaux, statuts, catégories ou galaxies selon le moteur de vue), avec un jeu d’exemple facultatif et partageable ;
+- un jeu de données local, importé par Excel et stocké uniquement dans cette instance.
+
+L’écran **Structure** permet de partir du modèle standard, d’une page blanche, de l’éditeur guidé ou d’un fichier YAML. Le standard embarque son exemple ; la page blanche n’en contient aucun. Le modèle Excel est généré à la volée depuis la configuration active : les feuilles, lignes préremplies et listes de valeurs autorisées restent donc alignées avec la vue. Aucun connecteur de référentiel n’est activé dans cette version locale.
 
 ## Créer un nouveau type de vue
 
-La bibliothèque ouverte se trouve dans `library/src`. Un type de vue implémente le contrat `ViewDefinition` dans `view-registry.ts` :
+La bibliothèque ouverte se trouve dans `library/src`. Le contrat `ViewDefinition` regroupe le rendu, la configuration standard et vide, le modèle Excel dynamique, l’import, la démonstration, le guide et les indicateurs. L’application consomme uniquement le registre et ne contient aucun branchement par identifiant de vue.
 
-```ts
-const myView: ViewDefinition = {
-  id: "my-view",
-  title: "Ma vue",
-  component: MyReactView,
-  guide: { purpose: "…", questions: [], steps: [], sheets: [] },
-  template: { filename: "modele.xlsx", url: "/templates/modele.xlsx" },
-  createEmptyData: () => emptyData,
-  createDemoData: () => demoData,
-  importExcel: importMyExcel,
-  // métadonnées du catalogue…
-};
-
-viewRegistry.register(myView);
-```
-
-Le contrat regroupe donc le rendu, la documentation, le modèle d’entrée et la validation de données. L’application consomme le registre sans connaître le détail de chaque vue.
+- [Architecture et frontières](docs/ARCHITECTURE.md)
+- [Guide complet pour créer et intégrer une vue](docs/CREATE_A_VIEW.md)
+- [Instructions destinées aux agents et LLM](AGENTS.md)
 
 ## Développement
 
@@ -53,4 +52,4 @@ pnpm lint
 pnpm test
 ```
 
-Les modèles téléchargeables sont dans `public/templates/`.
+Les modèles Excel sont générés dans le navigateur à partir de la structure active ; aucun classeur statique n’est maintenu dans le dépôt.

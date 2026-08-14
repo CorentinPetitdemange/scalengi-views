@@ -73,6 +73,80 @@ export interface UrbanBlock {
   owner: string;
 }
 
+export interface UrbanisationIndicator {
+  id: string;
+  label: string;
+  group: string;
+  current: number;
+  target: number;
+  mapping: number;
+  weight: number;
+  owner: string;
+  evidence: string;
+  action: string;
+}
+
+export type ArchitectureLayer = string;
+export type ArchitectureStatus = string;
+
+export interface ArchitectureElement {
+  id: string;
+  name: string;
+  layer: ArchitectureLayer;
+  domain: string;
+  status: ArchitectureStatus;
+  criticality: "Faible" | "Moyenne" | "Forte";
+  owner: string;
+  description: string;
+}
+
+export interface ArchitectureRelation {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  relation: string;
+}
+
+export type TogafPhaseStatus = string;
+export type TogafItemType = string;
+export type TogafItemStatus = string;
+
+export interface TogafPhase {
+  id: string;
+  code: string;
+  name: string;
+  status: TogafPhaseStatus;
+  progress: number;
+  owner: string;
+  startDate: string;
+  targetDate: string;
+  objective: string;
+  gate: string;
+}
+
+export interface TogafItem {
+  id: string;
+  phaseId: string;
+  name: string;
+  type: TogafItemType;
+  status: TogafItemStatus;
+  owner: string;
+  dueDate: string;
+  detail: string;
+}
+
+export type VerbatimCategory = string;
+export type VerbatimSentiment = "Positif" | "Neutre" | "Négatif";
+
+export interface Verbatim {
+  id: string;
+  text: string;
+  category: VerbatimCategory;
+  team: string;
+  sentiment: VerbatimSentiment;
+  weight: number;
+}
+
 export interface ViewDataset {
   collaborators: Collaborator[];
   processes: Process[];
@@ -83,4 +157,10 @@ export interface ViewDataset {
   urbanZones: UrbanZone[];
   urbanDistricts: UrbanDistrict[];
   urbanBlocks: UrbanBlock[];
+  urbanisationIndicators: UrbanisationIndicator[];
+  architectureElements: ArchitectureElement[];
+  architectureRelations: ArchitectureRelation[];
+  togafPhases: TogafPhase[];
+  togafItems: TogafItem[];
+  verbatims: Verbatim[];
 }
