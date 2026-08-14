@@ -40,6 +40,7 @@ jobs:
           node -e "JSON.parse(require('fs').readFileSync('.devcontainer/devcontainer.json', 'utf8'))"
           bash -n .devcontainer/setup.sh
           bash -n .devcontainer/start-demo.sh
+          docker compose --file .devcontainer/compose.yaml config --quiet
 
       - name: Typecheck
         run: pnpm exec tsc --noEmit

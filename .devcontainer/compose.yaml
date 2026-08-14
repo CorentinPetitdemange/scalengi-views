@@ -1,0 +1,9 @@
+name: scalengi-views-demo
+
+services:
+  app:
+    image: ghcr.io/corentinpetitdemange/scalengi-view:latest
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${SCALENGI_VIEWS_PORT:-3000}:3000"

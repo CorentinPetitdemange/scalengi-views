@@ -25,18 +25,36 @@ test("does not broaden the Vite allowlist outside Codespaces", () => {
   );
 });
 
-test("waits for a production demo that serves an HTML page", async () => {
-  const [devcontainerSource, setupScript, startScript] = await Promise.all([
+test("runs the Codespaces demo as a persistent standalone container", async () => {
+  const [devcontainerSource, composeSource, dockerfile, setupScript, startScript, nextConfig, workflow] = await Promise.all([
     readFile(new URL("../.devcontainer/devcontainer.json", import.meta.url), "utf8"),
+    readFile(new URL("../.devcontainer/compose.yaml", import.meta.url), "utf8"),
+    readFile(new URL("../.devcontainer/Dockerfile", import.meta.url), "utf8"),
     readFile(new URL("../.devcontainer/setup.sh", import.meta.url), "utf8"),
     readFile(new URL("../.devcontainer/start-demo.sh", import.meta.url), "utf8"),
+    readFile(new URL("../next.config.ts", import.meta.url), "utf8"),
+    readFile(new URL("../.github/workflows/container.yml", import.meta.url), "utf8"),
   ]);
   const devcontainer = JSON.parse(devcontainerSource);
 
-  assert.equal(devcontainer.waitFor, "postStartCommand");
+  assert.ok(devcontainer.features["ghcr.io/devcontainers/features/docker-in-docker:2"]);
   assert.equal(devcontainer.portsAttributes["3000"].onAutoForward, "openBrowserOnce");
-  assert.match(setupScript, /pnpm build/);
-  assert.match(startScript, /pnpm start -- -H 0\.0\.0\.0 -p 3000/);
-  assert.match(startScript, /200 text\/html/);
-  assert.doesNotMatch(startScript, /pnpm dev/);
+  assert.deepEqual(devcontainer.forwardPorts, [3000]);
+  assert.match(composeSource, /restart: unless-stopped/);
+  assert.match(composeSource, /ghcr\.io\/corentinpetitdemange\/scalengi-view:latest/);
+  assert.match(composeSource, /SCALENGI_VIEWS_PORT:-3000/);
+  assert.match(dockerfile, /FROM node:22\.19\.0-bookworm-slim AS runtime/);
+  assert.match(dockerfile, /USER node/);
+  assert.match(dockerfile, /HEALTHCHECK/);
+  assert.match(dockerfile, /CMD \["node", "server\.js"\]/);
+  assert.match(nextConfig, /output: "standalone"/);
+  assert.match(setupScript, /docker compose .* pull/);
+  assert.match(setupScript, /docker build --pull/);
+  assert.match(setupScript, /docker compose .* up --detach/);
+  assert.match(setupScript, /container_health.*healthy/);
+  assert.match(startScript, /docker compose .* up --detach/);
+  assert.doesNotMatch(startScript, /nohup|pnpm (?:dev|start)/);
+  assert.match(workflow, /packages: write/);
+  assert.match(workflow, /docker\/build-push-action@[a-f0-9]{40}/);
+  assert.match(workflow, /ghcr\.io\/corentinpetitdemange\/scalengi-view:latest/);
 });
