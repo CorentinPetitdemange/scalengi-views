@@ -89,16 +89,38 @@ jobs:
       - name: Validate shared desktop frontend and version
         run: pnpm desktop:check
 
+      - name: Configure optional Apple signing
+        if: startsWith(matrix.platform, 'macos')
+        shell: bash
+        env:
+          APPLE_CERTIFICATE_VALUE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD_VALUE: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY_VALUE: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID_VALUE: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD_VALUE: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID_VALUE: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [[ -z "$APPLE_CERTIFICATE_VALUE" ]]; then
+            echo "No Apple certificate configured; using the ad hoc identity from tauri.conf.json."
+            exit 0
+          fi
+          if [[ -z "$APPLE_CERTIFICATE_PASSWORD_VALUE" || -z "$APPLE_SIGNING_IDENTITY_VALUE" || -z "$APPLE_ID_VALUE" || -z "$APPLE_PASSWORD_VALUE" || -z "$APPLE_TEAM_ID_VALUE" ]]; then
+            echo "Apple signing is only partially configured. Add every APPLE_* secret or remove APPLE_CERTIFICATE." >&2
+            exit 1
+          fi
+          {
+            echo "APPLE_CERTIFICATE=$APPLE_CERTIFICATE_VALUE"
+            echo "APPLE_CERTIFICATE_PASSWORD=$APPLE_CERTIFICATE_PASSWORD_VALUE"
+            echo "APPLE_SIGNING_IDENTITY=$APPLE_SIGNING_IDENTITY_VALUE"
+            echo "APPLE_ID=$APPLE_ID_VALUE"
+            echo "APPLE_PASSWORD=$APPLE_PASSWORD_VALUE"
+            echo "APPLE_TEAM_ID=$APPLE_TEAM_ID_VALUE"
+          } >> "$GITHUB_ENV"
+
       - name: Build installers and publish the GitHub release
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY || '-' }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: v__VERSION__
           releaseName: Scalengi Views v__VERSION__
