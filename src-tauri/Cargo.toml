@@ -1,0 +1,18 @@
+[package]
+name = "scalengi-views"
+version = "0.1.0-alpha.1"
+description = "Vues spécialisées pour l'architecture d'entreprise"
+authors = ["Corentin Petitdemange <corentin@scalengi.com>"]
+license = "MIT"
+repository = "https://github.com/CorentinPetitdemange/scalengi-view"
+edition = "2021"
+
+[lib]
+name = "scalengi_views_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }

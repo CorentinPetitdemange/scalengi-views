@@ -1,19 +1,19 @@
 import { CollaboratorJourneyView } from "./CollaboratorJourneyView";
-import { buildCapabilityTemplate, buildCollaboratorTemplate, buildLayersTemplate, buildRadarTemplate, buildTogafTemplate, buildUrbanPosTemplate, buildVerbatimTemplate, createBlankConfiguration, createDefaultConfiguration } from "./builtin-configurations";
-import { importCollaboratorExcel, importPosExcel, importSILayersExcel, importTogafExcel, importUrbanisationExcel, importUrbanPosExcel, importVerbatimExcel } from "./excel-import";
-import { CapabilityMapView } from "./CapabilityMapView";
+import { buildCollaboratorTemplate, buildLayersTemplate, buildMetamodelTemplate, buildPartitionTemplate, buildRadarTemplate, buildTogafTemplate, buildVerbatimTemplate, createBlankConfiguration, createDefaultConfiguration } from "./builtin-configurations";
+import { importCollaboratorExcel, importMetamodelExcel, importPartitionExcel, importSILayersExcel, importTogafExcel, importUrbanisationExcel, importVerbatimExcel } from "./excel-import";
 import { createEmptyDataset, datasetWith } from "./dataset";
 import { sampleDataset } from "./sample-data";
+import { PartitionView } from "./PartitionView";
+import { capabilityPartitionData, createBlankPartitionConfiguration, createCapabilityPartitionConfiguration, createUrbanPartitionConfiguration } from "./partition-model";
 import { SILayersView } from "./SILayersView";
+import { SIMetamodelView } from "./SIMetamodelView";
 import { TogafTrackingView } from "./TogafTrackingView";
-import { UrbanPosView } from "./UrbanPosView";
 import { UrbanisationRadarView } from "./UrbanisationRadarView";
 import { VerbatimCloudView } from "./VerbatimCloudView";
 import { defineView, ViewRegistry } from "./view-registry";
 
 const collaboratorDemo = () => datasetWith({ collaborators: structuredClone(sampleDataset.collaborators), processes: structuredClone(sampleDataset.processes), responsibilities: structuredClone(sampleDataset.responsibilities), feedbacks: structuredClone(sampleDataset.feedbacks) });
-const posDemo = () => datasetWith({ applications: structuredClone(sampleDataset.applications), capabilities: structuredClone(sampleDataset.capabilities) });
-const urbanPosDemo = () => datasetWith({ applications: structuredClone(sampleDataset.applications), urbanZones: structuredClone(sampleDataset.urbanZones), urbanDistricts: structuredClone(sampleDataset.urbanDistricts), urbanBlocks: structuredClone(sampleDataset.urbanBlocks) });
+const partitionDemo = () => capabilityPartitionData(sampleDataset);
 const urbanisationDemo = () => datasetWith({ urbanisationIndicators: structuredClone(sampleDataset.urbanisationIndicators) });
 const siLayersDemo = () => datasetWith({ architectureElements: structuredClone(sampleDataset.architectureElements), architectureRelations: structuredClone(sampleDataset.architectureRelations) });
 const togafDemo = () => datasetWith({ togafPhases: structuredClone(sampleDataset.togafPhases), togafItems: structuredClone(sampleDataset.togafItems) });
@@ -89,73 +89,42 @@ export const verbatimCloudDefinition = defineView({
   },
 });
 
-export const posDefinition = defineView({
-  id: "pos",
-  title: "Cartographie des capacités fonctionnelles",
-  shortTitle: "Capacités",
+export const partitionViewDefinition = defineView({
+  id: "partition-view",
+  title: "Vue en découpage",
+  shortTitle: "Découpage",
   demoName: "Capacités fonctionnelles — Démonstration",
   category: "Architecture d’entreprise",
   catalogGroup: "enterprise-architecture",
-  description: "Lire la couverture fonctionnelle du SI, identifier les fragilités et les capacités non couvertes.",
+  description: "Organiser librement des éléments en niveaux, groupes et sous-groupes, avec leurs informations et relations.",
   icon: "boxes",
   accent: "blue",
-  insights: ["Couverture", "Santé applicative", "Maturité"],
-  component: CapabilityMapView,
+  insights: ["Découpage libre", "Niveaux configurables", "Relations"],
+  component: PartitionView,
   createEmptyData: createEmptyDataset,
-  createDemoData: posDemo,
-  createDefaultConfiguration: () => createDefaultConfiguration("pos"),
-  createBlankConfiguration: () => createBlankConfiguration("pos"),
-  buildTemplate: buildCapabilityTemplate,
-  importExcel: importPosExcel,
-  summarize: (data) => [{ label: "Capacités", value: data.capabilities.length }, { label: "Applications", value: data.applications.length }],
+  createDemoData: partitionDemo,
+  createDefaultConfiguration: () => createDefaultConfiguration("partition-view"),
+  createBlankConfiguration: createBlankPartitionConfiguration,
+  presets: [
+    { id: "capabilities", title: "Capacités fonctionnelles", description: "Domaines, capacités, maturité et couverture applicative.", createConfiguration: createCapabilityPartitionConfiguration },
+    { id: "urban-pos", title: "POS urbain", description: "Zones, quartiers, îlots et applications dans une hiérarchie libre.", createConfiguration: createUrbanPartitionConfiguration },
+    { id: "blank", title: "Structure vierge", description: "Commencer sans niveau ni information prédéfinis.", createConfiguration: createBlankPartitionConfiguration },
+  ],
+  buildTemplate: buildPartitionTemplate,
+  importExcel: importPartitionExcel,
+  summarize: (data) => [{ label: "Éléments", value: data.partitionItems.length }, { label: "Niveaux", value: new Set(data.partitionItems.map((item) => item.levelId)).size }, { label: "Relations", value: data.partitionRelations.length }],
   guide: {
-    purpose: "Cette vue organise les capacités métier par domaine et superpose leur couverture applicative, leur maturité et leur criticité pour faire ressortir les zones fonctionnelles à traiter.",
-    questions: ["Quelles capacités sont mal ou non couvertes ?", "Où se trouvent les applications critiques ?", "Quels domaines cumulent faible maturité et forte criticité ?"],
+    purpose: "Cette vue répartit les objets dans un découpage défini par l’architecte. Les niveaux, informations, statuts et relations viennent de la configuration de l’instance, pas du moteur.",
+    questions: ["Comment le périmètre est-il découpé ?", "Quels éléments composent chaque niveau ?", "Quelles informations ou relations appellent une décision ?"],
     steps: [
-      { title: "Télécharger le modèle", description: "Le modèle sépare les capacités, les applications et leurs liens de couverture." },
-      { title: "Décrire le patrimoine", description: "Utilisez des identifiants stables pour relier chaque capacité à une ou plusieurs applications." },
-      { title: "Importer dans cette vue", description: "Les indicateurs et la matrice sont recalculés à partir de ce fichier seulement." },
+      { title: "Définir les niveaux", description: "Partez d’un exemple ou créez librement les niveaux, leur parent et leur mode d’affichage." },
+      { title: "Définir les informations", description: "Ajoutez les attributs, statuts et couleurs utiles à la lecture de vos cartes." },
+      { title: "Importer les éléments", description: "Le classeur généré contient exactement les niveaux et colonnes de cette instance." },
     ],
     sheets: [
-      { name: "Capacites", columns: ["id", "nom", "domaine", "maturite", "criticite", "responsable"], description: "Le découpage fonctionnel du SI." },
-      { name: "Applications", columns: ["id", "nom", "sante", "cycle_de_vie"], description: "Le patrimoine applicatif utile à cette analyse." },
-      { name: "Couverture", columns: ["capacite_id", "application_id"], description: "Les relations entre capacités et applications." },
-    ],
-  },
-});
-
-export const urbanPosDefinition = defineView({
-  id: "urban-pos",
-  title: "Plan d’occupation du sol urbain",
-  shortTitle: "POS urbain",
-  demoName: "POS urbain — Démonstration",
-  category: "Urbanisation du SI",
-  catalogGroup: "enterprise-architecture",
-  description: "Positionner les applications dans un découpage hiérarchique en zones, quartiers et îlots.",
-  icon: "map",
-  accent: "emerald",
-  insights: ["Zones & quartiers", "Îlots applicatifs", "Rationalisation"],
-  component: UrbanPosView,
-  createEmptyData: createEmptyDataset,
-  createDemoData: urbanPosDemo,
-  createDefaultConfiguration: () => createDefaultConfiguration("urban-pos"),
-  createBlankConfiguration: () => createBlankConfiguration("urban-pos"),
-  buildTemplate: buildUrbanPosTemplate,
-  importExcel: importUrbanPosExcel,
-  summarize: (data) => [{ label: "Zones", value: data.urbanZones.length }, { label: "Quartiers", value: data.urbanDistricts.length }, { label: "Îlots", value: data.urbanBlocks.length }, { label: "Applications", value: data.applications.length }],
-  guide: {
-    purpose: "Le POS urbain montre où se situe chaque application dans l’architecture fonctionnelle : une zone contient des quartiers, un quartier contient des îlots et chaque application occupe un îlot.",
-    questions: ["Où chaque application est-elle positionnée ?", "Quels îlots doivent être rationalisés ou construits ?", "Où se concentrent les applications critiques ou en retrait ?"],
-    steps: [
-      { title: "Définir les zones", description: "Créez le découpage stable du SI, puis rattachez chaque quartier à une zone." },
-      { title: "Décrire les îlots", description: "Rattachez chaque îlot à un quartier et qualifiez son statut d’urbanisation." },
-      { title: "Positionner les applications", description: "Chaque application référence exactement un îlot, avec sa santé et son cycle de vie." },
-    ],
-    sheets: [
-      { name: "Zones", columns: ["id", "nom", "description"], description: "Les grands ensembles fonctionnels du SI." },
-      { name: "Quartiers", columns: ["id", "nom", "zone_id", "description"], description: "Les subdivisions fonctionnelles rattachées à une zone." },
-      { name: "Ilots", columns: ["id", "nom", "quartier_id", "statut", "responsable"], description: "Les unités d’urbanisation qui accueillent les applications." },
-      { name: "Applications", columns: ["id", "nom", "ilot_id", "sante", "cycle_de_vie"], description: "Les applications positionnées dans les îlots." },
+      { name: "Elements", columns: ["id", "nom", "niveau", "parent_id", "description", "attributs configurés"], description: "Les objets, leur niveau et leur position dans le découpage." },
+      { name: "Relations", columns: ["id", "source_id", "cible_id", "type"], description: "Les relations facultatives entre objets." },
+      { name: "Mode d'emploi", columns: ["champ", "règle", "exemple"], description: "Les niveaux et règles produits depuis la structure." },
     ],
   },
 });
@@ -196,15 +165,15 @@ export const urbanisationMaturityDefinition = defineView({
 
 export const siLayersDefinition = defineView({
   id: "si-layers",
-  title: "Cartographie du SI par couches",
+  title: "Analyse d’impact du SI par couches",
   shortTitle: "SI par couches",
   demoName: "SI par couches — Démonstration",
   category: "Architecture d’entreprise",
   catalogGroup: "enterprise-architecture",
-  description: "Relier métier, données, applications et technologies sans transformer la lecture en graphe illisible.",
+  description: "Partir d’un objet et isoler ses impacts entrants et sortants à travers les couches métier, données, applications et technologies.",
   icon: "layers",
   accent: "violet",
-  insights: ["Alignement vertical", "Dépendances", "Transformation"],
+  insights: ["Analyse d’impact", "Dépendances critiques", "Propagation inter-couches"],
   component: SILayersView,
   createEmptyData: createEmptyDataset,
   createDemoData: siLayersDemo,
@@ -214,17 +183,53 @@ export const siLayersDefinition = defineView({
   importExcel: importSILayersExcel,
   summarize: (data) => [{ label: "Éléments", value: data.architectureElements.length }, { label: "Relations", value: data.architectureRelations.length }, { label: "Domaines", value: new Set(data.architectureElements.map((item) => item.domain)).size }],
   guide: {
-    purpose: "Cette vue aligne les objets métier, données, applications et technologies dans quatre bandes stables. La sélection d’un élément révèle uniquement sa chaîne de dépendances, ses responsabilités et son statut de transformation.",
-    questions: ["Quelles applications et technologies soutiennent une capacité métier ?", "Quels objets critiques sont isolés ou sans responsable ?", "Où les transformations se propagent-elles entre les couches ?"],
+    purpose: "Cette vue sert à analyser un changement ou un incident : elle isole autour d’un point focal les dépendances entrantes et sortantes, leur profondeur, leur criticité et leur propagation entre les couches.",
+    questions: ["Quels objets peuvent affecter cet élément ?", "Quels objets risquent d’être affectés si celui-ci change ?", "À quelle profondeur et dans quelles couches l’impact se propage-t-il ?"],
     steps: [
       { title: "Décrire les éléments", description: "Classez chaque objet dans une couche, un domaine et un statut d’architecture." },
       { title: "Relier les couches", description: "Ajoutez des relations explicites entre les identifiants, dans le sens qui convient à votre modèle." },
-      { title: "Explorer les impacts", description: "Filtrez par domaine puis sélectionnez un élément pour isoler ses dépendances directes." },
+      { title: "Explorer les impacts", description: "Sélectionnez un point focal, choisissez le sens entrant ou sortant et augmentez la profondeur pour suivre la propagation." },
     ],
     sheets: [
       { name: "Elements", columns: ["id", "nom", "couche", "domaine", "statut", "criticite", "responsable", "description"], description: "Tous les objets d’architecture à positionner." },
       { name: "Relations", columns: ["id", "source_id", "cible_id", "relation"], description: "Les dépendances entre deux objets existants." },
       { name: "Mode d'emploi", columns: ["champ", "règle", "exemple"], description: "Les valeurs autorisées et règles de saisie." },
+    ],
+  },
+});
+
+export const siMetamodelDefinition = defineView({
+  id: "si-metamodel",
+  title: "Métamodèle du SI",
+  shortTitle: "Métamodèle SI",
+  demoName: "Métamodèle du SI — Démonstration",
+  category: "Architecture d’entreprise",
+  catalogGroup: "enterprise-architecture",
+  description: "Définir la grammaire du référentiel : couches, types d’objets, relations autorisées et cardinalités.",
+  icon: "network",
+  accent: "blue",
+  insights: ["Concepts", "Relations autorisées", "Cardinalités"],
+  component: SIMetamodelView,
+  createEmptyData: createEmptyDataset,
+  createDemoData: createEmptyDataset,
+  createDefaultConfiguration: () => createDefaultConfiguration("si-metamodel"),
+  createBlankConfiguration: () => createBlankConfiguration("si-metamodel"),
+  buildTemplate: buildMetamodelTemplate,
+  importExcel: importMetamodelExcel,
+  summarize: (_data, configuration) => [{ label: "Couches", value: configuration?.sections.find((section) => section.id === "layers")?.items.length ?? 0 }, { label: "Types d’objets", value: configuration?.sections.find((section) => section.id === "objectTypes")?.items.length ?? 0 }, { label: "Relations", value: configuration?.sections.find((section) => section.id === "relationTypes")?.items.length ?? 0 }],
+  guide: {
+    purpose: "Cette vue décrit les règles du référentiel, pas son contenu : quels types d’objets existent, dans quelles couches ils se placent et quelles relations peuvent les relier.",
+    questions: ["Quels concepts composent notre langage d’architecture ?", "Quelles relations et cardinalités sont autorisées ?", "Notre métamodèle couvre-t-il toutes les couches utiles sans doublon ?"],
+    steps: [
+      { title: "Définir les couches", description: "Organisez visuellement le langage d’architecture selon vos propres couches." },
+      { title: "Définir les types", description: "Documentez chaque concept et rattachez-le à une couche." },
+      { title: "Définir la grammaire", description: "Reliez les types, nommez les relations et précisez leurs cardinalités." },
+    ],
+    sheets: [
+      { name: "Couches", columns: ["id", "libelle", "description", "couleur"], description: "Les colonnes visuelles du métamodèle." },
+      { name: "TypesObjets", columns: ["id", "libelle", "couche_id", "description", "couleur"], description: "Les concepts disponibles dans le référentiel." },
+      { name: "Relations", columns: ["id", "libelle", "source_type_id", "cible_type_id", "cardinalite_source", "cardinalite_cible", "description"], description: "Les liens autorisés entre concepts." },
+      { name: "Mode d'emploi", columns: ["champ", "règle", "exemple"], description: "Les règles de référence entre les feuilles." },
     ],
   },
 });
@@ -264,4 +269,4 @@ export const togafTrackingDefinition = defineView({
   },
 });
 
-export const viewRegistry = new ViewRegistry().registerMany([collaboratorJourneyDefinition, verbatimCloudDefinition, posDefinition, urbanPosDefinition, urbanisationMaturityDefinition, siLayersDefinition, togafTrackingDefinition]);
+export const viewRegistry = new ViewRegistry().registerMany([collaboratorJourneyDefinition, verbatimCloudDefinition, partitionViewDefinition, urbanisationMaturityDefinition, siLayersDefinition, siMetamodelDefinition, togafTrackingDefinition]);

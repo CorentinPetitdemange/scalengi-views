@@ -2,7 +2,7 @@ import type { ComponentType } from "react";
 import { withExampleData, type ViewConfiguration, type WorkbookTemplateSpec } from "./configuration";
 import type { ViewDataset } from "./types";
 
-export type BuiltInViewType = "collaborator-journey" | "verbatim-cloud" | "pos" | "urban-pos" | "urbanisation-maturity" | "si-layers" | "togaf-tracking";
+export type BuiltInViewType = "collaborator-journey" | "verbatim-cloud" | "partition-view" | "urbanisation-maturity" | "si-layers" | "si-metamodel" | "togaf-tracking";
 export type ViewCatalogGroup = "organisation-experience" | "enterprise-architecture" | "diagnostic-maturity" | "transformation-governance";
 
 export const VIEW_CATALOG_GROUPS: ReadonlyArray<{ id: ViewCatalogGroup; label: string; description: string }> = [
@@ -21,6 +21,8 @@ export interface ViewGuide {
 
 export interface ViewImportResult {
   data: ViewDataset;
+  /** Structure éventuellement reconstruite par l'import. */
+  configuration?: ViewConfiguration;
   rowCount: number;
   warnings: string[];
 }
@@ -28,6 +30,13 @@ export interface ViewImportResult {
 export interface ViewRendererProps {
   data: ViewDataset;
   configuration?: ViewConfiguration;
+}
+
+export interface ViewPreset {
+  id: string;
+  title: string;
+  description: string;
+  createConfiguration: () => ViewConfiguration;
 }
 
 export interface ViewDefinition<TType extends string = string> {
@@ -38,9 +47,10 @@ export interface ViewDefinition<TType extends string = string> {
   category: string;
   catalogGroup: ViewCatalogGroup;
   description: string;
-  icon: "users" | "cloud" | "boxes" | "map" | "radar" | "layers" | "route";
+  icon: "users" | "cloud" | "boxes" | "map" | "radar" | "layers" | "network" | "route";
   accent: "violet" | "blue" | "emerald";
   insights: string[];
+  presets?: ViewPreset[];
   guide: ViewGuide;
   component: ComponentType<ViewRendererProps>;
   createEmptyData: () => ViewDataset;
@@ -49,7 +59,7 @@ export interface ViewDefinition<TType extends string = string> {
   createBlankConfiguration: () => ViewConfiguration;
   buildTemplate: (configuration: ViewConfiguration) => WorkbookTemplateSpec;
   importExcel: (file: File, configuration?: ViewConfiguration) => Promise<ViewImportResult>;
-  summarize: (data: ViewDataset) => Array<{ label: string; value: string | number }>;
+  summarize: (data: ViewDataset, configuration?: ViewConfiguration) => Array<{ label: string; value: string | number }>;
 }
 
 const viewIdPattern = /^[a-z][a-z0-9-]{1,63}$/;
@@ -69,6 +79,11 @@ export function defineView<TType extends string>(definition: ViewDefinition<TTyp
   const standard = decorated.createDefaultConfiguration();
   const blank = definition.createBlankConfiguration();
   if (standard.viewType !== definition.id || blank.viewType !== definition.id) throw new Error(`La configuration de "${definition.id}" déclare un autre type de vue.`);
+  for (const preset of definition.presets ?? []) {
+    if (!viewIdPattern.test(preset.id) || !preset.title.trim() || !preset.description.trim()) throw new Error(`La vue "${definition.id}" déclare un modèle invalide.`);
+    const configuration = preset.createConfiguration();
+    if (configuration.viewType !== definition.id) throw new Error(`Le modèle "${preset.id}" déclare un autre type de vue.`);
+  }
   return Object.freeze(decorated);
 }
 

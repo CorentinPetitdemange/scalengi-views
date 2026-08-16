@@ -2,8 +2,19 @@
 
 [![CI](https://github.com/CorentinPetitdemange/scalengi-view/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinPetitdemange/scalengi-view/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Dernière version](https://img.shields.io/github/v/release/CorentinPetitdemange/scalengi-view?include_prereleases&sort=semver&display_name=tag&label=version)](CHANGELOG.md)
 
 Application web autonome et bibliothèque de vues spécialisées pour l’architecture d’entreprise. Ce dépôt ne dépend pas du frontend ni du backend de Scalengi.
+
+## Installer l’application
+
+[![Télécharger pour macOS](https://img.shields.io/badge/Télécharger-macOS-111827?logo=apple&logoColor=white)](https://github.com/CorentinPetitdemange/scalengi-view/releases)
+![Windows — bientôt validé](https://img.shields.io/badge/Windows-bientôt%20validé-6b7280?logo=windows&logoColor=white)
+![Linux — bientôt validé](https://img.shields.io/badge/Linux-bientôt%20validé-6b7280?logo=linux&logoColor=white)
+
+À partir de la première version publiée, macOS sera proposé pour Apple Silicon et Intel dans les [GitHub Releases](https://github.com/CorentinPetitdemange/scalengi-view/releases). Le projet est actuellement en alpha : GitHub classe donc ces versions comme préversions. Les installateurs Windows x64 et Linux x64 sont préparés par le même pipeline, mais resteront signalés comme non validés jusqu’à leurs tests manuels.
+
+L’application desktop utilise la même base React et les mêmes données locales que la version web, dans une WebView Tauri légère. Aucun serveur n’est nécessaire après installation. Voir [la construction et la publication desktop](docs/DESKTOP.md).
 
 ## Tester en un clic
 
@@ -32,10 +43,13 @@ Les préférences d’interface (thème et couleur) restent dans `localStorage`.
 ## Vues disponibles
 
 - Vue Collaborateurs sur un canvas React Flow ;
-- Cartographie des capacités fonctionnelles, de leur maturité et de leur couverture ;
-- POS urbain structuré en zones, quartiers, îlots et applications ;
+- Vue en découpage avec niveaux, informations et relations libres ;
+  - modèle Capacités fonctionnelles : domaines, maturité et couverture applicative ;
+  - modèle POS urbain : zones, quartiers, îlots et applications ;
+  - structure vierge pour construire son propre découpage ;
 - Diagnostic d’urbanisation configurable : radar, écarts pondérés, preuves, responsables et actions ;
-- Cartographie du SI par couches : métier, données, applications, technologies et dépendances ciblées ;
+- Analyse d’impact du SI par couches : point focal, dépendances entrantes/sortantes, profondeur et criticité ;
+- Métamodèle du SI sur React Flow : couches, types d’objets, relations autorisées et cardinalités ;
 - Cockpit TOGAF : phases ADM, avancement, gates, livrables, décisions, risques et blocages ;
 - mode plein écran, guide intégré et modèle Excel propres à chaque type de vue.
 
@@ -55,6 +69,7 @@ La bibliothèque ouverte se trouve dans `library/src`. Le contrat `ViewDefinitio
 - [Architecture et frontières](docs/ARCHITECTURE.md)
 - [Guide complet pour créer et intégrer une vue](docs/CREATE_A_VIEW.md)
 - [Instructions destinées aux agents et LLM](AGENTS.md)
+- [Cycle de versions et publication](docs/VERSIONING.md)
 
 ## Développement
 

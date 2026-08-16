@@ -1,4 +1,4 @@
-import { normalizeDataset, sampleDataset, validateConfiguration, type ViewConfiguration, type ViewDataset } from "../library/src";
+import { migrateLegacyPartition, normalizeDataset, sampleDataset, validateConfiguration, type ViewConfiguration, type ViewDataset } from "../library/src";
 
 export interface ViewInstance {
   id: string;
@@ -23,16 +23,21 @@ const safeText = (value: unknown, maxLength: number) => typeof value === "string
 function normalizeInstance(value: unknown): ViewInstance | null {
   if (!isRecord(value)) return null;
   const id = safeText(value.id, 200);
-  const type = safeText(value.type, 100);
+  const storedType = safeText(value.type, 100);
   const name = safeText(value.name, 200);
   const createdAt = safeText(value.createdAt, 50);
   const updatedAt = safeText(value.updatedAt, 50);
-  if (!id || !type || !name?.trim() || !createdAt || !updatedAt) return null;
+  if (!id || !storedType || !name?.trim() || !createdAt || !updatedAt) return null;
   const rawData = isRecord(value.data) ? value.data : {};
   const missingFeedbackLayer = !Array.isArray(rawData.feedbacks);
-  const data = normalizeDataset(rawData);
+  let type = storedType;
+  let data = normalizeDataset(rawData);
   if (missingFeedbackLayer && type === "collaborator-journey" && !value.source) data.feedbacks = structuredClone(sampleDataset.feedbacks);
-  const configuration = validateConfiguration(value.configuration, type).length === 0 ? structuredClone(value.configuration) as ViewConfiguration : undefined;
+  let configuration = validateConfiguration(value.configuration, type).length === 0 ? structuredClone(value.configuration) as ViewConfiguration : undefined;
+  if (type === "pos" || type === "urban-pos") {
+    const migrated = migrateLegacyPartition(type, data, configuration);
+    type = "partition-view"; data = migrated.data; configuration = migrated.configuration;
+  }
   let source: ViewInstance["source"];
   if (isRecord(value.source)) {
     if (value.source.kind === "demo") {
@@ -70,6 +75,8 @@ function transactionDone(transaction: IDBTransaction) {
 
 export async function listViewInstances() {
   const database = await openDatabase();
+  let normalizedInstances: ViewInstance[] = [];
+  let legacyIds = new Set<string>();
   try {
     const transaction = database.transaction(STORE, "readonly");
     const request = transaction.objectStore(STORE).getAll();
@@ -77,10 +84,13 @@ export async function listViewInstances() {
       request.onsuccess = () => resolve(request.result as ViewInstance[]);
       request.onerror = () => reject(request.error);
     });
-    return instances.map(normalizeInstance).filter((instance): instance is ViewInstance => instance !== null).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    legacyIds = new Set(instances.filter((instance) => instance.type === "pos" || instance.type === "urban-pos").map((instance) => instance.id));
+    normalizedInstances = instances.map(normalizeInstance).filter((instance): instance is ViewInstance => instance !== null).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   } finally {
     database.close();
   }
+  if (legacyIds.size) await Promise.all(normalizedInstances.filter((instance) => legacyIds.has(instance.id)).map(saveViewInstance));
+  return normalizedInstances;
 }
 
 export async function saveViewInstance(instance: ViewInstance) {
@@ -91,6 +101,17 @@ export async function saveViewInstance(instance: ViewInstance) {
   try {
     const transaction = database.transaction(STORE, "readwrite");
     transaction.objectStore(STORE).put(normalized);
+    await transactionDone(transaction);
+  } finally {
+    database.close();
+  }
+}
+
+export async function deleteViewInstance(id: string) {
+  const database = await openDatabase();
+  try {
+    const transaction = database.transaction(STORE, "readwrite");
+    transaction.objectStore(STORE).delete(id);
     await transactionDone(transaction);
   } finally {
     database.close();

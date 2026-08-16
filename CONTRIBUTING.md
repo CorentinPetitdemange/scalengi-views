@@ -39,6 +39,7 @@ Les contributeurs ne poussent jamais directement sur `main` et n’y effectuent 
 
 ```bash
 pnpm exec tsc --noEmit
+pnpm version:check
 pnpm lint
 pnpm test
 ```

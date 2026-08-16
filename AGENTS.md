@@ -15,6 +15,8 @@ Read this file before changing the repository. Then read the relevant document i
 Read `docs/ARCHITECTURE.md` before architectural work and `docs/CREATE_A_VIEW.md` before adding a view.
 
 - `app/` is the thin standalone shell: navigation, instance lifecycle and local persistence.
+- `desktop/` is the static Vite entry point for the desktop application. It must mount the same `ScalengiViewsApp`; never fork the UI or view logic there.
+- `src-tauri/` is a minimal native packaging shell. Do not move business logic, persistence rules or connectors into Rust.
 - `library/src/view-registry.ts` is the public integration contract.
 - `library/src/configuration.ts` owns the portable structure/YAML contract.
 - `library/src/dataset.ts` owns creation and normalization of the shared dataset envelope.
@@ -35,15 +37,28 @@ Read `docs/ARCHITECTURE.md` before architectural work and `docs/CREATE_A_VIEW.md
 8. Avoid adding a dependency when the platform or an existing dependency can do the job.
 9. Preserve full-screen readability and an automatic fit for dense views.
 10. Do not add a static XLSX template: templates are generated from the active configuration.
+11. Do not add a dedicated renderer for another hierarchical grouping. Extend `partition-view` or add a preset when the need is levels, containers, cards, attributes and optional relations.
+
+## Choosing between a view and a preset
+
+- Use a `partition-view` preset for a new hierarchy or decomposition such as domains/capabilities, zones/districts/blocks, products/components or organisation levels.
+- Create a new renderer only when the visual grammar produces a different analysis or decision, such as a radar, ADM cycle, word cloud or collaborator galaxy.
+- A preset owns its complete portable configuration and bounded example dataset. It must work with the shared `partitionItems` / `partitionRelations` Excel contract.
+- Never branch on a preset id in the shell or renderer. Rendering follows level roles, attributes and vocabularies from the configuration.
 
 ## Required checks
 
 Run from this directory with Node.js >= 22.13:
 
 ```bash
+pnpm desktop:check
 pnpm lint
 pnpm test
 ```
+
+For a native desktop change, also run `pnpm desktop:build` on the platform being validated. Keep the versions in `package.json`, `src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json` identical. See `docs/DESKTOP.md` for release, signing and platform-validation rules.
+
+Version changes must use `pnpm version:set <version>` and follow `docs/VERSIONING.md`. Never reuse or move a published version tag.
 
 For visual changes, also verify the affected view at `http://localhost:3000` in normal and full-screen layouts. Confirm that browser console errors are empty.
 

@@ -1,6 +1,6 @@
 {
   "name": "scalengi-view",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "private": true,
   "license": "MIT",
   "packageManager": "pnpm@10.17.0",
@@ -18,9 +18,16 @@
   "scripts": {
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
+    "desktop:web:dev": "vite --config desktop/vite.config.ts",
+    "desktop:web:build": "vite build --config desktop/vite.config.ts",
+    "desktop:check": "node scripts/check-desktop-version.mjs && pnpm desktop:web:build",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "version:check": "node scripts/check-desktop-version.mjs",
+    "version:set": "node scripts/set-version.mjs",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "test": "pnpm build && node --experimental-strip-types --test tests/*.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern dist-desktop --ignore-pattern src-tauri/target --ignore-pattern .next"
   },
   "dependencies": {
     "fflate": "^0.8.3",
@@ -36,6 +43,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
     "@tailwindcss/postcss": "4.2.1",
+    "@tauri-apps/cli": "2.11.4",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
