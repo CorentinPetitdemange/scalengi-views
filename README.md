@@ -1,81 +1,73 @@
 # Scalengi Views
 
-[![CI](https://github.com/CorentinPetitdemange/scalengi-view/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinPetitdemange/scalengi-view/actions/workflows/ci.yml)
+[![CI](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Dernière version](https://img.shields.io/github/v/release/CorentinPetitdemange/scalengi-views?include_prereleases&sort=semver&display_name=tag&label=version)](CHANGELOG.md)
 
-Application web autonome et bibliothèque de vues spécialisées pour l’architecture d’entreprise. Ce dépôt ne dépend pas du frontend ni du backend de Scalengi.
+Scalengi Views permet de créer des vues configurables pour analyser, expliquer et piloter un système d’information. Chaque vue associe une structure, des données et une représentation adaptée à une question d’architecture d’entreprise.
 
-## Tester en un clic
+> Le projet est actuellement en **alpha**. Les formats et certaines interactions peuvent encore évoluer.
 
-Aucune installation locale n’est nécessaire. Lancez un environnement de démonstration complet dans GitHub Codespaces :
+## Installer
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CorentinPetitdemange/scalengi-view?quickstart=1)
+[![Télécharger pour macOS](https://img.shields.io/badge/Télécharger-macOS-111827?logo=apple&logoColor=white)](https://github.com/CorentinPetitdemange/scalengi-views/releases)
+![Windows — bientôt disponible](https://img.shields.io/badge/Windows-bientôt-6b7280?logo=windows&logoColor=white)
+![Linux — bientôt disponible](https://img.shields.io/badge/Linux-bientôt-6b7280?logo=linux&logoColor=white)
 
-1. Cliquez sur le bouton et créez le Codespace avec la configuration proposée.
-2. Attendez le téléchargement et le démarrage automatique du conteneur de démonstration.
-3. Le port **3000** s’ouvre automatiquement dans le navigateur.
+Les versions macOS sont disponibles dans [GitHub Releases](https://github.com/CorentinPetitdemange/scalengi-views/releases). Windows et Linux seront proposés après validation de leurs installateurs.
 
-Aucun compte Scalengi n’est nécessaire. Les vues et données d’exemple sont initialisées localement dans le navigateur.
+## Essayer en ligne
 
-## Principe
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CorentinPetitdemange/scalengi-views?quickstart=1)
 
-Scalengi Views n’embarque pas de référentiel global. L’utilisateur crée des **instances de vues indépendantes** : chaque instance a un nom, un type, une configuration, son propre fichier Excel et ses propres données locales.
+Le Codespace démarre automatiquement l’application et ouvre le port **3000**. Aucun compte Scalengi n’est nécessaire.
 
-- les instances sont conservées dans IndexedDB, sur l’appareil courant ;
-- le fichier Excel est lu dans le navigateur et n’est pas envoyé à un serveur ;
-- une instance possède une seule source active : jeu d’exemple, fichier Excel ou aucune donnée ;
-- importer un fichier dans une vue n’affecte aucune autre vue ;
-- les sources de données utilisent un contrat commun, indépendant des moteurs de vues.
+## Fonctionnalités
 
-Les préférences d’interface (thème et couleur) restent dans `localStorage`. Aucune donnée métier n’y est stockée.
+- création de plusieurs vues indépendantes ;
+- structure configurable depuis l’interface ou en YAML ;
+- modèle Excel généré selon la structure de chaque vue ;
+- import Excel traité localement ;
+- jeu de données d’exemple activable ou remplaçable ;
+- affichage plein écran et export PNG/SVG ;
+- persistance locale des vues et de leurs données.
 
 ## Vues disponibles
 
-- Vue Collaborateurs sur un canvas React Flow ;
-- Cartographie des capacités fonctionnelles, de leur maturité et de leur couverture ;
-- POS urbain structuré en zones, quartiers, îlots et applications ;
-- Diagnostic d’urbanisation configurable : radar, écarts pondérés, preuves, responsables et actions ;
-- Cartographie du SI par couches : métier, données, applications, technologies et dépendances ciblées ;
-- Cockpit TOGAF : phases ADM, avancement, gates, livrables, décisions, risques et blocages ;
-- mode plein écran, guide intégré et modèle Excel propres à chaque type de vue.
+- **Collaborateurs** : responsabilités, processus, retours et relations autour des équipes ;
+- **Vue en découpage** : niveaux, informations et relations libres, avec des modèles Capacités fonctionnelles et POS urbain ;
+- **Diagnostic d’urbanisation** : radar configurable, écarts, preuves, responsables et actions ;
+- **SI par couches** : analyse d’impact autour d’un élément et de ses dépendances ;
+- **Métamodèle du SI** : types d’objets, couches, relations autorisées et cardinalités ;
+- **TOGAF ADM** : phases, avancement, livrables, décisions, risques et blocages ;
+- **Nuage de mots** : analyse visuelle de verbatims, besoins et dysfonctionnements.
 
-## Structure d’une instance
+## Données
 
-Chaque vue créée possède deux documents distincts :
-
-- une configuration de structure portable en YAML (axes, couches, niveaux, statuts, catégories ou galaxies selon le moteur de vue), avec un jeu d’exemple facultatif et partageable ;
-- un jeu de données local, importé par Excel et stocké uniquement dans cette instance.
-
-L’écran **Structure** permet de partir du modèle standard, d’une page blanche, de l’éditeur guidé ou d’un fichier YAML. Le standard embarque son exemple ; la page blanche n’en contient aucun. Le modèle Excel est généré à la volée depuis la configuration active : les feuilles, lignes préremplies et listes de valeurs autorisées restent donc alignées avec la vue. Aucun connecteur de référentiel n’est activé dans cette version locale.
-
-## Créer un nouveau type de vue
-
-La bibliothèque ouverte se trouve dans `library/src`. Le contrat `ViewDefinition` regroupe le rendu, la configuration standard et vide, le modèle Excel dynamique, l’import, la démonstration, le guide et les indicateurs. L’application consomme uniquement le registre et ne contient aucun branchement par identifiant de vue.
-
-- [Architecture et frontières](docs/ARCHITECTURE.md)
-- [Guide complet pour créer et intégrer une vue](docs/CREATE_A_VIEW.md)
-- [Instructions destinées aux agents et LLM](AGENTS.md)
+Une vue possède sa propre configuration et une seule source de données active : exemple, Excel ou aucune donnée. Les fichiers importés restent sur l’appareil et ne sont pas envoyés à un serveur.
 
 ## Développement
 
-Prérequis : Node.js `>=22.13.0`.
+Prérequis : Node.js `>=22.13.0` et pnpm 10.
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 pnpm dev
 pnpm lint
 pnpm test
 ```
 
-Les modèles Excel sont générés dans le navigateur à partir de la structure active ; aucun classeur statique n’est maintenu dans le dépôt.
+- [Architecture](docs/ARCHITECTURE.md)
+- [Créer un type de vue](docs/CREATE_A_VIEW.md)
+- [Application desktop](docs/DESKTOP.md)
+- [Versions et publication](docs/VERSIONING.md)
+- [Maintenance du dépôt](docs/MAINTENANCE.md)
 
-## Contribuer et sécurité
+## Contribuer
 
-- [Guide de contribution](CONTRIBUTING.md)
-- [Code de conduite](CODE_OF_CONDUCT.md)
-- [Politique de sécurité](SECURITY.md)
+Consultez le [guide de contribution](CONTRIBUTING.md), le [code de conduite](CODE_OF_CONDUCT.md) et la [politique de sécurité](SECURITY.md). Les changements sont proposés par pull request et validés par la CI avant leur intégration.
 
-Les changements passent par une branche dédiée et une pull request validée par la CI. Les vulnérabilités ne doivent jamais être publiées dans une issue publique.
+Pour discuter d’un connecteur ou d’une intégration : [corentin@scalengi.com](mailto:corentin@scalengi.com).
 
 ## Licence
 

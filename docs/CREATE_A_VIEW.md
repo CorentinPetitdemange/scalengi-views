@@ -2,6 +2,8 @@
 
 Une vue est livrée comme une définition complète. Son intégration ne doit nécessiter aucune modification dans `app/`.
 
+Avant d’ajouter un moteur, vérifier qu’un moteur existant ne répond pas déjà au besoin avec une autre configuration. Un découpage hiérarchique doit devenir un modèle de `partition-view`, pas une nouvelle vue React.
+
 ## 1. Définir la question de décision
 
 Écrire d’abord :
@@ -48,6 +50,8 @@ Ne pas ajouter de fichier XLSX statique dans `public/`.
 ## 5. Importer et valider
 
 Ajouter `import…Excel(file, configuration)` dans `excel-import.ts` en réutilisant les helpers communs.
+
+Par défaut l’import retourne `{ data, rowCount, warnings }`. Une vue dont le classeur décrit la structure elle-même peut aussi retourner `configuration`; le shell l’appliquera à l’instance avec la source importée.
 
 Vérifier avant de retourner :
 
@@ -107,6 +111,8 @@ export const viewRegistry = new ViewRegistry().registerMany([
   myViewDefinition,
 ]);
 ```
+
+Quand plusieurs usages partagent le renderer, le contrat Excel et le modèle de données, déclarer des `presets` dans la définition. Chaque modèle fournit une configuration complète, éventuellement accompagnée de son `exampleData`. Le shell affiche automatiquement ces choix lors de la création, sans branchement sur l’identifiant de la vue.
 
 Si l’intégration exige un `if (definition.id === "my-view")` dans le shell, la définition est incomplète.
 

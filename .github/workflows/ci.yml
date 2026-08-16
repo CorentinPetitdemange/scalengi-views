@@ -45,6 +45,9 @@ jobs:
       - name: Typecheck
         run: pnpm exec tsc --noEmit
 
+      - name: Validate desktop shell
+        run: pnpm desktop:check
+
       - name: Lint
         run: pnpm lint
 

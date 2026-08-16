@@ -1,10 +1,12 @@
 import { blankConfiguration, sectionOf, type ConfigurationItem, type ViewConfiguration, type WorkbookTemplateSpec } from "./configuration";
 import { sampleDataset } from "./sample-data";
+import { createBlankPartitionConfiguration, createCapabilityPartitionConfiguration } from "./partition-model";
 
 const text = (key: string, label: string, required = true, readonly = false) => ({ key, label, type: "text" as const, required, readonly });
 const textarea = (key: string, label: string) => ({ key, label, type: "textarea" as const });
 const number = (key: string, label: string) => ({ key, label, type: "number" as const });
 const color = (key = "color", label = "Couleur") => ({ key, label, type: "color" as const });
+const select = (key: string, label: string, choices: string[]) => ({ key, label, type: "select" as const, required: true, choices: choices.map((value) => ({ value, label: value || "Non définie" })) });
 const unique = (values: string[]) => [...new Set(values.filter(Boolean))];
 const itemLabels = (configuration: ViewConfiguration, sectionId: string, field = "label") => configuration.sections.find((section) => section.id === sectionId)?.items.map((item) => String(item[field] ?? item.id)).filter(Boolean) ?? [];
 const itemById = (configuration: ViewConfiguration, sectionId: string, id: string) => configuration.sections.find((section) => section.id === sectionId)?.items.find((item) => item.id === id);
@@ -54,6 +56,56 @@ const layersStandard = (): ViewConfiguration => ({
   ],
 });
 
+const metamodelStandard = (): ViewConfiguration => ({
+  version: 1,
+  viewType: "si-metamodel",
+  label: "Métamodèle du SI standard",
+  options: { showCardinalities: true, showDescriptions: true },
+  sections: [
+    {
+      id: "layers", title: "Couches du métamodèle", description: "Colonnes qui organisent les types d’objets, de la stratégie à la technologie.", itemLabel: "couche", minItems: 1,
+      fields: [text("id", "Identifiant", true, true), text("label", "Libellé"), textarea("description", "Description"), color()],
+      items: [
+        { id: "strategy", label: "Stratégie & organisation", description: "Intentions, acteurs et responsabilités.", color: "#7c3aed" },
+        { id: "business", label: "Métier", description: "Capacités, processus et services métier.", color: "#2563eb" },
+        { id: "data", label: "Données", description: "Concepts et objets d’information structurants.", color: "#0284c7" },
+        { id: "application", label: "Applications", description: "Services et composants applicatifs.", color: "#059669" },
+        { id: "technology", label: "Technologies", description: "Plateformes et composants techniques.", color: "#d97706" },
+        { id: "transformation", label: "Transformation", description: "Initiatives et risques qui font évoluer le SI.", color: "#dc2626" },
+      ],
+    },
+    {
+      id: "objectTypes", title: "Types d’objets", description: "Concepts autorisés dans le référentiel. Ce ne sont pas les instances réelles du SI.", itemLabel: "type d’objet", minItems: 1,
+      fields: [text("id", "Identifiant", true, true), text("label", "Libellé"), text("layerId", "Couche (identifiant)"), textarea("description", "Définition"), color()],
+      items: [
+        { id: "objective", label: "Objectif", layerId: "strategy", description: "Résultat stratégique recherché.", color: "#7c3aed" },
+        { id: "organisation", label: "Unité organisationnelle", layerId: "strategy", description: "Entité responsable ou contributrice.", color: "#8b5cf6" },
+        { id: "capability", label: "Capacité", layerId: "business", description: "Aptitude métier durable de l’organisation.", color: "#2563eb" },
+        { id: "process", label: "Processus", layerId: "business", description: "Enchaînement d’activités produisant un résultat.", color: "#3b82f6" },
+        { id: "data-object", label: "Objet de données", layerId: "data", description: "Information métier gérée par le SI.", color: "#0284c7" },
+        { id: "application", label: "Application", layerId: "application", description: "Solution applicative fournissant des services.", color: "#059669" },
+        { id: "technology", label: "Composant technologique", layerId: "technology", description: "Socle matériel, logiciel ou plateforme.", color: "#d97706" },
+        { id: "initiative", label: "Initiative", layerId: "transformation", description: "Projet ou chantier de transformation.", color: "#dc2626" },
+        { id: "risk", label: "Risque", layerId: "transformation", description: "Événement susceptible d’affecter un objet du SI.", color: "#ef4444" },
+      ],
+    },
+    {
+      id: "relationTypes", title: "Relations autorisées", description: "Grammaire des liens entre types d’objets, avec sens et cardinalités.", itemLabel: "relation", minItems: 1,
+      fields: [text("id", "Identifiant", true, true), text("label", "Libellé"), text("sourceTypeId", "Type source"), text("targetTypeId", "Type cible"), select("sourceCardinality", "Cardinalité source", ["0..1", "1", "0..*", "1..*"]), select("targetCardinality", "Cardinalité cible", ["0..1", "1", "0..*", "1..*"]), textarea("description", "Règle")],
+      items: [
+        { id: "objective-guides-capability", label: "oriente", sourceTypeId: "objective", targetTypeId: "capability", sourceCardinality: "0..*", targetCardinality: "0..*", description: "Un objectif oriente les capacités à développer." },
+        { id: "organisation-owns-capability", label: "porte", sourceTypeId: "organisation", targetTypeId: "capability", sourceCardinality: "0..*", targetCardinality: "1..*", description: "Une unité organisationnelle porte une capacité." },
+        { id: "process-uses-capability", label: "mobilise", sourceTypeId: "process", targetTypeId: "capability", sourceCardinality: "0..*", targetCardinality: "1..*", description: "Un processus mobilise une ou plusieurs capacités." },
+        { id: "capability-realized-by-application", label: "est réalisée par", sourceTypeId: "capability", targetTypeId: "application", sourceCardinality: "0..*", targetCardinality: "0..*", description: "Une application contribue à réaliser une capacité." },
+        { id: "application-manages-data", label: "gère", sourceTypeId: "application", targetTypeId: "data-object", sourceCardinality: "0..*", targetCardinality: "0..*", description: "Une application crée, lit ou modifie un objet de données." },
+        { id: "application-runs-on-technology", label: "s’exécute sur", sourceTypeId: "application", targetTypeId: "technology", sourceCardinality: "0..*", targetCardinality: "1..*", description: "Une application dépend d’un composant technologique." },
+        { id: "initiative-transforms-application", label: "transforme", sourceTypeId: "initiative", targetTypeId: "application", sourceCardinality: "0..*", targetCardinality: "0..*", description: "Une initiative modifie ou remplace une application." },
+        { id: "risk-affects-application", label: "affecte", sourceTypeId: "risk", targetTypeId: "application", sourceCardinality: "0..*", targetCardinality: "0..*", description: "Un risque peut affecter une application." },
+      ],
+    },
+  ],
+});
+
 const togafStandard = (): ViewConfiguration => ({
   version: 1, viewType: "togaf-tracking", label: "TOGAF ADM standard", options: {},
   sections: [
@@ -84,9 +136,30 @@ const verbatimStandard = (): ViewConfiguration => ({
   ],
 });
 
-const standardFactories: Record<string, () => ViewConfiguration> = { "collaborator-journey": collaboratorStandard, "verbatim-cloud": verbatimStandard, pos: capabilityStandard, "urban-pos": urbanPosStandard, "urbanisation-maturity": radarStandard, "si-layers": layersStandard, "togaf-tracking": togafStandard };
+const standardFactories: Record<string, () => ViewConfiguration> = { "collaborator-journey": collaboratorStandard, "verbatim-cloud": verbatimStandard, "partition-view": createCapabilityPartitionConfiguration, pos: capabilityStandard, "urban-pos": urbanPosStandard, "urbanisation-maturity": radarStandard, "si-layers": layersStandard, "si-metamodel": metamodelStandard, "togaf-tracking": togafStandard };
 export const createDefaultConfiguration = (viewType: string) => structuredClone(standardFactories[viewType]?.() ?? { version: 1, viewType, label: "Structure standard", sections: [], options: {} });
-export const createBlankConfiguration = (viewType: string) => blankConfiguration(createDefaultConfiguration(viewType));
+export const createBlankConfiguration = (viewType: string) => viewType === "partition-view" ? createBlankPartitionConfiguration() : blankConfiguration(createDefaultConfiguration(viewType));
+
+export function buildPartitionTemplate(configuration: ViewConfiguration): WorkbookTemplateSpec {
+  const levels = sectionOf(configuration, "levels")?.items ?? [];
+  const attributes = sectionOf(configuration, "attributes")?.items ?? [];
+  const vocabularies = sectionOf(configuration, "vocabularies")?.items ?? [];
+  const levelValues = levels.map((item) => String(item.id));
+  const columns = [
+    { key: "id", label: "id", width: 22 }, { key: "nom", label: "nom", width: 36 },
+    { key: "niveau", label: "niveau", width: 22, values: levelValues }, { key: "parent_id", label: "parent_id", width: 24 },
+    { key: "description", label: "description", width: 54 },
+    ...attributes.map((attribute) => {
+      const values = vocabularies.filter((item) => item.vocabularyId === attribute.vocabularyId).map((item) => String(item.label ?? item.value ?? item.id));
+      return { key: attribute.id, label: attribute.id, width: 22, type: attribute.type === "number" ? "number" as const : "text" as const, ...(values.length ? { values } : {}) };
+    }),
+  ];
+  return { filename: "modele-vue-en-decoupage.xlsx", viewTitle: configuration.label, sheets: [
+    { name: "Elements", description: "Tous les éléments du découpage. parent_id crée la hiérarchie ; les colonnes supplémentaires viennent de la structure.", columns },
+    { name: "Relations", description: "Liens facultatifs entre éléments, par exemple la couverture d’une capacité.", columns: [{ key: "id", label: "id", width: 22 }, { key: "source_id", label: "source_id", width: 24 }, { key: "cible_id", label: "cible_id", width: 24 }, { key: "type", label: "type", width: 22 }] },
+    { ...guide("Les niveaux, informations et valeurs autorisées proviennent de la structure YAML de cette instance."), rows: [["niveaux", "Valeurs autorisées dans Elements.niveau.", levelValues.join(", ")], ["parent_id", "Vide pour une racine ou une référence ; sinon identifiant d’un élément du niveau parent.", "zone-commerce"]] },
+  ] };
+}
 
 export function buildCollaboratorTemplate(configuration: ViewConfiguration): WorkbookTemplateSpec {
   const galaxies = itemLabels(configuration, "galaxies");
@@ -138,6 +211,18 @@ export function buildLayersTemplate(configuration: ViewConfiguration): WorkbookT
     { name: "Elements", description: "Objets positionnés dans les couches configurées.", columns: [{ key: "id", label: "id", width: 20 }, { key: "nom", label: "nom", width: 32 }, { key: "couche", label: "couche", width: 20, values: layers }, { key: "domaine", label: "domaine", width: 26 }, { key: "statut", label: "statut", width: 20, values: statuses }, { key: "criticite", label: "criticite", width: 16, values: criticalities }, { key: "responsable", label: "responsable", width: 28 }, { key: "description", label: "description", width: 54 }] },
     { name: "Relations", description: "Dépendances entre objets.", columns: [{ key: "id", label: "id", width: 18 }, { key: "source_id", label: "source_id", width: 24 }, { key: "cible_id", label: "cible_id", width: 24 }, { key: "relation", label: "relation", width: 34 }] },
     { ...guide("Les listes de couches, statuts et criticités proviennent de la configuration YAML."), rows: [["couches", "Valeurs autorisées dans Elements.couche.", layers.join(", ")], ["statuts", "Valeurs autorisées dans Elements.statut.", statuses.join(", ")]] },
+  ] };
+}
+
+export function buildMetamodelTemplate(configuration: ViewConfiguration): WorkbookTemplateSpec {
+  const layers = sectionOf(configuration, "layers")?.items ?? [];
+  const objectTypes = sectionOf(configuration, "objectTypes")?.items ?? [];
+  const relationTypes = sectionOf(configuration, "relationTypes")?.items ?? [];
+  return { filename: "modele-metamodele-si.xlsx", viewTitle: configuration.label, sheets: [
+    { name: "Couches", description: "Organisation visuelle des types d’objets.", columns: [{ key: "id", label: "id", width: 22 }, { key: "libelle", label: "libelle", width: 34 }, { key: "description", label: "description", width: 56 }, { key: "couleur", label: "couleur", width: 16 }], rows: layers.map((item) => [item.id, item.label, item.description, item.color]) },
+    { name: "TypesObjets", description: "Concepts autorisés dans le référentiel, sans données d’instance.", columns: [{ key: "id", label: "id", width: 24 }, { key: "libelle", label: "libelle", width: 34 }, { key: "couche_id", label: "couche_id", width: 22, values: layers.map((item) => String(item.id)) }, { key: "description", label: "description", width: 58 }, { key: "couleur", label: "couleur", width: 16 }], rows: objectTypes.map((item) => [item.id, item.label, item.layerId, item.description, item.color]) },
+    { name: "Relations", description: "Relations autorisées, orientées de la source vers la cible.", columns: [{ key: "id", label: "id", width: 30 }, { key: "libelle", label: "libelle", width: 28 }, { key: "source_type_id", label: "source_type_id", width: 24, values: objectTypes.map((item) => String(item.id)) }, { key: "cible_type_id", label: "cible_type_id", width: 24, values: objectTypes.map((item) => String(item.id)) }, { key: "cardinalite_source", label: "cardinalite_source", width: 22, values: ["0..1", "1", "0..*", "1..*"] }, { key: "cardinalite_cible", label: "cardinalite_cible", width: 22, values: ["0..1", "1", "0..*", "1..*"] }, { key: "description", label: "description", width: 58 }], rows: relationTypes.map((item) => [item.id, item.label, item.sourceTypeId, item.targetTypeId, item.sourceCardinality, item.targetCardinality, item.description]) },
+    { ...guide("Ce classeur redéfinit la structure du métamodèle. Les identifiants sont stables et servent à relier les trois feuilles."), rows: [["couche_id", "Doit référencer un identifiant de la feuille Couches.", layers[0]?.id ?? "business"], ["source_type_id / cible_type_id", "Doivent référencer des identifiants de TypesObjets.", objectTypes[0]?.id ?? "capability"]] },
   ] };
 }
 
