@@ -4,7 +4,7 @@ version = "0.1.0-alpha.1"
 description = "Vues spécialisées pour l'architecture d'entreprise"
 authors = ["Corentin Petitdemange <corentin@scalengi.com>"]
 license = "MIT"
-repository = "https://github.com/CorentinPetitdemange/scalengi-view"
+repository = "https://github.com/CorentinPetitdemange/scalengi-views"
 edition = "2021"
 
 [lib]

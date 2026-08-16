@@ -15,7 +15,7 @@ Prérequis : Node.js 22.13 ou supérieur et pnpm 10.
 ```bash
 git clone https://github.com/VOTRE-COMPTE/scalengi-view.git
 cd scalengi-view
-git remote add upstream https://github.com/CorentinPetitdemange/scalengi-view.git
+git remote add upstream https://github.com/CorentinPetitdemange/scalengi-views.git
 pnpm install --frozen-lockfile
 pnpm dev
 ```

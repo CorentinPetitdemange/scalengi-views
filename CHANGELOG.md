@@ -19,4 +19,4 @@ Les changements notables de Scalengi Views sont documentés ici. Le format suit 
 - politique CSP restrictive pour le shell desktop ;
 - imports Excel et YAML maintenus localement et validés aux frontières.
 
-[0.1.0-alpha.1]: https://github.com/CorentinPetitdemange/scalengi-view/releases/tag/v0.1.0-alpha.1
+[0.1.0-alpha.1]: https://github.com/CorentinPetitdemange/scalengi-views/releases/tag/v0.1.0-alpha.1

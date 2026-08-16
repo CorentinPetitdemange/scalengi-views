@@ -6,12 +6,12 @@
   "packageManager": "pnpm@10.17.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CorentinPetitdemange/scalengi-view.git"
+    "url": "git+https://github.com/CorentinPetitdemange/scalengi-views.git"
   },
   "bugs": {
-    "url": "https://github.com/CorentinPetitdemange/scalengi-view/issues"
+    "url": "https://github.com/CorentinPetitdemange/scalengi-views/issues"
   },
-  "homepage": "https://github.com/CorentinPetitdemange/scalengi-view#readme",
+  "homepage": "https://github.com/CorentinPetitdemange/scalengi-views#readme",
   "engines": {
     "node": ">=22.13.0"
   },

@@ -1,18 +1,18 @@
 # Scalengi Views
 
-[![CI](https://github.com/CorentinPetitdemange/scalengi-view/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinPetitdemange/scalengi-view/actions/workflows/ci.yml)
+[![CI](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Dernière version](https://img.shields.io/github/v/release/CorentinPetitdemange/scalengi-view?include_prereleases&sort=semver&display_name=tag&label=version)](CHANGELOG.md)
+[![Dernière version](https://img.shields.io/github/v/release/CorentinPetitdemange/scalengi-views?include_prereleases&sort=semver&display_name=tag&label=version)](CHANGELOG.md)
 
 Application web autonome et bibliothèque de vues spécialisées pour l’architecture d’entreprise. Ce dépôt ne dépend pas du frontend ni du backend de Scalengi.
 
 ## Installer l’application
 
-[![Télécharger pour macOS](https://img.shields.io/badge/Télécharger-macOS-111827?logo=apple&logoColor=white)](https://github.com/CorentinPetitdemange/scalengi-view/releases)
+[![Télécharger pour macOS](https://img.shields.io/badge/Télécharger-macOS-111827?logo=apple&logoColor=white)](https://github.com/CorentinPetitdemange/scalengi-views/releases)
 ![Windows — bientôt validé](https://img.shields.io/badge/Windows-bientôt%20validé-6b7280?logo=windows&logoColor=white)
 ![Linux — bientôt validé](https://img.shields.io/badge/Linux-bientôt%20validé-6b7280?logo=linux&logoColor=white)
 
-À partir de la première version publiée, macOS sera proposé pour Apple Silicon et Intel dans les [GitHub Releases](https://github.com/CorentinPetitdemange/scalengi-view/releases). Le projet est actuellement en alpha : GitHub classe donc ces versions comme préversions. Les installateurs Windows x64 et Linux x64 sont préparés par le même pipeline, mais resteront signalés comme non validés jusqu’à leurs tests manuels.
+À partir de la première version publiée, macOS sera proposé pour Apple Silicon et Intel dans les [GitHub Releases](https://github.com/CorentinPetitdemange/scalengi-views/releases). Le projet est actuellement en alpha : GitHub classe donc ces versions comme préversions. Les installateurs Windows x64 et Linux x64 sont préparés par le même pipeline, mais resteront signalés comme non validés jusqu’à leurs tests manuels.
 
 L’application desktop utilise la même base React et les mêmes données locales que la version web, dans une WebView Tauri légère. Aucun serveur n’est nécessaire après installation. Voir [la construction et la publication desktop](docs/DESKTOP.md).
 
@@ -20,7 +20,7 @@ L’application desktop utilise la même base React et les mêmes données local
 
 Aucune installation locale n’est nécessaire. Lancez un environnement de démonstration complet dans GitHub Codespaces :
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CorentinPetitdemange/scalengi-view?quickstart=1)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CorentinPetitdemange/scalengi-views?quickstart=1)
 
 1. Cliquez sur le bouton et créez le Codespace avec la configuration proposée.
 2. Attendez le téléchargement et le démarrage automatique du conteneur de démonstration.
