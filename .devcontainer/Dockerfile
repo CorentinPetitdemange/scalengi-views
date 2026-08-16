@@ -16,7 +16,7 @@ RUN pnpm build
 
 FROM node:22.19.0-bookworm-slim AS runtime
 
-LABEL org.opencontainers.image.source="https://github.com/CorentinPetitdemange/scalengi-view"
+LABEL org.opencontainers.image.source="https://github.com/CorentinPetitdemange/scalengi-views"
 LABEL org.opencontainers.image.licenses="MIT"
 
 ENV NODE_ENV="production"

@@ -20,4 +20,6 @@ test("publishes tagged prereleases through the desktop workflow", async () => {
   assert.match(workflow, /- "v\*"/);
   assert.match(workflow, /tagName: v__VERSION__/);
   assert.match(workflow, /prerelease: \$\{\{ contains\(github\.ref_name, '-'\) \}\}/);
+  assert.match(workflow, /git merge-base --is-ancestor "\$GITHUB_SHA" origin\/main/);
+  assert.match(workflow, /needs: validate-release/);
 });
