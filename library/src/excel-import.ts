@@ -1,8 +1,10 @@
 import readXlsxFile, { type CellValue, type Sheet } from "read-excel-file/browser";
-import type { Application, ArchitectureElement, ArchitectureRelation, Capability, Collaborator, Feedback, Process, Responsibility, TogafItem, TogafPhase, UrbanBlock, UrbanDistrict, UrbanisationIndicator, UrbanZone, Verbatim } from "./types";
+import type { Application, ArchitectureElement, ArchitectureRelation, Capability, Collaborator, Feedback, PartitionItem, PartitionRelation, Process, Responsibility, TogafItem, TogafPhase, UrbanBlock, UrbanDistrict, UrbanisationIndicator, UrbanZone, Verbatim } from "./types";
 import type { ViewImportResult } from "./view-registry";
-import { sectionOf, type ViewConfiguration } from "./configuration";
+import { optionOf, sectionOf, validateConfiguration, type ConfigurationItem, type ViewConfiguration } from "./configuration";
+import { createDefaultConfiguration } from "./builtin-configurations";
 import { createEmptyDataset } from "./dataset";
+import { capabilityPartitionData, urbanPartitionData } from "./partition-model";
 
 type RecordRow = Record<string, CellValue | null>;
 
@@ -110,6 +112,58 @@ export async function importCollaboratorExcel(file: File): Promise<ViewImportRes
     if (!feedback.content) throw new Error(`Retours : le contenu est obligatoire.`);
   }
   return { data: { ...createEmptyDataset(), collaborators, processes, responsibilities, feedbacks }, rowCount: collaborators.length + processes.length + responsibilities.length + feedbacks.length, warnings: [] };
+}
+
+export async function importPartitionExcel(file: File, configuration?: ViewConfiguration): Promise<ViewImportResult> {
+  const sheets = await readWorkbook(file);
+  const hasElements = sheets.some((sheet) => sheet.sheet.toLocaleLowerCase("fr") === "elements");
+  if (!hasElements && optionOf<string>(configuration, "preset", "") === "capabilities") {
+    const legacy = await importPosExcel(file);
+    return { ...legacy, data: capabilityPartitionData(legacy.data), warnings: [...legacy.warnings, "Ancien modèle Capacités reconnu et converti vers la Vue en découpage."] };
+  }
+  if (!hasElements && optionOf<string>(configuration, "preset", "") === "urban-pos") {
+    const legacy = await importUrbanPosExcel(file);
+    return { ...legacy, data: urbanPartitionData(legacy.data), warnings: [...legacy.warnings, "Ancien modèle POS reconnu et converti vers la Vue en découpage."] };
+  }
+  const levels = sectionOf(configuration, "levels")?.items ?? [];
+  const attributes = sectionOf(configuration, "attributes")?.items ?? [];
+  const vocabularies = sectionOf(configuration, "vocabularies")?.items ?? [];
+  if (!levels.length) throw new Error("Structure : ajoutez au moins un niveau avant d’importer des données.");
+  const attributeIds = attributes.map((item) => String(item.id));
+  const rows = recordsFromSheet(sheets, "Elements", ["id", "nom", "niveau", "parent_id", "description", ...attributeIds]);
+  const relationRows = recordsFromSheet(sheets, "Relations", ["id", "source_id", "cible_id", "type"]);
+  const levelById = new Map(levels.map((item) => [String(item.id), item]));
+  const items: PartitionItem[] = rows.map((row, index) => {
+    const levelId = asText(row.niveau);
+    if (!levelById.has(levelId)) throw new Error(`Elements : niveau inconnu "${levelId}" à la ligne ${index + 2}.`);
+    const values = Object.fromEntries(attributes.map((attribute) => {
+      const raw = row[attribute.id];
+      if (raw == null || asText(raw) === "") return [attribute.id, ""];
+      if (attribute.type === "number") {
+        const value = Number(raw); if (!Number.isFinite(value)) throw new Error(`Elements : ${String(attribute.label ?? attribute.id)} doit être un nombre à la ligne ${index + 2}.`); return [attribute.id, value];
+      }
+      if (attribute.type === "choice") {
+        const allowed = vocabularies.filter((item) => item.vocabularyId === attribute.vocabularyId);
+        const input = asText(raw); const match = allowed.find((item) => String(item.value ?? item.id) === input || String(item.label ?? item.value ?? item.id) === input);
+        if (allowed.length && !match) throw new Error(`Elements : valeur invalide "${input}" pour ${String(attribute.label ?? attribute.id)} à la ligne ${index + 2}.`);
+        return [attribute.id, String(match?.value ?? match?.id ?? input)];
+      }
+      return [attribute.id, asText(raw)];
+    }));
+    return { id: asText(row.id), name: asText(row.nom), levelId, parentId: asText(row.parent_id) || undefined, description: asText(row.description), values };
+  });
+  const relations: PartitionRelation[] = relationRows.map((row) => ({ id: asText(row.id), sourceId: asText(row.source_id), targetId: asText(row.cible_id), type: asText(row.type) || "lié à" }));
+  ensureUniqueIds(items, "Elements"); ensureUniqueIds(relations, "Relations");
+  const byId = new Map(items.map((item) => [item.id, item]));
+  for (const item of items) {
+    const level = levelById.get(item.levelId)!; const parentLevelId = String(level.parentLevelId ?? ""); const role = String(level.role ?? "card");
+    if (role !== "reference" && parentLevelId && !item.parentId) throw new Error(`Elements : ${item.id} doit référencer un parent du niveau ${parentLevelId}.`);
+    if (item.parentId) { const parent = byId.get(item.parentId); if (!parent) throw new Error(`Elements : parent inconnu ${item.parentId}.`); if (parentLevelId && parent.levelId !== parentLevelId) throw new Error(`Elements : le parent de ${item.id} doit appartenir au niveau ${parentLevelId}.`); }
+  }
+  for (const relation of relations) { if (!byId.has(relation.sourceId)) throw new Error(`Relations : source inconnue ${relation.sourceId}.`); if (!byId.has(relation.targetId)) throw new Error(`Relations : cible inconnue ${relation.targetId}.`); if (relation.sourceId === relation.targetId) throw new Error(`Relations : ${relation.id} relie un élément à lui-même.`); }
+  const roots = items.filter((item) => { const level = levelById.get(item.levelId); return level?.role !== "reference" && !item.parentId; });
+  const warnings = roots.length > 12 ? ["Le découpage contient plus de 12 racines ; utilisez le plein écran ou un filtre pour préserver la lisibilité."] : [];
+  return { data: { ...createEmptyDataset(), partitionItems: items, partitionRelations: relations }, rowCount: items.length + relations.length, warnings };
 }
 
 export async function importPosExcel(file: File, configuration?: ViewConfiguration): Promise<ViewImportResult> {
@@ -267,6 +321,56 @@ export async function importSILayersExcel(file: File, configuration?: ViewConfig
   const orphanCount = architectureElements.filter((item) => !architectureRelations.some((relation) => relation.sourceId === item.id || relation.targetId === item.id)).length;
   const warnings = orphanCount ? [`${orphanCount} élément${orphanCount > 1 ? "s sont" : " est"} isolé${orphanCount > 1 ? "s" : ""} : aucune relation n’est documentée.`] : [];
   return { data: { ...createEmptyDataset(), architectureElements, architectureRelations }, rowCount: architectureElements.length + architectureRelations.length, warnings };
+}
+
+export async function importMetamodelExcel(file: File, configuration?: ViewConfiguration): Promise<ViewImportResult> {
+  const sheets = await readWorkbook(file);
+  const layerRows = recordsFromSheet(sheets, "Couches", ["id", "libelle", "description", "couleur"]);
+  const objectRows = recordsFromSheet(sheets, "TypesObjets", ["id", "libelle", "couche_id", "description", "couleur"]);
+  const relationRows = recordsFromSheet(sheets, "Relations", ["id", "libelle", "source_type_id", "cible_type_id", "cardinalite_source", "cardinalite_cible", "description"]);
+  const safeId = /^[a-z][a-z0-9-]{1,63}$/;
+  const cardinalities = new Set(["0..1", "1", "0..*", "1..*"]);
+  const colorOrDefault = (value: CellValue | null, fallback: string, row: number) => {
+    const color = asText(value) || fallback;
+    if (!/^#[0-9a-f]{6}$/i.test(color)) throw new Error(`Couleur invalide à la ligne ${row} : utilisez le format #RRGGBB.`);
+    return color;
+  };
+  const checkedId = (value: CellValue | null, sheet: string, row: number) => {
+    const id = asText(value);
+    if (!safeId.test(id)) throw new Error(`${sheet} : identifiant invalide « ${id} » à la ligne ${row}. Utilisez lettres minuscules, chiffres et tirets.`);
+    return id;
+  };
+  const layers: ConfigurationItem[] = layerRows.map((row, index) => ({ id: checkedId(row.id, "Couches", index + 2), label: asText(row.libelle), description: asText(row.description), color: colorOrDefault(row.couleur, "#2563eb", index + 2) }));
+  const objectTypes: ConfigurationItem[] = objectRows.map((row, index) => ({ id: checkedId(row.id, "TypesObjets", index + 2), label: asText(row.libelle), layerId: asText(row.couche_id), description: asText(row.description), color: colorOrDefault(row.couleur, "#2563eb", index + 2) }));
+  const relationTypes: ConfigurationItem[] = relationRows.map((row, index) => {
+    const sourceCardinality = asText(row.cardinalite_source);
+    const targetCardinality = asText(row.cardinalite_cible);
+    if (!cardinalities.has(sourceCardinality) || !cardinalities.has(targetCardinality)) throw new Error(`Relations : cardinalité invalide à la ligne ${index + 2}.`);
+    return { id: checkedId(row.id, "Relations", index + 2), label: asText(row.libelle), sourceTypeId: asText(row.source_type_id), targetTypeId: asText(row.cible_type_id), sourceCardinality, targetCardinality, description: asText(row.description) };
+  });
+  ensureUniqueIds(layers, "Couches");
+  ensureUniqueIds(objectTypes, "TypesObjets");
+  ensureUniqueIds(relationTypes, "Relations");
+  if (!layers.length) throw new Error("Couches : ajoutez au moins une couche.");
+  if (!objectTypes.length) throw new Error("TypesObjets : ajoutez au moins un type d’objet.");
+  const layerIds = new Set(layers.map((item) => item.id));
+  const objectTypeIds = new Set(objectTypes.map((item) => item.id));
+  for (const item of objectTypes) if (!layerIds.has(String(item.layerId))) throw new Error(`TypesObjets : la couche « ${item.layerId} » du type ${item.id} n’existe pas.`);
+  for (const relation of relationTypes) {
+    if (!objectTypeIds.has(String(relation.sourceTypeId))) throw new Error(`Relations : le type source « ${relation.sourceTypeId} » de ${relation.id} n’existe pas.`);
+    if (!objectTypeIds.has(String(relation.targetTypeId))) throw new Error(`Relations : le type cible « ${relation.targetTypeId} » de ${relation.id} n’existe pas.`);
+  }
+  const base = configuration?.viewType === "si-metamodel" ? structuredClone(configuration) : createDefaultConfiguration("si-metamodel");
+  const nextConfiguration: ViewConfiguration = {
+    ...base,
+    label: base.label || "Métamodèle du SI",
+    sections: base.sections.map((section) => section.id === "layers" ? { ...section, items: layers } : section.id === "objectTypes" ? { ...section, items: objectTypes } : section.id === "relationTypes" ? { ...section, items: relationTypes } : section),
+  };
+  delete nextConfiguration.exampleData;
+  const errors = validateConfiguration(nextConfiguration, "si-metamodel");
+  if (errors.length) throw new Error(errors.join(" "));
+  const isolated = objectTypes.filter((item) => !relationTypes.some((relation) => relation.sourceTypeId === item.id || relation.targetTypeId === item.id)).length;
+  return { data: createEmptyDataset(), configuration: nextConfiguration, rowCount: layers.length + objectTypes.length + relationTypes.length, warnings: isolated ? [`${isolated} type${isolated > 1 ? "s d’objets sont" : " d’objet est"} isolé${isolated > 1 ? "s" : ""} dans le métamodèle.`] : [] };
 }
 
 export async function importTogafExcel(file: File, configuration?: ViewConfiguration): Promise<ViewImportResult> {

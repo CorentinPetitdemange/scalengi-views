@@ -22,7 +22,7 @@ test("server-renders the Scalengi Views shell", async () => {
 });
 
 test("keeps data, guides and Excel contracts scoped per view", async () => {
-  const [app, exportMenu, exportView, registry, builtins, builtinConfigurations, configuration, dataset, storage, collaboratorView, urbanPosView, urbanisationView, layersView, togafView, verbatimView, excelImport, agents, architecture, createViewGuide] = await Promise.all([
+  const [app, exportMenu, exportView, registry, builtins, builtinConfigurations, configuration, dataset, storage, collaboratorView, partitionView, urbanisationView, layersView, metamodelView, togafView, verbatimView, excelImport, agents, architecture, createViewGuide] = await Promise.all([
     readFile(new URL("../app/scalengi-views-app.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/view-export-menu.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/export-view.ts", import.meta.url), "utf8"),
@@ -33,9 +33,10 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
     readFile(new URL("../library/src/dataset.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/view-instance-store.ts", import.meta.url), "utf8"),
     readFile(new URL("../library/src/CollaboratorJourneyView.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../library/src/UrbanPosView.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../library/src/PartitionView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/UrbanisationRadarView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/SILayersView.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../library/src/SIMetamodelView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/TogafTrackingView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/VerbatimCloudView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/excel-import.ts", import.meta.url), "utf8"),
@@ -71,13 +72,14 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(builtins, /summarize/);
   assert.doesNotMatch(app, /definition\.id\s*===/);
   assert.match(builtinConfigurations, /modele-vue-collaborateurs\.xlsx/);
-  assert.match(builtinConfigurations, /modele-vue-capacites\.xlsx/);
-  assert.match(builtinConfigurations, /modele-pos-urbain\.xlsx/);
+  assert.match(builtinConfigurations, /modele-vue-en-decoupage\.xlsx/);
   assert.match(builtinConfigurations, /modele-diagnostic-urbanisation\.xlsx/);
   assert.match(builtinConfigurations, /modele-si-par-couches\.xlsx/);
+  assert.match(builtinConfigurations, /modele-metamodele-si\.xlsx/);
   assert.match(builtinConfigurations, /modele-togaf-adm\.xlsx/);
   assert.match(builtinConfigurations, /modele-analyse-verbatims\.xlsx/);
-  assert.match(builtins, /Plan d’occupation du sol urbain/);
+  assert.match(builtins, /title: "Vue en découpage"/);
+  assert.match(builtins, /title: "POS urbain"/);
   assert.match(storage, /indexedDB\.open/);
   assert.match(storage, /normalizeDataset/);
   assert.match(storage, /ViewSource/);
@@ -89,16 +91,28 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(collaboratorView, /Affichage des anneaux/);
   assert.match(collaboratorView, /Noms des processus/);
   assert.doesNotMatch(collaboratorView, /source:\s*["']current["']/);
-  assert.match(urbanPosView, /Cartographie urbaine du SI/);
-  assert.match(urbanPosView, /urbanZones/);
-  assert.match(urbanPosView, /urbanDistricts/);
-  assert.match(urbanPosView, /urbanBlocks/);
+  assert.match(partitionView, /Vue en découpage/);
+  assert.match(partitionView, /partitionItems/);
+  assert.match(partitionView, /partitionRelations/);
+  assert.match(partitionView, /Conditions sur les informations/);
+  assert.match(partitionView, /Niveaux réellement visibles/);
+  assert.match(partitionView, /displayedIds/);
+  assert.match(partitionView, /Toutes les conditions/);
+  assert.match(partitionView, /Au moins une/);
+  assert.match(partitionView, /filterRules/);
+  assert.match(partitionView, /requestFullscreen/);
   assert.match(urbanisationView, /Écarts prioritaires/);
   assert.match(urbanisationView, /Composer le diagnostic/);
   assert.match(urbanisationView, /requestFullscreen/);
-  assert.match(layersView, /Le SI, couche par couche/);
-  assert.match(layersView, /chaîne de dépendances/);
+  assert.match(layersView, /Analyse d’impact inter-couches/);
+  assert.match(layersView, /Point focal/);
+  assert.match(layersView, /Profondeur/);
+  assert.match(layersView, /impactScope/);
   assert.match(layersView, /requestFullscreen/);
+  assert.match(metamodelView, /Métamodèle du SI/);
+  assert.match(metamodelView, /Relation autorisée/);
+  assert.match(metamodelView, /ReactFlow/);
+  assert.match(metamodelView, /requestFullscreen/);
   assert.match(togafView, /TOGAF ADM/);
   assert.match(togafView, /adm-cycle-ring/);
   assert.match(togafView, /data-view-export-content/);
@@ -111,6 +125,7 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(excelImport, /Objectif Niveau d'Urbanisation/);
   assert.match(excelImport, /niveau_cartographie/);
   assert.match(excelImport, /importSILayersExcel/);
+  assert.match(excelImport, /importMetamodelExcel/);
   assert.match(excelImport, /importTogafExcel/);
   assert.match(excelImport, /importVerbatimExcel/);
   assert.match(agents, /shell must never switch on a view id/i);

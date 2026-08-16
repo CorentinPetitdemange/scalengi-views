@@ -147,6 +147,26 @@ export interface Verbatim {
   weight: number;
 }
 
+export type PartitionValue = string | number | boolean;
+
+/** Élément générique d'une vue en découpage. La structure porte le sens des niveaux et attributs. */
+export interface PartitionItem {
+  id: string;
+  name: string;
+  levelId: string;
+  parentId?: string;
+  description: string;
+  values: Record<string, PartitionValue>;
+}
+
+/** Relation facultative entre deux éléments, par exemple la couverture d'une capacité par une application. */
+export interface PartitionRelation {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  type: string;
+}
+
 export interface ViewDataset {
   collaborators: Collaborator[];
   processes: Process[];
@@ -163,4 +183,6 @@ export interface ViewDataset {
   togafPhases: TogafPhase[];
   togafItems: TogafItem[];
   verbatims: Verbatim[];
+  partitionItems: PartitionItem[];
+  partitionRelations: PartitionRelation[];
 }

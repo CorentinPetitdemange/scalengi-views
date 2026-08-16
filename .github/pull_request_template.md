@@ -13,8 +13,10 @@
 ## Vérifications
 
 - [ ] `pnpm exec tsc --noEmit`
+- [ ] `pnpm version:check`
 - [ ] `pnpm lint`
 - [ ] `pnpm test`
+- [ ] `pnpm desktop:check` si le shell, le packaging ou les dépendances ont changé
 - [ ] Vérification visuelle normale et plein écran, si nécessaire
 - [ ] Documentation mise à jour, si nécessaire
 - [ ] Aucun secret, fichier métier ou donnée personnelle ajouté

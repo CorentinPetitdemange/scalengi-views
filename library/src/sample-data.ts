@@ -165,4 +165,6 @@ export const sampleDataset: ViewDataset = {
     { id: "v11", text: "Les équipes ont besoin d’un vocabulaire commun pour décrire les capacités et applications.", category: "needs", team: "Architecture", sentiment: "Neutre", weight: 2 },
     { id: "v12", text: "Nous attendons un parcours plus simple, avec moins d’outils et des décisions visibles.", category: "expectations", team: "Tous métiers", sentiment: "Positif", weight: 3 },
   ],
+  partitionItems: [],
+  partitionRelations: [],
 };

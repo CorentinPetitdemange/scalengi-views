@@ -1,0 +1,114 @@
+name: Desktop release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-release:
+    name: Validate release source
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout complete history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Require the tagged commit to belong to main
+        shell: bash
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+  build:
+    name: ${{ matrix.label }}
+    needs: validate-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: macOS Apple Silicon
+            platform: macos-latest
+            rust_targets: aarch64-apple-darwin
+            args: --target aarch64-apple-darwin --bundles dmg
+          - label: macOS Intel
+            platform: macos-latest
+            rust_targets: x86_64-apple-darwin
+            args: --target x86_64-apple-darwin --bundles dmg
+          - label: Windows x64 (à valider)
+            platform: windows-latest
+            rust_targets: ""
+            args: --bundles nsis
+          - label: Linux x64 (à valider)
+            platform: ubuntu-22.04
+            rust_targets: ""
+            args: --bundles appimage,deb
+
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Install Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.19.0
+          cache: pnpm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - name: Cache Rust artifacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate shared desktop frontend and version
+        run: pnpm desktop:check
+
+      - name: Build installers and publish the GitHub release
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY || '-' }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          tagName: v__VERSION__
+          releaseName: Scalengi Views v__VERSION__
+          releaseBody: |
+            Application desktop construite depuis la même base web que Scalengi Views.
+
+            - macOS Apple Silicon et Intel : version prioritaire.
+            - Windows x64 et Linux x64 : builds de prévalidation tant que les tests manuels ne sont pas terminés.
+          releaseDraft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generateReleaseNotes: true
+          releaseAssetNamePattern: Scalengi-Views-[version]-[platform]-[arch][setup].[ext]
+          args: ${{ matrix.args }}

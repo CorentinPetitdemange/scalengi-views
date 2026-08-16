@@ -13,9 +13,9 @@ Les vulnérabilités suivent exclusivement la procédure privée décrite dans [
 Prérequis : Node.js 22.13 ou supérieur et pnpm 10.
 
 ```bash
-git clone https://github.com/VOTRE-COMPTE/scalengi-view.git
-cd scalengi-view
-git remote add upstream https://github.com/CorentinPetitdemange/scalengi-view.git
+git clone https://github.com/VOTRE-COMPTE/scalengi-views.git
+cd scalengi-views
+git remote add upstream https://github.com/CorentinPetitdemange/scalengi-views.git
 pnpm install --frozen-lockfile
 pnpm dev
 ```
@@ -33,12 +33,13 @@ Créez d’abord un fork depuis GitHub, puis remplacez `VOTRE-COMPTE` par votre 
 7. Attendre la réussite de la CI, la revue du mainteneur et la résolution des conversations.
 8. Le mainteneur décide de la fusion, effectuée par **squash**, et supprime la branche si nécessaire.
 
-Les contributeurs ne poussent jamais directement sur `main` et n’y effectuent aucun force-push. Seul le mainteneur du dépôt peut exceptionnellement pousser directement sur `main` ou fusionner une pull request.
+Personne ne pousse directement sur `main`, y compris le mainteneur. Chaque changement passe par une pull request, la CI et la résolution des conversations. Le mainteneur reste seul responsable de la décision de fusion et de publication.
 
 ## Vérifications requises
 
 ```bash
 pnpm exec tsc --noEmit
+pnpm version:check
 pnpm lint
 pnpm test
 ```

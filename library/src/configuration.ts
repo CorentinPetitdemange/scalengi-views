@@ -12,6 +12,7 @@ const exampleDataCollectionKeys = [
   "collaborators", "processes", "responsibilities", "feedbacks", "applications", "capabilities",
   "urbanZones", "urbanDistricts", "urbanBlocks", "urbanisationIndicators", "architectureElements",
   "architectureRelations", "togafPhases", "togafItems", "verbatims",
+  "partitionItems", "partitionRelations",
 ] as const satisfies ReadonlyArray<keyof ViewDataset>;
 const safeKeyPattern = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/;
 const forbiddenKeys = new Set(["__proto__", "prototype", "constructor"]);
@@ -21,10 +22,13 @@ export type ConfigurationScalar = string | number | boolean;
 export interface ConfigurationField {
   key: string;
   label: string;
-  type: "text" | "number" | "color" | "textarea";
+  type: "text" | "number" | "color" | "textarea" | "select";
+  choices?: Array<{ value: string; label: string }>;
   required?: boolean;
   placeholder?: string;
   readonly?: boolean;
+  /** La valeur saisie doit être un identifiant technique sûr. */
+  identifier?: boolean;
 }
 
 export interface ConfigurationItem {
@@ -153,10 +157,12 @@ export function validateConfiguration(configuration: unknown, expectedViewType?:
       if (typeof rawField.key === "string" && fieldKeys.has(rawField.key)) addError(`${String(section.title)} : le champ ${rawField.key} est déclaré plusieurs fois.`);
       if (typeof rawField.key === "string") fieldKeys.add(rawField.key);
       if (!isShortText(rawField.label) || !rawField.label.trim()) addError(`${String(section.title)} : chaque champ doit avoir un libellé.`);
-      if (!["text", "number", "color", "textarea"].includes(String(rawField.type))) addError(`${String(section.title)} : type de champ invalide pour ${String(rawField.key ?? "un champ")}.`);
+      if (!["text", "number", "color", "textarea", "select"].includes(String(rawField.type))) addError(`${String(section.title)} : type de champ invalide pour ${String(rawField.key ?? "un champ")}.`);
+      if (rawField.choices != null && (!Array.isArray(rawField.choices) || rawField.choices.length > 100 || rawField.choices.some((choice) => !isRecord(choice) || !isShortText(choice.value) || !isShortText(choice.label)))) addError(`${String(section.title)} : choix invalides pour ${String(rawField.key ?? "un champ")}.`);
       if (rawField.placeholder != null && !isShortText(rawField.placeholder)) addError(`${String(section.title)} : placeholder trop long.`);
       if (rawField.required != null && typeof rawField.required !== "boolean") addError(`${String(section.title)} : required doit être booléen.`);
       if (rawField.readonly != null && typeof rawField.readonly !== "boolean") addError(`${String(section.title)} : readonly doit être booléen.`);
+      if (rawField.identifier != null && typeof rawField.identifier !== "boolean") addError(`${String(section.title)} : identifier doit être booléen.`);
       fields.push(rawField as unknown as ConfigurationField);
     }
     const itemIds = new Set<string>();
@@ -172,6 +178,9 @@ export function validateConfiguration(configuration: unknown, expectedViewType?:
       }
       for (const field of fields.filter((candidate) => candidate.required)) {
         if (item[field.key] == null || String(item[field.key]).trim() === "") errors.push(`${String(section.title)} : ${field.label} est obligatoire pour ${String(item.id || "un élément")}.`);
+      }
+      for (const field of fields.filter((candidate) => candidate.identifier && item[candidate.key] != null && String(item[candidate.key]) !== "")) {
+        if (!isSafeKey(item[field.key])) addError(`${String(section.title)} : ${field.label} doit être un identifiant technique sûr.`);
       }
     }
   }
@@ -204,5 +213,5 @@ export function withExampleData(configuration: ViewConfiguration, exampleData: V
 
 export function createConfigurationItem(section: ConfigurationSection): ConfigurationItem {
   const suffix = globalThis.crypto?.randomUUID?.().slice(0, 8) ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-  return Object.fromEntries([["id", `${section.id}-${suffix}`], ...section.fields.filter((field) => field.key !== "id").map((field) => [field.key, field.type === "number" ? 0 : field.type === "color" ? "#2563eb" : ""])]) as ConfigurationItem;
+  return Object.fromEntries([["id", `${section.id}-${suffix}`], ...section.fields.filter((field) => field.key !== "id").map((field) => [field.key, field.type === "number" ? 0 : field.type === "color" ? "#2563eb" : field.type === "select" ? field.choices?.[0]?.value ?? "" : ""])]) as ConfigurationItem;
 }

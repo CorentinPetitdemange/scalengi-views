@@ -16,6 +16,8 @@ ViewInstance
 
 La configuration définit ce que la vue sait organiser : axes, couches, phases, niveaux, statuts ou catégories. Elle peut aussi embarquer un `exampleData` facultatif afin qu’une vue partagée reste immédiatement démontrable. Cet exemple est un contenu de distribution, pas une seconde source active : l’instance n’affiche toujours qu’une source à la fois. Activer l’exemple copie `configuration.exampleData` vers `data` ; importer Excel le remplace.
 
+Un type de vue peut proposer plusieurs **modèles de départ** lorsqu’ils partagent réellement le même moteur et le même contrat. La Vue en découpage fournit ainsi Capacités fonctionnelles, POS urbain et Structure vierge comme modèles, et non comme trois moteurs dupliqués.
+
 ## Dépendances entre couches
 
 ```text
@@ -33,6 +35,8 @@ ViewRegistry ── ViewDefinition
 core library
 configuration · dataset · types · xlsx
 ```
+
+Le point d’entrée `desktop/` monte le même `ScalengiViewsApp` avec Vite en sortie statique. `src-tauri/` ne contient qu’un shell natif minimal ; aucune règle de vue, donnée ou connecteur n’y est dupliqué. La version web et les applications macOS, Windows et Linux partagent donc réellement `app/` et `library/`.
 
 Le flux inverse est interdit : une vue ne connaît pas le shell, IndexedDB ou une autre vue.
 
@@ -62,13 +66,34 @@ Enveloppe de données partagée. Elle garantit que toutes les collections existe
 
 Chaque moteur reçoit uniquement `data` et `configuration`. React Flow est utilisé lorsqu’un espace navigable ou des relations structurées apportent de la valeur ; les matrices, radars et bandes utilisent un rendu plus direct.
 
+### Vue en découpage
+
+`partition-view` est le moteur générique de répartition hiérarchique. Sa configuration décrit des niveaux ordonnés (`container`, `card` ou `reference`), des attributs et des vocabulaires colorés. Ses données utilisent deux collections seulement :
+
+- `partitionItems` pour les éléments, leur niveau, leur parent et leurs valeurs ;
+- `partitionRelations` pour les liens facultatifs plusieurs-à-plusieurs.
+
+Le POS utilise les relations parent-enfant. Le modèle Capacités utilise la même hiérarchie pour Domaine → Capacité et des relations pour la couverture applicative. Les anciennes instances `pos` et `urban-pos` sont migrées localement vers ce contrat lors de leur lecture.
+
+Le panneau de filtres est lui aussi générique : il peut limiter un niveau ou toute information déclarée dans `attributes`, y compris lorsqu’elle est portée par un élément de référence lié.
+
+Plusieurs valeurs peuvent être sélectionnées dans une même condition et plusieurs conditions peuvent être combinées en logique `all` (ET) ou `any` (OU). La sélection des niveaux est une projection d’affichage stricte : choisir uniquement Îlot masque réellement Zone et Quartier, et les îlots deviennent les racines visibles. Les filtres restent un état d’exploration local au renderer et ne modifient ni la configuration ni les données.
+
+### Analyse d’impact du SI par couches
+
+`si-layers` répond à une question d’impact, contrairement au métamodèle. En vue d’ensemble, il présente les objets dans leurs couches configurées. La sélection d’un point focal calcule ensuite un périmètre multi-niveaux sur les relations orientées : entrants, sortants ou les deux. La profondeur est bornée à quatre niveaux et les objets hors périmètre disparaissent afin de conserver une lecture décisionnelle.
+
+### Métamodèle du SI
+
+`si-metamodel` décrit la grammaire d’un référentiel et non ses instances. Sa configuration porte les couches, les types d’objets et les relations autorisées avec leurs cardinalités. Le renderer React Flow consomme directement cette structure. Son classeur Excel constitue donc une autre manière d’éditer la configuration et l’import peut retourner un nouveau couple `{ configuration, data }` ; `data` reste vide pour cette vue structurelle.
+
 ### Export des vues
 
 Le shell enveloppe le renderer actif dans une surface d’export et propose PNG/SVG à toutes les vues sans logique spécifique par identifiant. `library/src/export-view.ts` contient le moteur générique inspiré de l’export Scalengi ; `app/view-export-menu.tsx` ne porte que l’interaction. `html-to-image` est chargé dynamiquement au premier export. Un renderer peut exclure un contrôle avec `data-export-exclude` sans connaître le shell.
 
 ### Imports et modèles Excel
 
-Le modèle XLSX est généré dans le navigateur depuis la configuration active. L’import est local, borné en taille et valide les relations avant de produire un `ViewDataset`.
+Le modèle XLSX est généré dans le navigateur depuis la configuration active. L’import est local, borné en taille et valide les relations avant de produire un `ViewDataset`. Une vue structurelle peut également retourner une nouvelle `configuration`, que le shell enregistre sans branchement sur l’identifiant de la vue.
 
 ## Stockage et sécurité
 
