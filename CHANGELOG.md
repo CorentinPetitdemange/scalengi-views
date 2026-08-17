@@ -2,6 +2,13 @@
 
 Les changements notables de Scalengi Views sont documentés ici. Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et les versions suivent [Semantic Versioning](https://semver.org/).
 
+## [0.1.0-alpha.2] - 2026-08-16
+
+### Corrigé
+
+- la release macOS utilise désormais la signature ad hoc lorsque les secrets Apple ne sont pas configurés ;
+- les variables Apple vides ne déclenchent plus l’import d’un certificat inexistant dans GitHub Actions.
+
 ## [0.1.0-alpha.1] - 2026-08-16
 
 ### Ajouté
@@ -19,4 +26,5 @@ Les changements notables de Scalengi Views sont documentés ici. Le format suit 
 - politique CSP restrictive pour le shell desktop ;
 - imports Excel et YAML maintenus localement et validés aux frontières.
 
+[0.1.0-alpha.2]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/CorentinPetitdemange/scalengi-views/releases/tag/v0.1.0-alpha.1

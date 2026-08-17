@@ -11,10 +11,10 @@ Scalengi Views permet de créer des vues configurables pour analyser, expliquer 
 ## Installer
 
 [![Télécharger pour macOS](https://img.shields.io/badge/Télécharger-macOS-111827?logo=apple&logoColor=white)](https://github.com/CorentinPetitdemange/scalengi-views/releases)
-![Windows — bientôt disponible](https://img.shields.io/badge/Windows-bientôt-6b7280?logo=windows&logoColor=white)
-![Linux — bientôt disponible](https://img.shields.io/badge/Linux-bientôt-6b7280?logo=linux&logoColor=white)
+[![Télécharger pour Windows](https://img.shields.io/badge/Télécharger-Windows-0078d4?logo=windows&logoColor=white)](https://github.com/CorentinPetitdemange/scalengi-views/releases)
+[![Télécharger pour Linux](https://img.shields.io/badge/Télécharger-Linux-f59e0b?logo=linux&logoColor=white)](https://github.com/CorentinPetitdemange/scalengi-views/releases)
 
-Les versions macOS sont disponibles dans [GitHub Releases](https://github.com/CorentinPetitdemange/scalengi-views/releases). Windows et Linux seront proposés après validation de leurs installateurs.
+Les installateurs sont disponibles dans [GitHub Releases](https://github.com/CorentinPetitdemange/scalengi-views/releases) : `.dmg` pour macOS, `.exe` pour Windows, `.AppImage` ou `.deb` pour Linux.
 
 ## Essayer en ligne
 
