@@ -42,11 +42,11 @@ jobs:
             platform: macos-latest
             rust_targets: x86_64-apple-darwin
             args: --target x86_64-apple-darwin --bundles dmg
-          - label: Windows x64 (à valider)
+          - label: Windows x64
             platform: windows-latest
             rust_targets: ""
             args: --bundles nsis
-          - label: Linux x64 (à valider)
+          - label: Linux x64
             platform: ubuntu-22.04
             rust_targets: ""
             args: --bundles appimage,deb
@@ -127,8 +127,7 @@ jobs:
           releaseBody: |
             Application desktop construite depuis la même base web que Scalengi Views.
 
-            - macOS Apple Silicon et Intel : version prioritaire.
-            - Windows x64 et Linux x64 : builds de prévalidation tant que les tests manuels ne sont pas terminés.
+            Installateurs disponibles pour macOS Apple Silicon, macOS Intel, Windows x64 et Linux x64.
           releaseDraft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
           generateReleaseNotes: true

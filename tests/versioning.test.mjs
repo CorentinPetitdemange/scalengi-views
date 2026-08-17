@@ -24,4 +24,7 @@ test("publishes tagged prereleases through the desktop workflow", async () => {
   assert.match(workflow, /needs: validate-release/);
   assert.match(workflow, /No Apple certificate configured; using the ad hoc identity/);
   assert.doesNotMatch(workflow, /^\s+APPLE_CERTIFICATE: \$\{\{ secrets\.APPLE_CERTIFICATE \}\}/m);
+  assert.match(workflow, /--target aarch64-apple-darwin --bundles dmg/);
+  assert.match(workflow, /--target x86_64-apple-darwin --bundles dmg/);
+  assert.doesNotMatch(workflow, /version prioritaire|à valider/);
 });
