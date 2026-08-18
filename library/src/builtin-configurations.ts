@@ -60,18 +60,18 @@ const metamodelStandard = (): ViewConfiguration => ({
   version: 1,
   viewType: "si-metamodel",
   label: "Métamodèle du SI standard",
-  options: { showCardinalities: true, showDescriptions: true },
+  options: {},
   sections: [
     {
-      id: "layers", title: "Couches du métamodèle", description: "Colonnes qui organisent les types d’objets, de la stratégie à la technologie.", itemLabel: "couche", minItems: 1,
-      fields: [text("id", "Identifiant", true, true), text("label", "Libellé"), textarea("description", "Description"), color()],
+      id: "layers", title: "Couches du métamodèle", description: "Bandes empilées ou transverses qui organisent les types d’objets.", itemLabel: "couche", minItems: 1,
+      fields: [text("id", "Identifiant", true, true), text("label", "Libellé"), textarea("description", "Description"), { key: "layout", label: "Disposition", type: "select", required: true, choices: [{ value: "stacked", label: "Empilée" }, { value: "transverse", label: "Transverse" }] }, { ...number("row", "Niveau"), defaultValue: 1, visibleWhen: { key: "layout", equals: "stacked" } }, { key: "side", label: "Côté", type: "select", required: false, visibleWhen: { key: "layout", equals: "transverse" }, choices: [{ value: "right", label: "À droite" }, { value: "left", label: "À gauche" }] }, { ...number("column", "Colonne transverse (même numéro = empilées)"), defaultValue: 1, visibleWhen: { key: "layout", equals: "transverse" } }, color()],
       items: [
-        { id: "strategy", label: "Stratégie & organisation", description: "Intentions, acteurs et responsabilités.", color: "#7c3aed" },
-        { id: "business", label: "Métier", description: "Capacités, processus et services métier.", color: "#2563eb" },
-        { id: "data", label: "Données", description: "Concepts et objets d’information structurants.", color: "#0284c7" },
-        { id: "application", label: "Applications", description: "Services et composants applicatifs.", color: "#059669" },
-        { id: "technology", label: "Technologies", description: "Plateformes et composants techniques.", color: "#d97706" },
-        { id: "transformation", label: "Transformation", description: "Initiatives et risques qui font évoluer le SI.", color: "#dc2626" },
+        { id: "strategy", label: "Stratégie & organisation", description: "Intentions, acteurs et responsabilités.", row: 1, column: 1, layout: "stacked", side: "right", color: "#7c3aed" },
+        { id: "business", label: "Métier", description: "Capacités, processus et services métier.", row: 2, column: 1, layout: "stacked", side: "right", color: "#2563eb" },
+        { id: "data", label: "Données", description: "Concepts et objets d’information structurants.", row: 3, column: 1, layout: "stacked", side: "right", color: "#0284c7" },
+        { id: "application", label: "Applications", description: "Services et composants applicatifs.", row: 3, column: 1, layout: "stacked", side: "right", color: "#059669" },
+        { id: "technology", label: "Technologies", description: "Plateformes et composants techniques.", row: 4, column: 1, layout: "stacked", side: "right", color: "#d97706" },
+        { id: "transformation", label: "Transformation", description: "Initiatives et risques qui font évoluer le SI.", row: 5, column: 1, layout: "transverse", side: "right", color: "#dc2626" },
       ],
     },
     {
@@ -219,10 +219,10 @@ export function buildMetamodelTemplate(configuration: ViewConfiguration): Workbo
   const objectTypes = sectionOf(configuration, "objectTypes")?.items ?? [];
   const relationTypes = sectionOf(configuration, "relationTypes")?.items ?? [];
   return { filename: "modele-metamodele-si.xlsx", viewTitle: configuration.label, sheets: [
-    { name: "Couches", description: "Organisation visuelle des types d’objets.", columns: [{ key: "id", label: "id", width: 22 }, { key: "libelle", label: "libelle", width: 34 }, { key: "description", label: "description", width: 56 }, { key: "couleur", label: "couleur", width: 16 }], rows: layers.map((item) => [item.id, item.label, item.description, item.color]) },
+    { name: "Couches", description: "Organisation visuelle des types d’objets. Un même niveau place les couches empilées côte à côte ; une même colonne transverse les empile.", columns: [{ key: "id", label: "id", width: 22 }, { key: "libelle", label: "libelle", width: 34 }, { key: "description", label: "description", width: 56 }, { key: "niveau", label: "niveau", width: 14, type: "number" }, { key: "disposition", label: "disposition", width: 18, values: ["stacked", "transverse"] }, { key: "cote", label: "cote", width: 14, values: ["left", "right"] }, { key: "colonne_transverse", label: "colonne_transverse", width: 24, type: "number" }, { key: "couleur", label: "couleur", width: 16 }], rows: layers.map((item, index) => [item.id, item.label, item.description, item.row ?? index + 1, item.layout ?? "stacked", item.side ?? "right", item.column ?? index + 1, item.color]) },
     { name: "TypesObjets", description: "Concepts autorisés dans le référentiel, sans données d’instance.", columns: [{ key: "id", label: "id", width: 24 }, { key: "libelle", label: "libelle", width: 34 }, { key: "couche_id", label: "couche_id", width: 22, values: layers.map((item) => String(item.id)) }, { key: "description", label: "description", width: 58 }, { key: "couleur", label: "couleur", width: 16 }], rows: objectTypes.map((item) => [item.id, item.label, item.layerId, item.description, item.color]) },
     { name: "Relations", description: "Relations autorisées, orientées de la source vers la cible.", columns: [{ key: "id", label: "id", width: 30 }, { key: "libelle", label: "libelle", width: 28 }, { key: "source_type_id", label: "source_type_id", width: 24, values: objectTypes.map((item) => String(item.id)) }, { key: "cible_type_id", label: "cible_type_id", width: 24, values: objectTypes.map((item) => String(item.id)) }, { key: "cardinalite_source", label: "cardinalite_source", width: 22, values: ["0..1", "1", "0..*", "1..*"] }, { key: "cardinalite_cible", label: "cardinalite_cible", width: 22, values: ["0..1", "1", "0..*", "1..*"] }, { key: "description", label: "description", width: 58 }], rows: relationTypes.map((item) => [item.id, item.label, item.sourceTypeId, item.targetTypeId, item.sourceCardinality, item.targetCardinality, item.description]) },
-    { ...guide("Ce classeur redéfinit la structure du métamodèle. Les identifiants sont stables et servent à relier les trois feuilles."), rows: [["couche_id", "Doit référencer un identifiant de la feuille Couches.", layers[0]?.id ?? "business"], ["source_type_id / cible_type_id", "Doivent référencer des identifiants de TypesObjets.", objectTypes[0]?.id ?? "capability"]] },
+    { ...guide("Ce classeur redéfinit la structure du métamodèle. Les identifiants sont stables et servent à relier les trois feuilles."), rows: [["niveau", "Les couches empilées ayant le même numéro sont placées côte à côte.", "3 pour Données et Applications"], ["colonne_transverse", "Sur un même côté, le même numéro empile les couches transverses ; des numéros différents créent des colonnes côte à côte.", "1"], ["ordre des lignes", "Ordonne les niveaux, les colonnes et les couches regroupées.", "1 = première couche affichée"], ["disposition", "Utilisez stacked pour une couche empilée ou transverse pour une couche latérale.", "stacked"], ["cote", "Pour une couche transverse, utilisez left ou right.", "right"], ["couche_id", "Doit référencer un identifiant de la feuille Couches.", layers[0]?.id ?? "business"], ["source_type_id / cible_type_id", "Doivent référencer des identifiants de TypesObjets.", objectTypes[0]?.id ?? "capability"]] },
   ] };
 }
 

@@ -340,7 +340,19 @@ export async function importMetamodelExcel(file: File, configuration?: ViewConfi
     if (!safeId.test(id)) throw new Error(`${sheet} : identifiant invalide « ${id} » à la ligne ${row}. Utilisez lettres minuscules, chiffres et tirets.`);
     return id;
   };
-  const layers: ConfigurationItem[] = layerRows.map((row, index) => ({ id: checkedId(row.id, "Couches", index + 2), label: asText(row.libelle), description: asText(row.description), color: colorOrDefault(row.couleur, "#2563eb", index + 2) }));
+  const layers: ConfigurationItem[] = layerRows.map((row, index) => {
+    const rawLevel = asText(row.niveau) || asText(row.tranche);
+    const rowNumber = rawLevel ? Number(rawLevel) : index + 1;
+    const rawColumn = asText(row.colonne_transverse);
+    const column = rawColumn ? Number(rawColumn) : index + 1;
+    const layout = asText(row.disposition) || "stacked";
+    const side = asText(row.cote) || "right";
+    if (!Number.isInteger(rowNumber) || rowNumber < 1 || rowNumber > 64) throw new Error(`Couches : niveau invalide « ${rawLevel} » à la ligne ${index + 2}. Utilisez un entier entre 1 et 64.`);
+    if (!Number.isInteger(column) || column < 1 || column > 64) throw new Error(`Couches : colonne transverse invalide « ${rawColumn} » à la ligne ${index + 2}. Utilisez un entier entre 1 et 64.`);
+    if (layout !== "stacked" && layout !== "transverse") throw new Error(`Couches : disposition invalide « ${layout} » à la ligne ${index + 2}. Utilisez stacked ou transverse.`);
+    if (side !== "left" && side !== "right") throw new Error(`Couches : côté transverse invalide « ${side} » à la ligne ${index + 2}. Utilisez left ou right.`);
+    return { id: checkedId(row.id, "Couches", index + 2), label: asText(row.libelle), description: asText(row.description), row: rowNumber, column, layout, side, color: colorOrDefault(row.couleur, "#2563eb", index + 2) };
+  });
   const objectTypes: ConfigurationItem[] = objectRows.map((row, index) => ({ id: checkedId(row.id, "TypesObjets", index + 2), label: asText(row.libelle), layerId: asText(row.couche_id), description: asText(row.description), color: colorOrDefault(row.couleur, "#2563eb", index + 2) }));
   const relationTypes: ConfigurationItem[] = relationRows.map((row, index) => {
     const sourceCardinality = asText(row.cardinalite_source);

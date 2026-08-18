@@ -15,15 +15,16 @@ test("server-renders the Scalengi Views shell", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
   assert.match(html, /<title>Scalengi Views<\/title>/i);
-  assert.match(html, /Mes vues/);
-  assert.match(html, /Nouvelle vue/);
-  assert.match(html, /STOCKAGE PAR VUE/);
-  assert.match(html, /Chargement des vues locales/);
+  assert.match(html, /My views/);
+  assert.match(html, /New view/);
+  assert.match(html, /STORAGE PER VIEW/);
+  assert.match(html, /Loading local views/);
 });
 
 test("keeps data, guides and Excel contracts scoped per view", async () => {
-  const [app, exportMenu, exportView, registry, builtins, builtinConfigurations, configuration, dataset, storage, collaboratorView, partitionView, urbanisationView, layersView, metamodelView, togafView, verbatimView, excelImport, agents, architecture, createViewGuide] = await Promise.all([
+  const [app, i18n, exportMenu, exportView, registry, builtins, builtinConfigurations, configuration, dataset, storage, collaboratorView, partitionView, urbanisationView, layersView, metamodelView, togafView, verbatimView, excelImport, agents, architecture, createViewGuide] = await Promise.all([
     readFile(new URL("../app/scalengi-views-app.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../library/src/i18n.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/view-export-menu.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/export-view.ts", import.meta.url), "utf8"),
     readFile(new URL("../library/src/view-registry.ts", import.meta.url), "utf8"),
@@ -44,7 +45,24 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
     readFile(new URL("../docs/ARCHITECTURE.md", import.meta.url), "utf8"),
     readFile(new URL("../docs/CREATE_A_VIEW.md", import.meta.url), "utf8"),
   ]);
+  assert.match(app, /I18nProvider/);
+  assert.match(app, /APP_LOCALES\.map/);
+  assert.match(app, /className="language-select"/);
+  assert.doesNotMatch(app, /language-quick-switch/);
+  assert.match(i18n, /useState<AppLocale>\("en"\)/);
+  assert.match(i18n, /export const APP_LOCALES/);
+  assert.match(i18n, /scalengi-views-locale-v1/);
+  assert.match(i18n, /document\.documentElement\.lang = locale/);
+  assert.match(i18n, /"Mes vues": "My views"/);
   assert.match(app, /Comment ça fonctionne/);
+  assert.match(app, /Supprimer définitivement/);
+  assert.match(app, /Renommer la vue/);
+  assert.match(app, /name: nextName/);
+  assert.match(app, /deleteViewInstance\(instance\.id\)/);
+  assert.match(app, /Scalengi Inventory/);
+  assert.match(app, /Scalengi App/);
+  assert.match(app, /API \/ BDD/);
+  assert.doesNotMatch(app, /Chaque vue et ses données Excel sont conservées séparément/);
   assert.match(app, /Données de cette vue uniquement/);
   assert.match(app, /Configuration intrinsèque de la vue/);
   assert.match(app, /Exporter YAML/);
@@ -52,15 +70,26 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(app, /Jeu d’exemple/);
   assert.match(app, /Aucune donnée/);
   assert.match(app, /Désactiver l’exemple/);
+  assert.match(app, /Activer la vue d’exemple/);
+  assert.match(app, /canActivateExample && <section className="example-activation-card"/);
+  assert.match(app, /const canActivateExample = !instance\.source && !hasData/);
+  assert.match(app, /configuration: disablingDemo \? definition\.createBlankConfiguration\(\) : configuration/);
+  assert.doesNotMatch(app, /instance\.name === definition\.demoName \? \{ kind: "demo"/);
+  assert.match(app, /Supprimer les données importées/);
+  assert.doesNotMatch(app, /resetConfiguration/);
   assert.match(app, /kind: "demo"/);
-  assert.match(app, /Contrat de données généré/);
+  assert.doesNotMatch(app, /Contrat de données généré/);
+  assert.match(app, /Format Excel disponible dans Données/);
+  assert.doesNotMatch(app, /Télécharger le modèle configuré/);
   assert.match(app, /VIEW_CATALOG_GROUPS/);
   assert.match(app, /Exemple portable inclus dans le YAML/);
   assert.doesNotMatch(app, /aria-label="Changer de thème"/);
   assert.match(exportMenu, /Image \(PNG\)/);
   assert.match(exportMenu, /Vecteur \(SVG\)/);
-  assert.match(exportView, /toPng/);
+  assert.match(exportView, /toBlob/);
   assert.match(exportView, /toSvg/);
+  assert.match(exportView, /createReactFlowExportSurface/);
+  assert.match(exportView, /URL\.createObjectURL/);
   assert.match(exportView, /data-export-exclude/);
   assert.match(exportView, /data-view-export-content/);
   assert.doesNotMatch(app, /scalengi-view-dataset-v1/);
@@ -111,8 +140,36 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(layersView, /requestFullscreen/);
   assert.match(metamodelView, /Métamodèle du SI/);
   assert.match(metamodelView, /Relation autorisée/);
+  assert.doesNotMatch(metamodelView, /showCardinalities/);
+  assert.match(metamodelView, /label: relation\.label/);
   assert.match(metamodelView, /ReactFlow/);
+  assert.match(metamodelView, /Au focus/);
+  assert.match(metamodelView, /Masquées/);
+  assert.match(metamodelView, /hiddenLayerIds/);
+  assert.match(metamodelView, /metamodel-density/);
+  assert.match(metamodelView, /min="1" max="10"/);
+  assert.match(metamodelView, /spacingForLevel/);
+  assert.match(metamodelView, /leftTransverseColumns/);
+  assert.match(metamodelView, /addTransverseColumns/);
+  assert.match(metamodelView, /stackedRows/);
+  assert.match(metamodelView, /source-right.*target-left/);
+  assert.match(metamodelView, /Gauche.*col\./);
   assert.match(metamodelView, /requestFullscreen/);
+  assert.match(builtinConfigurations, /value: "transverse"/);
+  assert.match(builtinConfigurations, /key: "side"/);
+  assert.match(builtinConfigurations, /number\("row", "Niveau"\)/);
+  assert.match(builtinConfigurations, /number\("column", "Colonne transverse/);
+  assert.match(builtinConfigurations, /key: "niveau"/);
+  assert.match(builtinConfigurations, /key: "colonne_transverse"/);
+  assert.match(builtinConfigurations, /key: "disposition"/);
+  assert.match(builtinConfigurations, /key: "cote"/);
+  assert.match(excelImport, /disposition invalide/);
+  assert.match(excelImport, /côté transverse invalide/);
+  assert.match(excelImport, /niveau invalide/);
+  assert.match(excelImport, /colonne transverse invalide/);
+  assert.match(app, /visibleWhen/);
+  assert.match(app, /moveItem/);
+  assert.match(app, /Monter.*section\.itemLabel/);
   assert.match(togafView, /TOGAF ADM/);
   assert.match(togafView, /adm-cycle-ring/);
   assert.match(togafView, /data-view-export-content/);

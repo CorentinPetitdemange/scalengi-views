@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { configurationFromYaml, configurationToYaml, validateConfiguration, withExampleData } from "../library/src/configuration.ts";
-import { normalizeDataset } from "../library/src/dataset.ts";
+import { configurationFromYaml, configurationToYaml, upgradeConfigurationSchema, validateConfiguration, withExampleData } from "../library/src/configuration.ts";
+import { createEmptyDataset, isDatasetEmpty, normalizeDataset } from "../library/src/dataset.ts";
 import { createWorkbookBytes } from "../library/src/xlsx-template.ts";
 
 const validConfiguration = {
@@ -41,6 +41,25 @@ test("serializes an incomplete editor draft before validating it", () => {
   assert.match(validateConfiguration(draft, "test-view").join(" "), /Libellé est obligatoire/);
 });
 
+test("adds new configuration fields without changing saved item order", () => {
+  const stored = structuredClone(validConfiguration);
+  stored.options.legacy = true;
+  stored.sections[0].items = [{ id: "second" }, { id: "first" }];
+  const defaults = structuredClone(validConfiguration);
+  defaults.options.newOption = "active";
+  defaults.sections[0].fields[0].label = "Identifiant technique";
+  defaults.sections[0].fields[0].visibleWhen = { key: "mode", equals: "advanced" };
+  defaults.sections[0].fields.push({ key: "side", label: "Côté", type: "select", choices: [{ value: "right", label: "Droite" }, { value: "left", label: "Gauche" }] });
+  defaults.sections[0].items = [{ id: "first", side: "left" }, { id: "second", side: "right" }];
+  const upgraded = upgradeConfigurationSchema(stored, defaults);
+  assert.deepEqual(upgraded.sections[0].items.map((item) => item.id), ["second", "first"]);
+  assert.deepEqual(upgraded.sections[0].items.map((item) => item.side), ["right", "left"]);
+  assert.deepEqual(upgraded.sections[0].fields[0].visibleWhen, { key: "mode", equals: "advanced" });
+  assert.equal(upgraded.sections[0].fields[0].label, "Identifiant technique");
+  assert.deepEqual(upgraded.options, { scoreMax: 5, newOption: "active" });
+  assert.equal(stored.sections[0].fields.some((field) => field.key === "side"), false);
+});
+
 test("rejects malformed, oversized and cross-view YAML", () => {
   assert.throws(() => configurationFromYaml("sections: nope", "test-view"), /version|type|sections/i);
   assert.throws(() => configurationFromYaml(`version: 1\nviewType: other-view\nlabel: Test\nsections: []\noptions: {}`, "test-view"), /other-view/);
@@ -65,6 +84,11 @@ test("normalizes the dataset envelope and bounds collections", () => {
   const normalized = normalizeDataset({ collaborators: [null, "bad", ...Array.from({ length: 25_010 }, (_, id) => ({ id }))] });
   assert.equal(normalized.collaborators.length, 25_000);
   assert.deepEqual(normalized.processes, []);
+});
+
+test("detects data independently from its source metadata", () => {
+  assert.equal(isDatasetEmpty(createEmptyDataset()), true);
+  assert.equal(isDatasetEmpty(normalizeDataset({ verbatims: [{ id: "v1", text: "Existing data" }] })), false);
 });
 
 test("rejects an oversized generated workbook contract", () => {

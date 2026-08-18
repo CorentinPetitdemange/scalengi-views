@@ -9,9 +9,10 @@ export { collaboratorJourneyDefinition, verbatimCloudDefinition, partitionViewDe
 export { createCapabilityPartitionConfiguration, createUrbanPartitionConfiguration, createBlankPartitionConfiguration, migrateLegacyPartition } from "./partition-model";
 export { ViewRegistry, VIEW_CATALOG_GROUPS } from "./view-registry";
 export { sampleDataset } from "./sample-data";
-export { createEmptyDataset, datasetWith, normalizeDataset } from "./dataset";
+export { createEmptyDataset, datasetWith, isDatasetEmpty, normalizeDataset } from "./dataset";
 export type * from "./view-registry";
 export type * from "./types";
 export * from "./configuration";
 export * from "./xlsx-template";
 export * from "./export-view";
+export * from "./i18n";

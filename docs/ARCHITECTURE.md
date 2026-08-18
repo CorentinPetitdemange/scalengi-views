@@ -85,7 +85,13 @@ Plusieurs valeurs peuvent être sélectionnées dans une même condition et plus
 
 ### Métamodèle du SI
 
-`si-metamodel` décrit la grammaire d’un référentiel et non ses instances. Sa configuration porte les couches, les types d’objets et les relations autorisées avec leurs cardinalités. Le renderer React Flow consomme directement cette structure. Son classeur Excel constitue donc une autre manière d’éditer la configuration et l’import peut retourner un nouveau couple `{ configuration, data }` ; `data` reste vide pour cette vue structurelle.
+L’ordre de la section `layers` fixe la lecture de haut en bas des couches empilées. Une couche transverse porte aussi un côté `left` ou `right` ; les couches placées du même côté conservent entre elles l’ordre de la liste.
+
+`si-metamodel` décrit la grammaire d’un référentiel et non ses instances. Sa configuration porte les couches, leur niveau, leur disposition empilée ou transverse, les types d’objets et les relations autorisées avec leurs cardinalités. Le renderer React Flow consomme directement cette structure. Les couches empilées forment des bandes horizontales successives ; plusieurs couches portant le même niveau partagent la même ligne et sont placées côte à côte. Les couches transverses sont placées à gauche ou à droite. Sur un même côté, les couches ayant le même numéro de colonne sont empilées verticalement ; des numéros différents créent des colonnes côte à côte. Dans les deux cas, l’ordre de la liste fixe l’ordre des groupes et des couches à l’intérieur d’un groupe. La sélection des couches, le niveau d’espacement et le mode d’affichage des relations restent des états locaux d’exploration qui ne modifient pas la configuration.
+
+Par défaut, les relations ne sont dessinées qu’autour du type sélectionné afin de préserver la lisibilité. L’utilisateur peut aussi toutes les masquer ou afficher l’ensemble du graphe. Son classeur Excel constitue une autre manière d’éditer la configuration et l’import peut retourner un nouveau couple `{ configuration, data }` ; `data` reste vide pour cette vue structurelle. Les anciens classeurs sans colonne `niveau` conservent une ligne distincte par couche ; la colonne historique `tranche` reste acceptée à l’import. Sans `colonne_transverse`, chaque couche transverse conserve sa propre colonne. Les classeurs sans `disposition` sont interprétés avec des couches empilées.
+
+Sans colonne Excel `cote`, une couche transverse est placée à droite pour préserver la compatibilité avec les anciens classeurs.
 
 ### Export des vues
 

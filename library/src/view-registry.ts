@@ -15,6 +15,9 @@ export const VIEW_CATALOG_GROUPS: ReadonlyArray<{ id: ViewCatalogGroup; label: s
 export interface ViewGuide {
   purpose: string;
   questions: string[];
+  readingTitle?: string;
+  reading?: Array<{ title: string; description: string }>;
+  stepsTitle?: string;
   steps: Array<{ title: string; description: string }>;
   sheets: Array<{ name: string; columns: string[]; description: string }>;
 }
