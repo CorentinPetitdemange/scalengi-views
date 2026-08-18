@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const imageUrl = new URL("/og.png", `${protocol}://${host}`).toString();
   const title = "Scalengi Views";
-  const description = "Bibliothèque de vues spécialisées pour comprendre et piloter le système d’information.";
+  const description = "A library of specialized views for understanding and steering information systems.";
   return {
     title,
     description,
@@ -22,5 +22,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fr"><body className={`${geistSans.variable} ${geistMono.variable}`}>{children}</body></html>;
+  return <html lang="en"><body className={`${geistSans.variable} ${geistMono.variable}`}>{children}</body></html>;
 }

@@ -17,6 +17,10 @@ export function createEmptyDataset(): ViewDataset {
   };
 }
 
+export function isDatasetEmpty(value: ViewDataset): boolean {
+  return DATASET_COLLECTION_KEYS.every((key) => value[key].length === 0);
+}
+
 export function normalizeDataset(value: unknown): ViewDataset {
   const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const dataset = createEmptyDataset() as unknown as Record<string, unknown>;
