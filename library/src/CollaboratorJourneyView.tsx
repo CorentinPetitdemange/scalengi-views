@@ -5,6 +5,7 @@ import ReactFlow, { Background, Controls, Handle, Position, ReactFlowProvider, u
 import "reactflow/dist/style.css";
 import { Activity, BriefcaseBusiness, Check, ChevronDown, ChevronLeft, ChevronRight, CircleDashed, Eye, EyeOff, FolderGit2, Maximize2, MessageSquareText, Minimize2, Shield, Type, Users, Zap } from "lucide-react";
 import { optionOf, sectionOf, type ViewConfiguration } from "./configuration";
+import { useI18n } from "./i18n";
 import type { Collaborator, Feedback, Process, ResponsibilityKind, ViewDataset } from "./types";
 
 type Visibility = { processes: boolean; responsibilities: boolean; feedbacks: boolean; colleagues: boolean; processLabels: boolean; colleagueLabels: boolean };
@@ -32,7 +33,9 @@ const ProcessNode = memo(function ProcessNode({ data }: NodeProps<ProcessData>) 
 });
 
 const ColleagueNode = memo(function ColleagueNode({ data }: NodeProps<ColleagueData>) {
-  return <div className={`rf-colleague-node ${data.showLabel ? "show-label" : ""}`} title={`${data.collaborator.name} · ${data.shared} processus partagés`}><Handle type="source" position={Position.Top} className="rf-hidden-handle" /><div>{data.collaborator.initials}</div>{data.showLabel && <><strong>{data.collaborator.name}</strong><span>{data.shared} partagé{data.shared > 1 ? "s" : ""}</span></>}</div>;
+  const { locale } = useI18n();
+  const shared = locale === "fr" ? `${data.shared} processus partagé${data.shared > 1 ? "s" : ""}` : `${data.shared} shared process${data.shared === 1 ? "" : "es"}`;
+  return <div className={`rf-colleague-node ${data.showLabel ? "show-label" : ""}`} title={`${data.collaborator.name} · ${shared}`}><Handle type="source" position={Position.Top} className="rf-hidden-handle" /><div>{data.collaborator.initials}</div>{data.showLabel && <><strong>{data.collaborator.name}</strong><span>{shared}</span></>}</div>;
 });
 
 const ResponsibilityNode = memo(function ResponsibilityNode({ data }: NodeProps<ResponsibilityData>) {
@@ -40,9 +43,10 @@ const ResponsibilityNode = memo(function ResponsibilityNode({ data }: NodeProps<
 });
 
 const FeedbackNode = memo(function FeedbackNode({ data }: NodeProps<FeedbackData>) {
+  const { locale } = useI18n();
   const [open, setOpen] = useState(false);
   const parsedDate = new Date(data.feedback.createdAt);
-  const displayDate = Number.isNaN(parsedDate.getTime()) ? data.feedback.createdAt : parsedDate.toLocaleDateString("fr-FR");
+  const displayDate = Number.isNaN(parsedDate.getTime()) ? data.feedback.createdAt : parsedDate.toLocaleDateString(locale === "fr" ? "fr-FR" : "en-GB");
   return <button className={`rf-feedback-node ${open ? "is-open" : ""}`} onClick={() => setOpen((value) => !value)} title={data.feedback.content}><Handle type="target" position={Position.Top} className="rf-hidden-handle" /><MessageSquareText size={18} />{open && <span><strong>{data.process.name}</strong>{data.feedback.content}{displayDate && <small>{displayDate}</small>}</span>}</button>;
 });
 
@@ -59,22 +63,24 @@ function FitController({ signature, fullscreen }: { signature: string; fullscree
 }
 
 function GalaxyDisplayToolbar({ visibility, onToggle, radius, onRadius, labels, available }: { visibility: Visibility; onToggle: (key: keyof Visibility) => void; radius: number; onRadius: (radius: number) => void; labels: Record<string, string>; available: Set<string> }) {
+  const { t } = useI18n();
   const [collapsed, setCollapsed] = useState(true);
   const layers: Array<{ key: keyof Visibility; label: string; icon: typeof Activity }> = [
     { key: "processes", label: labels.processes, icon: Activity }, { key: "responsibilities", label: labels.responsibilities, icon: Shield },
     { key: "feedbacks", label: labels.feedbacks, icon: MessageSquareText }, { key: "colleagues", label: labels.colleagues, icon: Users },
   ].filter((layer) => available.has(layer.key)) as Array<{ key: keyof Visibility; label: string; icon: typeof Activity }>;
-  return <aside className={`galaxy-display-toolbar ${collapsed ? "is-collapsed" : ""}`} aria-label="Affichage des anneaux">
-    <header>{!collapsed && <strong>Anneaux</strong>}<button onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? "Ouvrir les options d’affichage" : "Réduire les options d’affichage"}>{collapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}</button></header>
+  return <aside className={`galaxy-display-toolbar ${collapsed ? "is-collapsed" : ""}`} aria-label={t("Affichage des anneaux")}>
+    <header>{!collapsed && <strong>{t("Anneaux")}</strong>}<button onClick={() => setCollapsed((value) => !value)} aria-label={t(collapsed ? "Ouvrir les options d’affichage" : "Réduire les options d’affichage")}>{collapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}</button></header>
     <div className="galaxy-layer-list">{layers.map((layer) => { const Icon = layer.icon; const active = visibility[layer.key]; return <button key={layer.key} className={active ? "active" : ""} onClick={() => onToggle(layer.key)} title={collapsed ? layer.label : undefined}><Icon size={16} />{!collapsed && <><span>{layer.label}</span>{active ? <Eye size={15} /> : <EyeOff size={15} />}</>}</button>; })}</div>
     <div className="galaxy-toolbar-separator" />
-    <button className={visibility.processLabels ? "active" : ""} onClick={() => onToggle("processLabels")} title={collapsed ? "Noms des processus" : undefined}><Type size={16} />{!collapsed && <><span>Noms des processus</span>{visibility.processLabels && <Check size={14} />}</>}</button>
-    <button className={visibility.colleagueLabels ? "active" : ""} onClick={() => onToggle("colleagueLabels")} title={collapsed ? "Noms des collègues" : undefined}><Users size={16} />{!collapsed && <><span>Noms des collègues</span>{visibility.colleagueLabels && <Check size={14} />}</>}</button>
-    {!collapsed && <div className="galaxy-radius-control"><label><CircleDashed size={14} /> Rayon <span>{radius}px</span></label><input type="range" min="280" max="760" step="40" value={radius} onChange={(event) => onRadius(Number(event.target.value))} /></div>}
+    <button className={visibility.processLabels ? "active" : ""} onClick={() => onToggle("processLabels")} title={collapsed ? t("Noms des processus") : undefined}><Type size={16} />{!collapsed && <><span>{t("Noms des processus")}</span>{visibility.processLabels && <Check size={14} />}</>}</button>
+    <button className={visibility.colleagueLabels ? "active" : ""} onClick={() => onToggle("colleagueLabels")} title={collapsed ? t("Noms des collègues") : undefined}><Users size={16} />{!collapsed && <><span>{t("Noms des collègues")}</span>{visibility.colleagueLabels && <Check size={14} />}</>}</button>
+    {!collapsed && <div className="galaxy-radius-control"><label><CircleDashed size={14} /> {t("Rayon")} <span>{radius}px</span></label><input type="range" min="280" max="760" step="40" value={radius} onChange={(event) => onRadius(Number(event.target.value))} /></div>}
   </aside>;
 }
 
 function CollaboratorCanvas({ data, current, selectedProcessId, onSelectProcess, fullscreen, visibility, radius, onToggle, onRadius, labels, available }: { data: ViewDataset; current: Collaborator; selectedProcessId: string | null; onSelectProcess: (id: string) => void; fullscreen: boolean; visibility: Visibility; radius: number; onToggle: (key: keyof Visibility) => void; onRadius: (radius: number) => void; labels: Record<string, string>; available: Set<string> }) {
+  const { t } = useI18n();
   const { nodes, edges, processCount, colleagueCount, feedbackCount } = useMemo(() => {
     const currentResponsibilities = data.responsibilities.filter((item) => item.collaboratorId === current.id);
     const currentProcesses = currentResponsibilities.map((responsibility) => ({ process: data.processes.find((item) => item.id === responsibility.processId), responsibility })).filter((item): item is { process: Process; responsibility: typeof currentResponsibilities[number] } => Boolean(item.process));
@@ -128,13 +134,14 @@ function CollaboratorCanvas({ data, current, selectedProcessId, onSelectProcess,
     return { nodes: nextNodes, edges: nextEdges, processCount: currentProcesses.length, colleagueCount: colleagues.length, feedbackCount: feedbacks.length };
   }, [current, data, labels, onSelectProcess, radius, selectedProcessId, visibility]);
 
-  return <><div className="journey-summary rf-summary"><span><BriefcaseBusiness size={15} /> {processCount} processus</span><span><Users size={15} /> {colleagueCount} collaborateurs liés</span><span><MessageSquareText size={15} /> {feedbackCount} retours</span></div>
+  return <><div className="journey-summary rf-summary"><span><BriefcaseBusiness size={15} /> {processCount} {t("processus")}</span><span><Users size={15} /> {colleagueCount} {t("collaborateurs liés")}</span><span><MessageSquareText size={15} /> {feedbackCount} {t("retours")}</span></div>
     <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} nodesDraggable={false} nodesConnectable={false} elementsSelectable fitView fitViewOptions={{ padding: .12, maxZoom: 1 }} minZoom={.18} maxZoom={1.35} proOptions={{ hideAttribution: true }}><Background gap={25} size={1} color="var(--rf-grid)" /><Controls position="bottom-left" showInteractive={false} /><FitController signature={`${current.id}-${nodes.length}-${selectedProcessId ?? ""}-${radius}-${Object.values(visibility).join("")}`} fullscreen={fullscreen} /></ReactFlow>
     <GalaxyDisplayToolbar visibility={visibility} onToggle={onToggle} radius={radius} onRadius={onRadius} labels={labels} available={available} />
   </>;
 }
 
 export function CollaboratorJourneyView({ data, configuration }: { data: ViewDataset; configuration?: ViewConfiguration }) {
+  const { t } = useI18n();
   const galaxyItems = sectionOf(configuration, "galaxies")?.items;
   const labels = useMemo(() => ({ processes: String(galaxyItems?.find((item) => item.id === "processes")?.label ?? "Processus"), responsibilities: String(galaxyItems?.find((item) => item.id === "roles")?.label ?? "Responsabilités"), feedbacks: String(galaxyItems?.find((item) => item.id === "feedbacks")?.label ?? "Retours"), colleagues: String(galaxyItems?.find((item) => item.id === "colleagues")?.label ?? "Collaborateurs") }), [galaxyItems]);
   const available = useMemo(() => galaxyItems ? new Set(galaxyItems.map((item) => item.id === "roles" ? "responsibilities" : item.id)) : new Set(["processes", "responsibilities", "feedbacks", "colleagues"]), [galaxyItems]);
@@ -153,10 +160,10 @@ export function CollaboratorJourneyView({ data, configuration }: { data: ViewDat
 
   useEffect(() => { const update = () => setFullscreen(document.fullscreenElement === frameRef.current); document.addEventListener("fullscreenchange", update); return () => document.removeEventListener("fullscreenchange", update); }, []);
   const toggleFullscreen = async () => { if (document.fullscreenElement) await document.exitFullscreen(); else await frameRef.current?.requestFullscreen(); };
-  if (!current) return <div className="empty-state">Ajoutez un collaborateur pour afficher cette vue.</div>;
+  if (!current) return <div className="empty-state">{t("Ajoutez un collaborateur pour afficher cette vue.")}</div>;
 
-  return <section ref={frameRef} className="view-workspace rf-view-workspace"><div className="view-toolbar rf-view-toolbar"><div><p className="eyebrow">Vue centrée collaborateur</p><h1>Écosystème de collaboration</h1></div><div className="rf-toolbar-actions"><label className="select-control"><span>Point de vue</span><div><select value={current.id} onChange={(event) => { setCurrentId(event.target.value); setSelectedProcessId(null); }}>{data.collaborators.map((collaborator) => <option value={collaborator.id} key={collaborator.id}>{collaborator.name}</option>)}</select><ChevronDown size={15} /></div></label><button className="rf-fullscreen-button" onClick={() => void toggleFullscreen()}>{fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<span>{fullscreen ? "Quitter" : "Plein écran"}</span></button></div></div>
+  return <section ref={frameRef} className="view-workspace rf-view-workspace"><div className="view-toolbar rf-view-toolbar"><div><p className="eyebrow">{t("Vue centrée collaborateur")}</p><h1>{t("Écosystème de collaboration")}</h1></div><div className="rf-toolbar-actions"><label className="select-control"><span>{t("Point de vue")}</span><div><select value={current.id} onChange={(event) => { setCurrentId(event.target.value); setSelectedProcessId(null); }}>{data.collaborators.map((collaborator) => <option value={collaborator.id} key={collaborator.id}>{collaborator.name}</option>)}</select><ChevronDown size={15} /></div></label><button className="rf-fullscreen-button" onClick={() => void toggleFullscreen()}>{fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<span>{t(fullscreen ? "Quitter" : "Plein écran")}</span></button></div></div>
     <div className="rf-canvas-area" data-view-export-content><ReactFlowProvider><CollaboratorCanvas data={data} current={current} selectedProcessId={selectedProcessId} onSelectProcess={onSelectProcess} fullscreen={fullscreen} visibility={effectiveVisibility} radius={radius} onToggle={toggleVisibility} onRadius={setRadius} labels={labels} available={available} /></ReactFlowProvider></div>
-    {selectedProcess && <aside className="context-panel rf-context-panel"><button className="panel-close" onClick={() => setSelectedProcessId(null)} aria-label="Fermer le détail">×</button><p className="eyebrow">Processus sélectionné</p><h2>{selectedProcess.name}</h2><span className="status-chip">{selectedProcess.status}</span><div className="panel-section"><h3>Équipe associée</h3>{selectedResponsibilities.map((responsibility) => { const collaborator = data.collaborators.find((item) => item.id === responsibility.collaboratorId); return collaborator ? <div className="person-row" key={responsibility.id}><span className="mini-avatar">{collaborator.initials}</span><div><strong>{collaborator.name}</strong><small>{responsibility.kind}</small></div></div> : null; })}</div><div className="panel-section"><h3>Retours</h3>{(data.feedbacks ?? []).filter((feedback) => feedback.processId === selectedProcess.id).map((feedback) => <div className="journey-feedback-row" key={feedback.id}>{feedback.content}</div>)}</div></aside>}
+    {selectedProcess && <aside className="context-panel rf-context-panel"><button className="panel-close" onClick={() => setSelectedProcessId(null)} aria-label={t("Fermer le détail")}>×</button><p className="eyebrow">{t("Processus sélectionné")}</p><h2>{selectedProcess.name}</h2><span className="status-chip">{selectedProcess.status}</span><div className="panel-section"><h3>{t("Équipe associée")}</h3>{selectedResponsibilities.map((responsibility) => { const collaborator = data.collaborators.find((item) => item.id === responsibility.collaboratorId); return collaborator ? <div className="person-row" key={responsibility.id}><span className="mini-avatar">{collaborator.initials}</span><div><strong>{collaborator.name}</strong><small>{responsibility.kind}</small></div></div> : null; })}</div><div className="panel-section"><h3>{t("Retours")}</h3>{(data.feedbacks ?? []).filter((feedback) => feedback.processId === selectedProcess.id).map((feedback) => <div className="journey-feedback-row" key={feedback.id}>{feedback.content}</div>)}</div></aside>}
   </section>;
 }

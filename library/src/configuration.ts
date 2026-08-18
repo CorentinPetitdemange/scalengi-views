@@ -27,8 +27,11 @@ export interface ConfigurationField {
   required?: boolean;
   placeholder?: string;
   readonly?: boolean;
+  defaultValue?: ConfigurationScalar;
   /** La valeur saisie doit être un identifiant technique sûr. */
   identifier?: boolean;
+  /** Affiche le champ guidé uniquement lorsque l’élément possède cette valeur. */
+  visibleWhen?: { key: string; equals: ConfigurationScalar };
 }
 
 export interface ConfigurationItem {
@@ -83,6 +86,7 @@ export const optionOf = <T extends ConfigurationScalar>(configuration: ViewConfi
 
 const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
 const isScalar = (value: unknown): value is ConfigurationScalar => typeof value === "string" || typeof value === "number" || typeof value === "boolean";
+const isBoundedScalar = (value: unknown): value is ConfigurationScalar => isScalar(value) && (typeof value !== "string" || value.length <= MAX_TEXT_LENGTH) && (typeof value !== "number" || Number.isFinite(value));
 const isSafeKey = (value: unknown): value is string => typeof value === "string" && safeKeyPattern.test(value) && !forbiddenKeys.has(value);
 const isShortText = (value: unknown): value is string => typeof value === "string" && value.length <= MAX_TEXT_LENGTH;
 const datasetKeys = new Set<string>(exampleDataCollectionKeys);
@@ -162,7 +166,9 @@ export function validateConfiguration(configuration: unknown, expectedViewType?:
       if (rawField.placeholder != null && !isShortText(rawField.placeholder)) addError(`${String(section.title)} : placeholder trop long.`);
       if (rawField.required != null && typeof rawField.required !== "boolean") addError(`${String(section.title)} : required doit être booléen.`);
       if (rawField.readonly != null && typeof rawField.readonly !== "boolean") addError(`${String(section.title)} : readonly doit être booléen.`);
+      if (rawField.defaultValue != null && !isBoundedScalar(rawField.defaultValue)) addError(`${String(section.title)} : valeur par défaut invalide pour ${String(rawField.key ?? "un champ")}.`);
       if (rawField.identifier != null && typeof rawField.identifier !== "boolean") addError(`${String(section.title)} : identifier doit être booléen.`);
+      if (rawField.visibleWhen != null && (!isRecord(rawField.visibleWhen) || !isSafeKey(rawField.visibleWhen.key) || !isBoundedScalar(rawField.visibleWhen.equals))) addError(`${String(section.title)} : condition d’affichage invalide pour ${String(rawField.key ?? "un champ")}.`);
       fields.push(rawField as unknown as ConfigurationField);
     }
     const itemIds = new Set<string>();
@@ -176,7 +182,7 @@ export function validateConfiguration(configuration: unknown, expectedViewType?:
         if (!isSafeKey(key)) addError(`${String(section.title)} : la clé « ${key} » n’est pas autorisée.`);
         if (!isScalar(value) || (typeof value === "string" && value.length > MAX_TEXT_LENGTH) || (typeof value === "number" && !Number.isFinite(value))) addError(`${String(section.title)} : ${key} doit être une valeur simple et bornée.`);
       }
-      for (const field of fields.filter((candidate) => candidate.required)) {
+      for (const field of fields.filter((candidate) => candidate.required && (!candidate.visibleWhen || item[candidate.visibleWhen.key] === candidate.visibleWhen.equals))) {
         if (item[field.key] == null || String(item[field.key]).trim() === "") errors.push(`${String(section.title)} : ${field.label} est obligatoire pour ${String(item.id || "un élément")}.`);
       }
       for (const field of fields.filter((candidate) => candidate.identifier && item[candidate.key] != null && String(item[candidate.key]) !== "")) {
@@ -213,5 +219,48 @@ export function withExampleData(configuration: ViewConfiguration, exampleData: V
 
 export function createConfigurationItem(section: ConfigurationSection): ConfigurationItem {
   const suffix = globalThis.crypto?.randomUUID?.().slice(0, 8) ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-  return Object.fromEntries([["id", `${section.id}-${suffix}`], ...section.fields.filter((field) => field.key !== "id").map((field) => [field.key, field.type === "number" ? 0 : field.type === "color" ? "#2563eb" : field.type === "select" ? field.choices?.[0]?.value ?? "" : ""])]) as ConfigurationItem;
+  return Object.fromEntries([["id", `${section.id}-${suffix}`], ...section.fields.filter((field) => field.key !== "id").map((field) => [field.key, field.defaultValue ?? (field.type === "number" ? 0 : field.type === "color" ? "#2563eb" : field.type === "select" ? field.choices?.[0]?.value ?? "" : "")])]) as ConfigurationItem;
+}
+
+/** Ajoute les nouveaux champs d’un moteur sans écraser la structure ni l’ordre déjà enregistrés. */
+export function upgradeConfigurationSchema(configuration: ViewConfiguration, defaults: ViewConfiguration): ViewConfiguration {
+  const next = structuredClone(configuration);
+  let changed = false;
+  for (const key of Object.keys(next.options)) {
+    if (key in defaults.options) continue;
+    delete next.options[key];
+    changed = true;
+  }
+  for (const [key, value] of Object.entries(defaults.options)) {
+    if (key in next.options) continue;
+    next.options[key] = value;
+    changed = true;
+  }
+  for (const defaultSection of defaults.sections) {
+    const section = next.sections.find((candidate) => candidate.id === defaultSection.id);
+    if (!section) continue;
+    for (const defaultField of defaultSection.fields) {
+      const field = section.fields.find((candidate) => candidate.key === defaultField.key);
+      if (field && defaultField.visibleWhen) {
+        if (field.label !== defaultField.label) { field.label = defaultField.label; changed = true; }
+        if (JSON.stringify(field.visibleWhen) !== JSON.stringify(defaultField.visibleWhen)) { field.visibleWhen = structuredClone(defaultField.visibleWhen); changed = true; }
+        if (defaultField.defaultValue != null && field.defaultValue !== defaultField.defaultValue) { field.defaultValue = defaultField.defaultValue; changed = true; }
+      }
+    }
+    const missingFields = defaultSection.fields.filter((field) => !section.fields.some((candidate) => candidate.key === field.key));
+    if (missingFields.length) {
+      section.fields.push(...structuredClone(missingFields));
+      for (const item of section.items) {
+        const defaultItem = defaultSection.items.find((candidate) => candidate.id === item.id);
+        for (const field of missingFields) {
+          if (field.key in item) continue;
+          item[field.key] = defaultItem?.[field.key]
+            ?? field.defaultValue
+            ?? (field.type === "number" ? 0 : field.type === "color" ? "#2563eb" : field.type === "select" ? field.choices?.[0]?.value ?? "" : "");
+        }
+      }
+      changed = true;
+    }
+  }
+  return changed ? next : configuration;
 }

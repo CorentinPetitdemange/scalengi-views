@@ -218,15 +218,23 @@ export const siMetamodelDefinition = defineView({
   importExcel: importMetamodelExcel,
   summarize: (_data, configuration) => [{ label: "Couches", value: configuration?.sections.find((section) => section.id === "layers")?.items.length ?? 0 }, { label: "Types d’objets", value: configuration?.sections.find((section) => section.id === "objectTypes")?.items.length ?? 0 }, { label: "Relations", value: configuration?.sections.find((section) => section.id === "relationTypes")?.items.length ?? 0 }],
   guide: {
-    purpose: "Cette vue décrit les règles du référentiel, pas son contenu : quels types d’objets existent, dans quelles couches ils se placent et quelles relations peuvent les relier.",
+    purpose: "Cette vue rend lisible la grammaire du SI : les familles de concepts, leur position et les relations autorisées. Elle décrit les règles du référentiel, pas les applications ou données réelles.",
     questions: ["Quels concepts composent notre langage d’architecture ?", "Quelles relations et cardinalités sont autorisées ?", "Notre métamodèle couvre-t-il toutes les couches utiles sans doublon ?"],
+    readingTitle: "Comprendre le dessin du métamodèle",
+    reading: [
+      { title: "Lire les niveaux", description: "Les couches empilées sont organisées du haut vers le bas. Un même niveau place plusieurs couches côte à côte." },
+      { title: "Lire les côtés", description: "Les couches transverses encadrent le métamodèle à gauche ou à droite. Un même numéro de colonne les empile verticalement." },
+      { title: "Explorer les relations", description: "Sélectionnez un type pour ne voir que ses relations. Vous pouvez aussi masquer tous les liens ou afficher le graphe complet." },
+      { title: "Réduire le bruit", description: "Masquez les couches inutiles, recherchez un type et augmentez l’espacement pour isoler précisément une interconnexion." },
+    ],
+    stepsTitle: "Construire le métamodèle",
     steps: [
-      { title: "Définir les couches", description: "Organisez visuellement le langage d’architecture selon vos propres couches." },
-      { title: "Définir les types", description: "Documentez chaque concept et rattachez-le à une couche." },
-      { title: "Définir la grammaire", description: "Reliez les types, nommez les relations et précisez leurs cardinalités." },
+      { title: "Organiser les couches", description: "Dans Structure, choisissez pour chaque couche une disposition, un niveau ou un placement transverse, puis ordonnez-la avec les flèches." },
+      { title: "Définir les concepts", description: "Ajoutez les types d’objets, documentez leur rôle et rattachez chacun à une couche existante." },
+      { title: "Définir les relations", description: "Nommez les liens autorisés entre types et précisez leurs cardinalités. L’onglet Données permet aussi d’importer cette structure depuis Excel." },
     ],
     sheets: [
-      { name: "Couches", columns: ["id", "libelle", "description", "couleur"], description: "Les colonnes visuelles du métamodèle." },
+      { name: "Couches", columns: ["id", "libelle", "description", "niveau", "disposition", "cote", "colonne_transverse", "couleur"], description: "Le placement des couches : niveau pour les couches empilées, côté et colonne pour les couches transverses." },
       { name: "TypesObjets", columns: ["id", "libelle", "couche_id", "description", "couleur"], description: "Les concepts disponibles dans le référentiel." },
       { name: "Relations", columns: ["id", "libelle", "source_type_id", "cible_type_id", "cardinalite_source", "cardinalite_cible", "description"], description: "Les liens autorisés entre concepts." },
       { name: "Mode d'emploi", columns: ["champ", "règle", "exemple"], description: "Les règles de référence entre les feuilles." },
