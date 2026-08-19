@@ -1,24 +1,24 @@
-# Application desktop
+# Desktop application
 
-Scalengi Views utilise Tauri 2 pour macOS, Windows et Linux. Le shell natif ne contient aucune logique métier : il charge le même composant React, les mêmes moteurs de vues et le même stockage IndexedDB que la version web.
+Scalengi Views uses Tauri 2 for macOS, Windows, and Linux. The native shell contains no business logic: it loads the same React component, view engines, and IndexedDB storage as the web application.
 
 ## Architecture
 
 ```text
 app/ + library/
       │
-      ├── vinext build         -> application web / Codespaces
-      └── Vite statique        -> dist-desktop/ -> WebView Tauri
-                                              ├── DMG macOS
-                                              ├── NSIS Windows
-                                              └── AppImage / DEB Linux
+      ├── vinext build         -> web application / Codespaces
+      └── static Vite build    -> dist-desktop/ -> Tauri WebView
+                                              ├── macOS DMG
+                                              ├── Windows NSIS
+                                              └── Linux AppImage / DEB
 ```
 
-La version desktop ne lance aucun serveur Node et n’embarque pas Chromium. Elle utilise WKWebView sur macOS, WebView2 sur Windows et WebKitGTK sur Linux.
+The desktop application starts no Node server and does not bundle Chromium. It uses WKWebView on macOS, WebView2 on Windows, and WebKitGTK on Linux.
 
-## Développement local
+## Local development
 
-Prérequis supplémentaires : Rust stable et les dépendances système Tauri de la plateforme.
+Additional requirements: stable Rust and the platform-specific Tauri system dependencies.
 
 ```bash
 pnpm desktop:check
@@ -26,37 +26,37 @@ pnpm desktop:dev
 pnpm desktop:build
 ```
 
-`desktop:check` vérifie que `package.json`, `src-tauri/Cargo.toml` et `src-tauri/tauri.conf.json` portent exactement la même version, puis construit le frontend desktop.
+`desktop:check` verifies that `package.json`, `src-tauri/Cargo.toml`, and `src-tauri/tauri.conf.json` contain exactly the same version, then builds the desktop frontend.
 
-## Publier une version
+## Publishing a release
 
-1. Choisir la prochaine version selon [`VERSIONING.md`](VERSIONING.md), puis exécuter `pnpm version:set <version>`.
-2. Compléter `CHANGELOG.md` et valider `pnpm desktop:check`.
-3. Fusionner et vérifier la CI sur `main`.
-4. Créer puis pousser le tag correspondant :
+1. Choose the next version according to [`VERSIONING.md`](VERSIONING.md), then run `pnpm version:set <version>`.
+2. Update `CHANGELOG.md` and validate `pnpm desktop:check`.
+3. Merge and verify CI on `main`.
+4. Create and push the corresponding tag:
 
 ```bash
 git tag v0.1.0-alpha.1
 git push origin v0.1.0-alpha.1
 ```
 
-Le workflow `Desktop release` construit et joint automatiquement les installateurs à la GitHub Release.
+The `Desktop release` workflow automatically builds and attaches installers to the GitHub Release.
 
-## Signature et notarisation macOS
+## macOS signing and notarisation
 
-Une compilation ad hoc est produite lorsque les secrets Apple sont absents. Elle permet les tests, mais macOS peut encore afficher l’avertissement « développeur non identifié ».
+An ad hoc build is produced when Apple secrets are absent. It supports testing, but macOS may still display an “unidentified developer” warning.
 
-Pour une installation publique fluide, configurer dans **GitHub → Settings → Secrets and variables → Actions** :
+For a smooth public installation, configure the following under **GitHub → Settings → Secrets and variables → Actions**:
 
-- `APPLE_CERTIFICATE` ;
-- `APPLE_CERTIFICATE_PASSWORD` ;
-- `APPLE_SIGNING_IDENTITY` ;
-- `APPLE_ID` ;
-- `APPLE_PASSWORD` avec un mot de passe d’application Apple ;
+- `APPLE_CERTIFICATE`;
+- `APPLE_CERTIFICATE_PASSWORD`;
+- `APPLE_SIGNING_IDENTITY`;
+- `APPLE_ID`;
+- `APPLE_PASSWORD` with an app-specific password;
 - `APPLE_TEAM_ID`.
 
-Ces secrets activent la signature Developer ID et la notarisation sans modifier le code. Aucun certificat ne doit être ajouté au dépôt.
+These secrets enable Developer ID signing and notarisation without changing the code. Never add a certificate to the repository.
 
-## Windows et Linux
+## Windows and Linux
 
-Le pipeline produit déjà un installateur NSIS Windows x64 ainsi que des paquets AppImage et DEB Linux x64. Ils restent indiqués « à valider » dans la documentation publique tant qu’un test manuel d’installation, de persistance locale, d’import Excel et d’export PNG/SVG n’a pas été effectué sur chaque système.
+The pipeline produces a Windows x64 NSIS installer and Linux x64 AppImage and DEB packages. Public documentation continues to mark them as “to be validated” until installation, local persistence, Excel import, and PNG/SVG export have been tested manually on each system.
