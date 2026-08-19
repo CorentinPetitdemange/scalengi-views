@@ -1,52 +1,52 @@
-# Journal des versions
+# Changelog
 
-Les changements notables de Scalengi Views sont documentés ici. Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et les versions suivent [Semantic Versioning](https://semver.org/).
+All notable changes to Scalengi Views are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases follow [Semantic Versioning](https://semver.org/).
 
 ## [0.1.0-alpha.3] - 2026-08-19
 
-### Ajouté
+### Added
 
-- interface applicative en anglais par défaut avec sélection persistante du français dans les paramètres ;
-- organisation du métamodèle par niveaux, couches côte à côte et couches transverses ordonnées à gauche ou à droite ;
-- filtres de couches, modes d’affichage des relations et réglage d’espacement du métamodèle ;
-- renommage et suppression complète d’une vue depuis sa structure, avec confirmation ;
-- suppression explicite des données importées et activation conditionnelle de la vue d’exemple.
+- English application interface by default, with persistent French selection in settings;
+- metamodel organisation by levels, side-by-side layers, and ordered transverse layers on the left or right;
+- layer filters, relation display modes, and metamodel spacing controls;
+- view renaming and complete deletion from the Structure tab, with confirmation;
+- explicit deletion of imported data and conditional activation of the sample view.
 
-### Modifié
+### Changed
 
-- cycle de vie des données d’exemple : leur désactivation supprime désormais leurs données et leur structure sans réactivation au rechargement ;
-- cartes du métamodèle et espacement des objets simplifiés pour améliorer la lisibilité ;
-- configuration des sources futures préparée pour Scalengi Inventory, Scalengi App et API/BDD, sans activer de connecteur.
+- sample-data lifecycle: disabling a sample now removes its data and structure without reactivating it after reload;
+- simplified metamodel cards and object spacing for improved readability;
+- prepared future source options for Scalengi Inventory, Scalengi App, and API/database, without enabling a connector.
 
-### Corrigé
+### Fixed
 
-- exports PNG et SVG produits à partir de la surface réelle de la vue avec un arrière-plan transparent ;
-- étiquettes des relations du métamodèle affichées sans cardinalités ;
-- migration des configurations enregistrées lors de l’ajout de nouveaux champs de structure.
+- PNG and SVG exports now use the actual view surface with a transparent background;
+- metamodel relation labels are displayed without cardinalities;
+- saved configurations are migrated when new structure fields are added.
 
 ## [0.1.0-alpha.2] - 2026-08-16
 
-### Corrigé
+### Fixed
 
-- la release macOS utilise désormais la signature ad hoc lorsque les secrets Apple ne sont pas configurés ;
-- les variables Apple vides ne déclenchent plus l’import d’un certificat inexistant dans GitHub Actions.
+- macOS releases now use ad hoc signing when Apple secrets are not configured;
+- empty Apple variables no longer trigger the import of a nonexistent certificate in GitHub Actions.
 
 ## [0.1.0-alpha.1] - 2026-08-16
 
-### Ajouté
+### Added
 
-- première application desktop Tauri pour macOS, Windows et Linux, bâtie sur la même base React que l’application web ;
-- pipeline GitHub de génération des installateurs et publication des préversions ;
-- Vue en découpage générique avec modèles Capacités fonctionnelles, POS urbain et structure vierge ;
-- filtres multicritères, multisélection et projection libre des niveaux ;
-- Métamodèle du SI navigable sur React Flow ;
-- Analyse d’impact du SI par couches remaniée ;
-- configurations YAML et jeux de données d’exemple portables par instance.
+- first Tauri desktop application for macOS, Windows, and Linux, built from the same React codebase as the web application;
+- GitHub pipeline for building installers and publishing prereleases;
+- generic Partition View with Business Capabilities, Urban Information System Map, and blank-structure presets;
+- multi-criteria filters, multi-selection, and independent level projection;
+- navigable Information System Metamodel built with React Flow;
+- redesigned layered information-system impact analysis;
+- portable YAML configurations and per-instance sample datasets.
 
-### Sécurité
+### Security
 
-- politique CSP restrictive pour le shell desktop ;
-- imports Excel et YAML maintenus localement et validés aux frontières.
+- restrictive CSP policy for the desktop shell;
+- Excel and YAML imports remain local and are validated at trust boundaries.
 
 [0.1.0-alpha.3]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.1...v0.1.0-alpha.2

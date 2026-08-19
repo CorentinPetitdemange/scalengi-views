@@ -1,41 +1,41 @@
-# Contribuer à Scalengi Views
+# Contributing to Scalengi Views
 
-Merci de contribuer à Scalengi Views. Les contributions doivent rester alignées avec les frontières décrites dans [`AGENTS.md`](AGENTS.md) et [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Thank you for contributing to Scalengi Views. Contributions must remain aligned with the boundaries described in [`AGENTS.md`](AGENTS.md) and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## Validation d’une contribution
+## Contribution approval
 
-Toute contribution communautaire commence par une issue. Le mainteneur examine la proposition, peut demander des précisions et indique son accord avec le label **`status: accepted`**. N’engagez pas l’implémentation et n’ouvrez pas de pull request avant cette validation.
+Every community contribution starts with an issue. The maintainer reviews the proposal, may request clarification, and signals approval with the **`status: accepted`** label. Do not begin implementation or open a pull request before this approval.
 
-Les vulnérabilités suivent exclusivement la procédure privée décrite dans [`SECURITY.md`](SECURITY.md) et ne doivent jamais être publiées dans une issue.
+Vulnerabilities must follow the private process described in [`SECURITY.md`](SECURITY.md) and must never be published in an issue.
 
-## Préparer l’environnement
+## Setting up the environment
 
-Prérequis : Node.js 22.13 ou supérieur et pnpm 10.
+Requirements: Node.js 22.13 or later and pnpm 10.
 
 ```bash
-git clone https://github.com/VOTRE-COMPTE/scalengi-views.git
+git clone https://github.com/YOUR-ACCOUNT/scalengi-views.git
 cd scalengi-views
 git remote add upstream https://github.com/CorentinPetitdemange/scalengi-views.git
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Créez d’abord un fork depuis GitHub, puis remplacez `VOTRE-COMPTE` par votre identifiant.
+Create a GitHub fork first, then replace `YOUR-ACCOUNT` with your username.
 
-## Workflow Git
+## Git workflow
 
-1. Créer une issue et attendre sa validation avec le label `status: accepted`.
-2. Mettre à jour votre fork depuis `upstream/main`.
-3. Créer une branche dans votre fork : `feat/...`, `fix/...`, `docs/...`, `refactor/...` ou `chore/...`.
-4. Faire des commits courts et explicites selon [Conventional Commits](https://www.conventionalcommits.org/) : `feat:`, `fix:`, `docs:`, `refactor:`, `test:` ou `chore:`.
-5. Pousser cette branche vers votre fork, jamais vers `main`.
-6. Ouvrir une pull request ciblée, référencer l’issue validée, expliquer la valeur produite et joindre une capture pour toute évolution visuelle.
-7. Attendre la réussite de la CI, la revue du mainteneur et la résolution des conversations.
-8. Le mainteneur décide de la fusion, effectuée par **squash**, et supprime la branche si nécessaire.
+1. Create an issue and wait for approval with the `status: accepted` label.
+2. Update your fork from `upstream/main`.
+3. Create a branch in your fork: `feat/...`, `fix/...`, `docs/...`, `refactor/...`, or `chore/...`.
+4. Make short, explicit commits following [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, or `chore:`.
+5. Push the branch to your fork, never to `main`.
+6. Open a focused pull request, reference the accepted issue, explain the value delivered, and attach a screenshot for visual changes.
+7. Wait for CI, maintainer review, and resolution of all conversations.
+8. The maintainer decides whether to merge. Merges use **squash**, and the branch is deleted when appropriate.
 
-Personne ne pousse directement sur `main`, y compris le mainteneur. Chaque changement passe par une pull request, la CI et la résolution des conversations. Le mainteneur reste seul responsable de la décision de fusion et de publication.
+Nobody pushes directly to `main`, including the maintainer. Every change goes through a pull request, CI, and resolved review conversations. The maintainer remains solely responsible for merge and release decisions.
 
-## Vérifications requises
+## Required checks
 
 ```bash
 pnpm exec tsc --noEmit
@@ -44,12 +44,12 @@ pnpm lint
 pnpm test
 ```
 
-Pour une modification visuelle, vérifier également la vue concernée en mode normal et plein écran, sans erreur dans la console du navigateur.
+For a visual change, also verify the affected view in normal and full-screen layouts with no browser console errors.
 
-## Ajouter une vue
+## Adding a view
 
-Suivre [`docs/CREATE_A_VIEW.md`](docs/CREATE_A_VIEW.md). Une vue doit être enregistrée uniquement via un `ViewDefinition` complet et ne doit introduire aucun branchement par identifiant dans le shell.
+Follow [`docs/CREATE_A_VIEW.md`](docs/CREATE_A_VIEW.md). A view must be registered only through a complete `ViewDefinition` and must not introduce view-id branching in the shell.
 
-## Licence des contributions
+## Contribution licence
 
-En soumettant une contribution, vous acceptez qu’elle soit distribuée sous la [licence MIT](LICENSE) du projet.
+By submitting a contribution, you agree that it may be distributed under the project's [MIT licence](LICENSE).

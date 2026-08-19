@@ -1,22 +1,22 @@
-# Politique de sécurité
+# Security Policy
 
-## Versions prises en charge
+## Supported versions
 
-Tant qu’aucune version stable n’est publiée, seule la dernière version de la branche `main` reçoit les correctifs de sécurité.
+Until a stable release is published, only the latest version of the `main` branch receives security fixes.
 
-## Signaler une vulnérabilité
+## Reporting a vulnerability
 
-Ne publiez pas de vulnérabilité dans une issue publique. Utilisez la fonctionnalité **Report a vulnerability** de l’onglet Security du dépôt GitHub afin d’ouvrir un avis de sécurité privé.
+Do not publish vulnerabilities in a public issue. Use **Report a vulnerability** in the GitHub repository's Security tab to open a private security advisory.
 
-Le signalement doit idéalement contenir :
+Ideally, a report should include:
 
-- la version ou le commit concerné ;
-- les étapes minimales de reproduction ;
-- l’impact estimé ;
-- une proposition de correction, si elle existe.
+- the affected version or commit;
+- minimal reproduction steps;
+- the estimated impact;
+- a proposed fix, when available.
 
-Un accusé de réception sera donné dès que possible. La vulnérabilité et son correctif resteront privés jusqu’à ce qu’une publication coordonnée soit possible.
+Receipt will be acknowledged as soon as possible. The vulnerability and its fix will remain private until a coordinated disclosure is possible.
 
-## Périmètre actuel
+## Current scope
 
-Scalengi Views fonctionne localement dans le navigateur. Les imports Excel, YAML et IndexedDB sont considérés comme non fiables. Aucun fichier métier ne doit être envoyé vers un serveur sans décision produit explicite.
+Scalengi Views runs locally in the browser. Excel, YAML, and IndexedDB inputs are considered untrusted. No business file may be sent to a server without an explicit product decision.

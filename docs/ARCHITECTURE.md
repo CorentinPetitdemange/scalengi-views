@@ -1,130 +1,130 @@
-# Architecture de Scalengi Views
+# Scalengi Views architecture
 
-## Objectif
+## Purpose
 
-Scalengi Views est composé d’une bibliothèque ouverte de moteurs de vues et d’un shell web local. La bibliothèque expose le même contrat public au shell autonome et à ses intégrations.
+Scalengi Views consists of an open library of view engines and a local web shell. The library exposes the same public contract to the standalone shell and its integrations.
 
-L’unité fonctionnelle est une **instance de vue** :
+The functional unit is a **view instance**:
 
 ```text
 ViewInstance
-├── type            -> ViewDefinition enregistrée
-├── configuration   -> structure portable (YAML), exemple distribuable facultatif
-├── data            -> données propres à l’instance
-└── source          -> source active exclusive : exemple, Excel ou aucune
+├── type            -> registered ViewDefinition
+├── configuration   -> portable structure (YAML), with optional distributable sample
+├── data            -> instance-owned data
+└── source          -> exclusive active source: sample, Excel, or none
 ```
 
-La configuration définit ce que la vue sait organiser : axes, couches, phases, niveaux, statuts ou catégories. Elle peut aussi embarquer un `exampleData` facultatif afin qu’une vue partagée reste immédiatement démontrable. Cet exemple est un contenu de distribution, pas une seconde source active : l’instance n’affiche toujours qu’une source à la fois. Activer l’exemple copie `configuration.exampleData` vers `data` ; importer Excel le remplace.
+The configuration defines what the view can organise: axes, layers, phases, levels, statuses, or categories. It may also embed optional `exampleData` so that a shared view remains immediately demonstrable. This sample is distributable content, not a second active source: an instance still displays exactly one source at a time. Enabling the sample copies `configuration.exampleData` into `data`; importing Excel replaces it.
 
-Un type de vue peut proposer plusieurs **modèles de départ** lorsqu’ils partagent réellement le même moteur et le même contrat. La Vue en découpage fournit ainsi Capacités fonctionnelles, POS urbain et Structure vierge comme modèles, et non comme trois moteurs dupliqués.
+A view type may provide several **starting presets** when they genuinely share the same engine and contract. The Partition View therefore provides Business Capabilities, Urban Information System Map, and Blank Structure as presets rather than three duplicated engines.
 
-## Dépendances entre couches
+## Layer dependencies
 
 ```text
 app shell
-   │ consomme uniquement le contrat public
+   │ consumes only the public contract
    ▼
 ViewRegistry ── ViewDefinition
-   │               ├── renderer React
-   │               ├── configuration standard/vide
-   │               ├── contrat Excel dynamique
-   │               ├── import et validation Excel
-   │               ├── données de démonstration embarquées dans le YAML standard
-   │               └── métriques du shell
+   │               ├── React renderer
+   │               ├── standard/blank configuration
+   │               ├── dynamic Excel contract
+   │               ├── Excel import and validation
+   │               ├── demo data embedded in standard YAML
+   │               └── shell metrics
    ▼
 core library
 configuration · dataset · types · xlsx
 ```
 
-Le point d’entrée `desktop/` monte le même `ScalengiViewsApp` avec Vite en sortie statique. `src-tauri/` ne contient qu’un shell natif minimal ; aucune règle de vue, donnée ou connecteur n’y est dupliqué. La version web et les applications macOS, Windows et Linux partagent donc réellement `app/` et `library/`.
+The `desktop/` entry point mounts the same `ScalengiViewsApp` through a static Vite build. `src-tauri/` contains only a minimal native shell; no view, data, or connector rule is duplicated there. The web application and macOS, Windows, and Linux applications therefore genuinely share `app/` and `library/`.
 
-Le flux inverse est interdit : une vue ne connaît pas le shell, IndexedDB ou une autre vue.
+The reverse dependency is forbidden: a view knows nothing about the shell, IndexedDB, or another view.
 
-## Responsabilités
+## Responsibilities
 
 ### `app/`
 
-- création et ouverture des instances ;
-- navigation Vue / Structure / Données / Guide ;
-- préférences d’interface ;
-- persistance locale via IndexedDB ;
-- aucune règle métier spécifique à un identifiant de vue.
+- create and open instances;
+- navigate between View, Structure, Data, and Guide;
+- manage interface preferences;
+- persist locally through IndexedDB;
+- contain no business rule tied to a view identifier.
 
 ### `library/src/view-registry.ts`
 
-Contrat de plug-in interne. Une définition complète suffit pour apparaître dans le catalogue, créer une instance, afficher ses métriques et fournir ses imports.
+Internal plug-in contract. One complete definition is enough to appear in the catalogue, create an instance, display its metrics, and provide its imports.
 
 ### `library/src/configuration.ts`
 
-Schéma descriptif versionné. Le YAML est une représentation portable du même objet, y compris de son jeu d’exemple facultatif. Ce module valide forme, tailles, types scalaires, identifiants, unicité et enveloppe de données d’exemple.
+Versioned descriptive schema. YAML is a portable representation of the same object, including its optional sample dataset. This module validates shape, sizes, scalar types, identifiers, uniqueness, and the sample-data envelope.
 
 ### `library/src/dataset.ts`
 
-Enveloppe de données partagée. Elle garantit que toutes les collections existent, y compris après lecture d’une ancienne entrée IndexedDB.
+Shared data envelope. It guarantees that every collection exists, including after reading an older IndexedDB entry.
 
-### Moteurs de vues
+### View engines
 
-Chaque moteur reçoit uniquement `data` et `configuration`. React Flow est utilisé lorsqu’un espace navigable ou des relations structurées apportent de la valeur ; les matrices, radars et bandes utilisent un rendu plus direct.
+Each engine receives only `data` and `configuration`. React Flow is used when a navigable space or structured relationships add value; matrices, radars, and bands use more direct rendering.
 
-### Vue en découpage
+### Partition View
 
-`partition-view` est le moteur générique de répartition hiérarchique. Sa configuration décrit des niveaux ordonnés (`container`, `card` ou `reference`), des attributs et des vocabulaires colorés. Ses données utilisent deux collections seulement :
+`partition-view` is the generic hierarchical partition engine. Its configuration describes ordered levels (`container`, `card`, or `reference`), attributes, and coloured vocabularies. Its data uses only two collections:
 
-- `partitionItems` pour les éléments, leur niveau, leur parent et leurs valeurs ;
-- `partitionRelations` pour les liens facultatifs plusieurs-à-plusieurs.
+- `partitionItems` for elements, their level, parent, and values;
+- `partitionRelations` for optional many-to-many links.
 
-Le POS utilise les relations parent-enfant. Le modèle Capacités utilise la même hiérarchie pour Domaine → Capacité et des relations pour la couverture applicative. Les anciennes instances `pos` et `urban-pos` sont migrées localement vers ce contrat lors de leur lecture.
+The Urban Information System Map uses parent-child relationships. The Business Capabilities preset uses the same hierarchy for Domain → Capability and relationships for application coverage. Legacy `pos` and `urban-pos` instances are migrated locally to this contract when read.
 
-Le panneau de filtres est lui aussi générique : il peut limiter un niveau ou toute information déclarée dans `attributes`, y compris lorsqu’elle est portée par un élément de référence lié.
+The filter panel is generic as well: it can restrict a level or any information declared in `attributes`, including information carried by a linked reference element.
 
-Plusieurs valeurs peuvent être sélectionnées dans une même condition et plusieurs conditions peuvent être combinées en logique `all` (ET) ou `any` (OU). La sélection des niveaux est une projection d’affichage stricte : choisir uniquement Îlot masque réellement Zone et Quartier, et les îlots deviennent les racines visibles. Les filtres restent un état d’exploration local au renderer et ne modifient ni la configuration ni les données.
+Several values may be selected in one condition, and conditions may be combined with `all` (AND) or `any` (OR) logic. Level selection is a strict display projection: selecting only Block genuinely hides Zone and District, and blocks become visible roots. Filters remain local renderer exploration state and modify neither configuration nor data.
 
-### Analyse d’impact du SI par couches
+### Layered information-system impact analysis
 
-`si-layers` répond à une question d’impact, contrairement au métamodèle. En vue d’ensemble, il présente les objets dans leurs couches configurées. La sélection d’un point focal calcule ensuite un périmètre multi-niveaux sur les relations orientées : entrants, sortants ou les deux. La profondeur est bornée à quatre niveaux et les objets hors périmètre disparaissent afin de conserver une lecture décisionnelle.
+`si-layers` answers an impact question, unlike the metamodel. Its overview presents objects in their configured layers. Selecting a focal point then computes a multi-level scope across directed relationships: incoming, outgoing, or both. Depth is capped at four levels, and out-of-scope objects disappear to preserve decision readability.
 
-### Métamodèle du SI
+### Information System Metamodel
 
-L’ordre de la section `layers` fixe la lecture de haut en bas des couches empilées. Une couche transverse porte aussi un côté `left` ou `right` ; les couches placées du même côté conservent entre elles l’ordre de la liste.
+The order of the `layers` section defines the top-to-bottom reading order of stacked layers. A transverse layer also has a `left` or `right` side; layers on the same side retain their list order.
 
-`si-metamodel` décrit la grammaire d’un référentiel et non ses instances. Sa configuration porte les couches, leur niveau, leur disposition empilée ou transverse, les types d’objets et les relations autorisées avec leurs cardinalités. Le renderer React Flow consomme directement cette structure. Les couches empilées forment des bandes horizontales successives ; plusieurs couches portant le même niveau partagent la même ligne et sont placées côte à côte. Les couches transverses sont placées à gauche ou à droite. Sur un même côté, les couches ayant le même numéro de colonne sont empilées verticalement ; des numéros différents créent des colonnes côte à côte. Dans les deux cas, l’ordre de la liste fixe l’ordre des groupes et des couches à l’intérieur d’un groupe. La sélection des couches, le niveau d’espacement et le mode d’affichage des relations restent des états locaux d’exploration qui ne modifient pas la configuration.
+`si-metamodel` describes the grammar of a repository rather than its instances. Its configuration contains layers, their level, their stacked or transverse layout, object types, and permitted relationships with cardinalities. The React Flow renderer consumes this structure directly. Stacked layers form successive horizontal bands; several layers with the same level share one row and sit side by side. Transverse layers sit on the left or right. On one side, layers with the same column number stack vertically, while different numbers create side-by-side columns. In both cases, list order determines group order and layer order within each group. Layer selection, spacing level, and relation display mode remain local exploration state and do not modify configuration.
 
-Par défaut, les relations ne sont dessinées qu’autour du type sélectionné afin de préserver la lisibilité. L’utilisateur peut aussi toutes les masquer ou afficher l’ensemble du graphe. Son classeur Excel constitue une autre manière d’éditer la configuration et l’import peut retourner un nouveau couple `{ configuration, data }` ; `data` reste vide pour cette vue structurelle. Les anciens classeurs sans colonne `niveau` conservent une ligne distincte par couche ; la colonne historique `tranche` reste acceptée à l’import. Sans `colonne_transverse`, chaque couche transverse conserve sa propre colonne. Les classeurs sans `disposition` sont interprétés avec des couches empilées.
+By default, relationships are drawn only around the selected type to preserve readability. Users may also hide all relationships or display the full graph. The Excel workbook provides another way to edit configuration, and import may return a new `{ configuration, data }` pair; `data` remains empty for this structural view. Older workbooks without a `niveau` column keep one row per layer; the legacy `tranche` column remains accepted on import. Without `colonne_transverse`, each transverse layer keeps its own column. Workbooks without `disposition` are interpreted as stacked layers.
 
-Sans colonne Excel `cote`, une couche transverse est placée à droite pour préserver la compatibilité avec les anciens classeurs.
+Without an Excel `cote` column, a transverse layer is placed on the right for backward compatibility.
 
-### Export des vues
+### View export
 
-Le shell enveloppe le renderer actif dans une surface d’export et propose PNG/SVG à toutes les vues sans logique spécifique par identifiant. `library/src/export-view.ts` contient le moteur générique inspiré de l’export Scalengi ; `app/view-export-menu.tsx` ne porte que l’interaction. `html-to-image` est chargé dynamiquement au premier export. Un renderer peut exclure un contrôle avec `data-export-exclude` sans connaître le shell.
+The shell wraps the active renderer in an export surface and provides PNG/SVG export to every view without identifier-specific logic. `library/src/export-view.ts` contains the generic engine inspired by Scalengi export; `app/view-export-menu.tsx` contains only the interaction. `html-to-image` is loaded dynamically on first export. A renderer may exclude a control with `data-export-exclude` without knowing the shell.
 
-### Imports et modèles Excel
+### Excel imports and templates
 
-Le modèle XLSX est généré dans le navigateur depuis la configuration active. L’import est local, borné en taille et valide les relations avant de produire un `ViewDataset`. Une vue structurelle peut également retourner une nouvelle `configuration`, que le shell enregistre sans branchement sur l’identifiant de la vue.
+The XLSX template is generated in the browser from the active configuration. Import is local, size-bounded, and validates relationships before producing a `ViewDataset`. A structural view may also return a new `configuration`, which the shell stores without branching on the view identifier.
 
-## Stockage et sécurité
+## Storage and security
 
-- IndexedDB contient les instances ; localStorage contient seulement thème et couleur.
-- Aucun fichier ou contenu métier n’est envoyé à un serveur.
-- Le jeu d’exemple activé provient de la configuration courante ; en son absence, l’application propose le modèle standard complet.
-- YAML, Excel et IndexedDB sont des frontières non fiables.
-- Les textes importés restent des chaînes rendues par React ; aucun HTML importé n’est interprété.
-- Les identifiants réservés (`__proto__`, `prototype`, `constructor`) sont refusés.
+- IndexedDB stores instances; localStorage stores only theme, colour, language, and catalogue preferences.
+- No file or business content is sent to a server.
+- The enabled sample comes from the current configuration; when absent, the application offers the complete standard model.
+- YAML, Excel, and IndexedDB are untrusted boundaries.
+- Imported text remains strings rendered by React; imported HTML is never interpreted.
+- Reserved identifiers (`__proto__`, `prototype`, `constructor`) are rejected.
 
-## Contrat des sources
+## Source contract
 
-Une source externe produit le même couple `{ configuration, data }` qu’un import Excel. Elle reste derrière l’interface de source et ne modifie pas les moteurs de vues.
+An external source produces the same `{ configuration, data }` pair as an Excel import. It remains behind the source interface and does not modify view engines.
 
-## Connecteurs et collaboration
+## Connectors and collaboration
 
-Scalengi Views est ouvert aux contributions visant à implémenter des connecteurs tiers. Afin de préserver la cohérence du contrat de données, la sécurité des échanges et la compatibilité entre les moteurs de vues, ces travaux sont menés en collaboration avec Scalengi.
+Scalengi Views welcomes contributions that implement third-party connectors. To preserve data-contract consistency, exchange security, and compatibility between view engines, this work is carried out in collaboration with Scalengi.
 
-Pour proposer un connecteur ou échanger sur une intégration : [corentin@scalengi.com](mailto:corentin@scalengi.com).
+To propose a connector or discuss an integration, contact [corentin@scalengi.com](mailto:corentin@scalengi.com).
 
-Les extensions de connectivité prévues couvrent notamment :
+Planned connectivity extensions include:
 
-- un connecteur natif avec le référentiel Scalengi ;
-- une intégration MCP pour exposer et consommer des données via le Model Context Protocol ;
-- une API REST pour les outils et référentiels tiers ;
-- des adaptateurs de bases de données pour utiliser un autre type de référentiel.
+- a native connector to the Scalengi repository;
+- an MCP integration for exposing and consuming data through the Model Context Protocol;
+- a REST API for third-party tools and repositories;
+- database adapters for using another repository type.
 
-Quel que soit le transport employé, un connecteur fournit la configuration de la vue et ses données dans le contrat commun, sans introduire de dépendance spécifique dans les moteurs de rendu.
+Regardless of transport, a connector supplies the view configuration and data through the shared contract without introducing a specific dependency into rendering engines.

@@ -1,98 +1,98 @@
-# Créer et intégrer une vue
+# Creating and integrating a view
 
-Une vue est livrée comme une définition complète. Son intégration ne doit nécessiter aucune modification dans `app/`.
+A view is delivered as a complete definition. Integrating it must not require any change in `app/`.
 
-Avant d’ajouter un moteur, vérifier qu’un moteur existant ne répond pas déjà au besoin avec une autre configuration. Un découpage hiérarchique doit devenir un modèle de `partition-view`, pas une nouvelle vue React.
+Before adding an engine, check whether an existing engine already meets the need with a different configuration. A hierarchical decomposition must become a `partition-view` preset, not a new React view.
 
-## 1. Définir la question de décision
+## 1. Define the decision question
 
-Écrire d’abord :
+Start by writing down:
 
-- la question à laquelle la vue répond ;
-- l’utilisateur principal ;
-- la décision rendue plus simple ;
-- les objets affichés et leur vocabulaire contrôlé ;
-- pourquoi un canvas, une matrice, un radar ou une autre représentation est approprié.
+- the question answered by the view;
+- the primary user;
+- the decision made easier;
+- the displayed objects and their controlled vocabulary;
+- why a canvas, matrix, radar, or another representation is appropriate.
 
-Ne pas créer une vue qui duplique un schéma de processus ou affiche seulement des données sans lecture décisionnelle.
+Do not create a view that duplicates a process diagram or merely displays data without a decision-oriented interpretation.
 
-## 2. Étendre les données partagées
+## 2. Extend the shared data
 
-Ajouter les types nécessaires dans `library/src/types.ts`, puis les collections correspondantes dans `ViewDataset`, `createEmptyDataset` et `normalizeDataset` dans `library/src/dataset.ts`.
+Add the required types to `library/src/types.ts`, then add the corresponding collections to `ViewDataset`, `createEmptyDataset`, and `normalizeDataset` in `library/src/dataset.ts`.
 
-Les champs importés doivent rester sérialisables : chaînes, nombres, booléens, tableaux et objets simples.
+Imported fields must remain serialisable: strings, numbers, booleans, arrays, and plain objects.
 
-## 3. Définir la structure configurable
+## 3. Define the configurable structure
 
-Ajouter la configuration standard dans `builtin-configurations.ts` :
+Add the standard configuration to `builtin-configurations.ts`:
 
-- une section par dimension configurable ;
-- des identifiants stables et non traduits ;
-- des libellés modifiables ;
-- des couleurs/options seulement si le renderer les consomme réellement ;
-- un modèle vide utilisable.
+- one section per configurable dimension;
+- stable, untranslated identifiers;
+- editable labels;
+- colours and options only when the renderer actually consumes them;
+- a usable blank configuration.
 
-`defineView` embarque automatiquement `createDemoData()` dans `exampleData` de la configuration standard. Une configuration YAML importée peut fournir son propre `exampleData`. La configuration vide, elle, ne doit jamais en contenir.
+`defineView` automatically embeds `createDemoData()` as `exampleData` in the standard configuration. An imported YAML configuration may provide its own `exampleData`. The blank configuration must never contain sample data.
 
-Le renderer doit utiliser les identifiants, pas supposer les libellés français.
+The renderer must use identifiers and must not assume French labels.
 
-## 4. Construire le contrat Excel
+## 4. Build the Excel contract
 
-Ajouter un `build…Template(configuration)` qui produit :
+Add a `build…Template(configuration)` function that produces:
 
-- les feuilles et colonnes minimales ;
-- les lignes structurelles préremplies ;
-- les listes de valeurs issues de la configuration ;
-- une feuille `Mode d'emploi` courte.
+- the minimum worksheets and columns;
+- prefilled structural rows;
+- value lists derived from the configuration;
+- a short `Mode d'emploi` worksheet.
 
-Ne pas ajouter de fichier XLSX statique dans `public/`.
+Do not add a static XLSX file to `public/`.
 
-## 5. Importer et valider
+## 5. Import and validate
 
-Ajouter `import…Excel(file, configuration)` dans `excel-import.ts` en réutilisant les helpers communs.
+Add `import…Excel(file, configuration)` to `excel-import.ts`, reusing the shared helpers.
 
-Par défaut l’import retourne `{ data, rowCount, warnings }`. Une vue dont le classeur décrit la structure elle-même peut aussi retourner `configuration`; le shell l’appliquera à l’instance avec la source importée.
+By default, the import returns `{ data, rowCount, warnings }`. A view whose workbook describes the structure itself may also return `configuration`; the shell applies it to the instance with the imported source.
 
-Vérifier avant de retourner :
+Before returning, validate:
 
-- feuilles et colonnes requises ;
-- identifiants obligatoires et uniques ;
-- références entre feuilles ;
-- valeurs contrôlées par la configuration ;
-- bornes numériques ;
-- avertissements utiles mais non bloquants.
+- required worksheets and columns;
+- required and unique identifiers;
+- cross-sheet references;
+- values controlled by the configuration;
+- numeric bounds;
+- useful non-blocking warnings.
 
-## 6. Créer le renderer
+## 6. Create the renderer
 
-Créer `MyView.tsx` avec cette frontière :
+Create `MyView.tsx` with this boundary:
 
 ```tsx
 export function MyView({ data, configuration }: ViewRendererProps) {
-  // aucun stockage, fichier ou réseau ici
+  // no storage, file, or network access here
   return <section className="view-workspace">…</section>;
 }
 ```
 
-Prévoir : état vide, vue normale, plein écran si la densité le justifie, sélection/détail et adaptation à une configuration vide ou partielle.
+Provide an empty state, normal view, full-screen mode when density justifies it, selection/detail, and support for an empty or partial configuration.
 
-Le shell fournit automatiquement l’export PNG/SVG. Placer `data-view-export-content` sur la zone de visualisation à cadrer : le PNG/SVG prendra cette zone et non toute la fenêtre de la vue. Une vue ne doit donc pas réimplémenter l’export. Pour exclure un contrôle ou un élément purement interactif de l’image, ajouter `data-export-exclude` sur sa racine. Le fond quadrillé, les contrôles et panneaux React Flow ainsi que le bouton `.rf-fullscreen-button` sont déjà exclus par défaut.
+The shell provides PNG/SVG export automatically. Place `data-view-export-content` on the visualisation area to frame: PNG/SVG export captures that area rather than the whole view window. A view must not reimplement export. To exclude a control or purely interactive element from the image, add `data-export-exclude` to its root. The grid background, React Flow controls and panels, and the `.rf-fullscreen-button` are already excluded by default.
 
-## 7. Enregistrer une définition unique
+## 7. Register one definition
 
-Dans `builtin-views.ts`, utiliser `defineView` :
+Use `defineView` in `builtin-views.ts`:
 
 ```ts
 export const myViewDefinition = defineView({
   id: "my-view",
-  title: "Ma vue",
-  shortTitle: "Ma vue",
-  demoName: "Ma vue — Démonstration",
-  category: "Architecture d’entreprise",
+  title: "My view",
+  shortTitle: "My view",
+  demoName: "My view — Demo",
+  category: "Enterprise architecture",
   catalogGroup: "enterprise-architecture",
-  description: "La valeur produite par la vue.",
+  description: "The value delivered by the view.",
   icon: "boxes",
   accent: "blue",
-  insights: ["Décision", "Risque", "Trajectoire"],
+  insights: ["Decision", "Risk", "Roadmap"],
   component: MyView,
   createEmptyData: createEmptyDataset,
   createDemoData: myDemo,
@@ -101,31 +101,31 @@ export const myViewDefinition = defineView({
   buildTemplate: buildMyTemplate,
   importExcel: importMyExcel,
   summarize: (data) => [
-    { label: "Objets", value: data.myObjects.length },
+    { label: "Objects", value: data.myObjects.length },
   ],
   guide: { purpose: "…", questions: [], steps: [], sheets: [] },
 });
 
 export const viewRegistry = new ViewRegistry().registerMany([
-  // définitions existantes,
+  // existing definitions,
   myViewDefinition,
 ]);
 ```
 
-Quand plusieurs usages partagent le renderer, le contrat Excel et le modèle de données, déclarer des `presets` dans la définition. Chaque modèle fournit une configuration complète, éventuellement accompagnée de son `exampleData`. Le shell affiche automatiquement ces choix lors de la création, sans branchement sur l’identifiant de la vue.
+When multiple use cases share the renderer, Excel contract, and data model, declare `presets` in the definition. Each preset provides a complete configuration, optionally with its `exampleData`. The shell displays these choices automatically during creation without branching on the view identifier.
 
-Si l’intégration exige un `if (definition.id === "my-view")` dans le shell, la définition est incomplète.
+If integration requires `if (definition.id === "my-view")` in the shell, the definition is incomplete.
 
-Choisir `catalogGroup` parmi :
+Choose `catalogGroup` from:
 
-- `organisation-experience` ;
-- `enterprise-architecture` ;
-- `diagnostic-maturity` ;
+- `organisation-experience`;
+- `enterprise-architecture`;
+- `diagnostic-maturity`;
 - `transformation-governance`.
 
-## 8. Tester
+## 8. Test
 
-- ajouter les assertions de contrat utiles ;
-- exécuter `pnpm lint` et `pnpm test` ;
-- ouvrir la vue locale ;
-- vérifier normal, plein écran, filtre, détail, structure standard, structure vide, création avec/sans exemple et absence d’erreur console.
+- add relevant contract assertions;
+- run `pnpm lint` and `pnpm test`;
+- open the local view;
+- verify normal mode, full-screen mode, filters, details, standard structure, blank structure, creation with and without sample data, and an empty browser console.
