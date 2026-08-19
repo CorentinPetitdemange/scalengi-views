@@ -1,27 +1,27 @@
-## Objectif
+## Objective
 
-<!-- Quel problème cette pull request résout-elle ? -->
+<!-- What problem does this pull request solve? -->
 
-## Issue validée
+## Accepted issue
 
-<!-- Référence obligatoire pour une contribution communautaire : Closes #123 -->
+<!-- Required reference for a community contribution: Closes #123 -->
 
-## Changements
+## Changes
 
 - 
 
-## Vérifications
+## Checks
 
 - [ ] `pnpm exec tsc --noEmit`
 - [ ] `pnpm version:check`
 - [ ] `pnpm lint`
 - [ ] `pnpm test`
-- [ ] `pnpm desktop:check` si le shell, le packaging ou les dépendances ont changé
-- [ ] Vérification visuelle normale et plein écran, si nécessaire
-- [ ] Documentation mise à jour, si nécessaire
-- [ ] Aucun secret, fichier métier ou donnée personnelle ajouté
-- [ ] L’issue liée porte le label `status: accepted` pour une contribution communautaire
+- [ ] `pnpm desktop:check` if the shell, packaging, or dependencies changed
+- [ ] Normal and full-screen visual checks, when relevant
+- [ ] Documentation updated, when relevant
+- [ ] No secrets, business files, or personal data added
+- [ ] The linked issue has the `status: accepted` label for a community contribution
 
-## Captures
+## Screenshots
 
-<!-- Obligatoires pour une évolution visuelle. -->
+<!-- Required for visual changes. -->

@@ -1,29 +1,29 @@
-# Scalengi Views — environnement de démonstration
+# Scalengi Views — demo environment
 
-Le Codespace télécharge l’image officielle de démonstration puis la démarre dans un conteneur Docker persistant. Une construction locale sert de secours si l’image est momentanément indisponible. Le script attend que le healthcheck confirme une vraie page HTML avant d’annoncer l’application prête. Le port **3000** doit alors s’ouvrir dans un nouvel onglet.
+The Codespace downloads the official demo image and starts it in a persistent Docker container. A local build is used as a fallback if the image is temporarily unavailable. The script waits for the health check to confirm a valid HTML page before reporting that the application is ready. Port **3000** should then open in a new tab.
 
-## Tester l’application
+## Test the application
 
-- Aucun compte ni mot de passe n’est nécessaire.
-- Les vues et jeux de données d’exemple sont créés localement dans le navigateur.
-- Les fichiers Excel importés restent dans le stockage local de ce navigateur.
-- La première installation et le build prennent généralement quelques minutes ; les redémarrages suivants sont plus rapides.
+- No account or password is required.
+- Sample views and datasets are created locally in the browser.
+- Imported Excel files remain in this browser's local storage.
+- The initial installation and build usually take a few minutes; subsequent restarts are faster.
 
-Si l’onglet ne s’ouvre pas automatiquement, ouvrez le panneau **Ports** de VS Code puis cliquez sur l’icône globe du port `3000`.
+If the tab does not open automatically, open the **Ports** panel in VS Code and click the globe icon for port `3000`.
 
-## Commandes utiles
+## Useful commands
 
 ```bash
-# Suivre le journal du conteneur
+# Follow the container logs
 docker compose -f .devcontainer/compose.yaml logs -f
 
-# Redémarrer l’application
+# Restart the application
 docker compose -f .devcontainer/compose.yaml restart
 
-# Voir son état et son healthcheck
+# View its status and health check
 docker compose -f .devcontainer/compose.yaml ps
 
-# Vérifier le projet
+# Check the project
 pnpm exec tsc --noEmit
 pnpm lint
 pnpm test

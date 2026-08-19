@@ -1,43 +1,43 @@
-# Maintenance du dépôt
+# Repository maintenance
 
-## Rôle de `main`
+## The role of `main`
 
-`main` contient toujours une version complète, testée et publiable de Scalengi Views. Il n’existe pas de branche `develop` permanente : les changements vivent dans des branches courtes puis sont intégrés par pull request.
+`main` always contains a complete, tested, and releasable version of Scalengi Views. There is no permanent `develop` branch: changes live on short-lived branches and are integrated through pull requests.
 
-Une fusion dans `main` ne crée pas automatiquement une release. Une publication est un acte explicite matérialisé par un tag SemVer créé par le mainteneur, par exemple `v0.1.0-alpha.2`. Le workflow de release refuse un tag dont le commit n’appartient pas à `main`.
+Merging into `main` does not automatically create a release. Publishing is an explicit action represented by a SemVer tag created by the maintainer, for example `v0.1.0-alpha.2`. The release workflow rejects a tag whose commit does not belong to `main`.
 
-## Cycle d’un changement
+## Change lifecycle
 
-1. Créer une issue pour les contributions communautaires et obtenir le label `status: accepted`.
-2. Créer une branche courte : `feat/…`, `fix/…`, `docs/…`, `refactor/…`, `test/…` ou `chore/…`.
-3. Ouvrir une pull request vers `main`.
-4. Attendre la CI `Quality`, résoudre les conversations et effectuer la vérification visuelle si nécessaire.
-5. Le mainteneur fusionne par **squash**.
-6. GitHub supprime automatiquement la branche fusionnée.
+1. For community contributions, create an issue and obtain the `status: accepted` label.
+2. Create a short-lived branch: `feat/…`, `fix/…`, `docs/…`, `refactor/…`, `test/…`, or `chore/…`.
+3. Open a pull request to `main`.
+4. Wait for the `Quality` CI check, resolve conversations, and perform visual verification when relevant.
+5. The maintainer merges with **squash**.
+6. GitHub automatically deletes the merged branch.
 
-Les push directs et forcés sur `main` sont interdits. La branche impose un historique linéaire, une CI à jour et la résolution des conversations, y compris pour le mainteneur.
+Direct and forced pushes to `main` are forbidden. The branch requires a linear history, up-to-date CI, and resolved conversations, including for the maintainer.
 
-## Versions et releases
+## Versions and releases
 
-Le cycle détaillé se trouve dans [`VERSIONING.md`](VERSIONING.md). En résumé :
+The detailed lifecycle is documented in [`VERSIONING.md`](VERSIONING.md). In summary:
 
 ```bash
 pnpm version:set 0.1.0-alpha.2
 pnpm version:check
 ```
 
-Après fusion de la préparation de version dans `main`, le mainteneur crée le tag exact `v<version>`. GitHub Actions construit alors les installateurs et crée la GitHub Release correspondante. Un tag ou une release déjà publié n’est jamais déplacé ni remplacé.
+After the version-preparation pull request is merged into `main`, the maintainer creates the exact `v<version>` tag. GitHub Actions then builds the installers and creates the corresponding GitHub Release. A published tag or release is never moved or replaced.
 
-## Dépendances
+## Dependencies
 
-Dependabot vérifie les dépendances npm une fois par mois et les regroupe dans une seule pull request. Les GitHub Actions sont regroupées dans une autre PR mensuelle. Chaque lot suit les mêmes contrôles que le code produit ; aucune mise à jour n’est fusionnée uniquement parce qu’elle est automatisée.
+Dependabot checks npm dependencies once a month and groups them into a single pull request. GitHub Actions updates are grouped into a separate monthly pull request. Every batch follows the same checks as product code; no update is merged merely because it is automated.
 
-Les mises à jour majeures ou les lots trop larges peuvent être fermés puis repris manuellement en groupes cohérents. Les alertes de sécurité sont traitées séparément et en priorité.
+Major updates or overly broad batches may be closed and handled manually in coherent groups. Security alerts are handled separately and with priority.
 
-## Nettoyage
+## Cleanup
 
-- une branche fusionnée est supprimée automatiquement ;
-- une branche associée à une PR fermée est supprimée lors de la fermeture ;
-- une branche sans PR ni activité utile est supprimée après vérification de son contenu ;
-- les branches `main` et celles d’une PR active ne sont jamais supprimées ;
-- les artefacts générés, secrets et données métier ne sont jamais commités.
+- a merged branch is deleted automatically;
+- a branch associated with a closed pull request is deleted when the pull request is closed;
+- a branch with no pull request or useful activity is deleted after its content is reviewed;
+- `main` and branches associated with active pull requests are never deleted;
+- generated artefacts, secrets, and business data are never committed.

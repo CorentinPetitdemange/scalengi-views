@@ -1,35 +1,35 @@
-# Gestion des versions
+# Versioning
 
-Scalengi Views suit [Semantic Versioning](https://semver.org/) avec un canal de préversion explicite.
+Scalengi Views follows [Semantic Versioning](https://semver.org/) with an explicit prerelease channel.
 
-## Canaux
+## Channels
 
-- `0.1.0-alpha.1` : développement actif, contrat et données encore susceptibles d’évoluer ;
-- `0.1.0-beta.1` : périmètre fonctionnel stabilisé, validation élargie ;
-- `0.1.0-rc.1` : candidat à la publication stable, uniquement des corrections bloquantes ;
-- `0.1.0` : version stable.
+- `0.1.0-alpha.1`: active development; contracts and data may still change;
+- `0.1.0-beta.1`: stabilised functional scope and broader validation;
+- `0.1.0-rc.1`: stable-release candidate with blocker fixes only;
+- `0.1.0`: stable release.
 
-Un incrément après le suffixe publie une nouvelle itération du même canal. Une évolution incompatible incrémente la version majeure après la première version stable.
+Incrementing the suffix publishes a new iteration of the same channel. A breaking change increments the major version after the first stable release.
 
-## Source unique et contrôle
+## Single source and validation
 
-La version est exposée dans l’application et doit rester identique dans `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` et le paquet local de `src-tauri/Cargo.lock`.
+The version is displayed in the application and must remain identical in `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and the local package entry in `src-tauri/Cargo.lock`.
 
 ```bash
 pnpm version:check
 pnpm version:set 0.1.0-alpha.2
 ```
 
-`version:set` refuse les formats non pris en charge et les retours en arrière. `version:check` bloque la CI et les releases en cas de divergence.
+`version:set` rejects unsupported formats and version regressions. `version:check` blocks CI and releases when versions diverge.
 
-## Publication
+## Publishing
 
-1. Préparer la version avec `pnpm version:set <version>`.
-2. Décrire les changements dans `CHANGELOG.md`.
-3. Valider `pnpm exec tsc --noEmit`, `pnpm lint`, `pnpm test` et `pnpm desktop:check`.
-4. Fusionner sur `main`.
-5. Créer et pousser le tag exact `v<version>`.
+1. Prepare the version with `pnpm version:set <version>`.
+2. Describe the changes in `CHANGELOG.md`.
+3. Validate `pnpm exec tsc --noEmit`, `pnpm lint`, `pnpm test`, and `pnpm desktop:check`.
+4. Merge into `main`.
+5. Create and push the exact `v<version>` tag.
 
-Le workflow GitHub construit alors les installateurs et publie la GitHub Release. Les tags comportant un suffixe sont automatiquement marqués comme préversions ; les tags stables sont publiés comme releases normales. Le lien `/releases/latest` du README reste volontairement orienté vers la dernière version stable. Pendant l’alpha, le bouton macOS cible donc la page générale des releases afin de rendre les préversions visibles.
+The GitHub workflow then builds the installers and publishes the GitHub Release. Tags with a suffix are automatically marked as prereleases; stable tags are published as regular releases. The README `/releases/latest` link intentionally points to the latest stable release. During alpha, the macOS button therefore targets the general releases page so that prereleases remain visible.
 
-Une release et son tag publiés ne sont jamais remplacés. Une correction produit toujours une nouvelle version.
+A published release and tag are never replaced. A fix always produces a new version.
