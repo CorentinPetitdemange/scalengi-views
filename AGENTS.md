@@ -17,7 +17,7 @@ Read `docs/ARCHITECTURE.md` before architectural work and `docs/CREATE_A_VIEW.md
 - `app/` is the thin standalone shell: navigation, instance lifecycle and local persistence.
 - `desktop/` is the static Vite entry point for the desktop application. It must mount the same `ScalengiViewsApp`; never fork the UI or view logic there.
 - `src-tauri/` is a minimal native packaging shell. Do not move business logic, persistence rules or connectors into Rust.
-- `library/src/view-registry.ts` is the public integration contract.
+- `library/src/view-registry.ts` is the source-level integration contract shared by the application and view library.
 - `library/src/configuration.ts` owns the portable structure/YAML contract.
 - `library/src/dataset.ts` owns creation and normalization of the shared dataset envelope.
 - `library/src/builtin-configurations.ts` owns standard/blank structures and generated workbook contracts.

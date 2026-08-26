@@ -1,34 +1,34 @@
-name: Proposer une évolution
-description: Proposer une vue, une capacité ou une amélioration UX.
-title: "[Évolution]: "
-labels: [enhancement, "status: review"]
+name: Propose an improvement
+description: Propose a view, capability, or user-experience improvement.
+title: "[Feature]: "
+labels: [enhancement]
 body:
   - type: markdown
     attributes:
       value: |
-        Attendez la validation du mainteneur et le label `status: accepted` avant de commencer l’implémentation ou d’ouvrir une pull request.
+        Explain the problem and expected value before describing an implementation.
   - type: textarea
     id: decision
     attributes:
-      label: Décision ou problème à traiter
-      description: Quelle décision d’architecture ou difficulté utilisateur cette évolution améliore-t-elle ?
+      label: Decision or problem to address
+      description: Which architecture decision or user difficulty would this proposal improve?
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
-      label: Proposition
-      description: Décrivez la solution envisagée sans imposer une implémentation prématurée.
+      label: Proposal
+      description: Describe the suggested outcome without requiring a specific implementation too early.
     validations:
       required: true
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives considérées
+      label: Alternatives considered
   - type: checkboxes
     id: scope
     attributes:
-      label: Vérification du périmètre
+      label: Scope check
       options:
-        - label: Cette proposition ne duplique pas la modélisation de processus de Scalengi.
+        - label: This proposal does not duplicate Scalengi process modelling.
           required: true

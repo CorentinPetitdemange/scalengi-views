@@ -2,6 +2,20 @@
 
 All notable changes to Scalengi Views are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+## [0.1.0-beta.1] - 2026-08-26
+
+### Security
+
+- updated Next.js and pinned patched transitive dependencies so the production dependency audit reports no known vulnerabilities.
+
+### Changed
+
+- simplified the public contribution and maintenance guides;
+- harmonised GitHub issue forms in English and separated conduct reports from vulnerability reports;
+- clarified that the open-source view library is currently distributed with the application rather than as a standalone npm package.
+
 ## [0.1.0-alpha.3] - 2026-08-19
 
 ### Added
@@ -51,3 +65,5 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 [0.1.0-alpha.3]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/CorentinPetitdemange/scalengi-views/releases/tag/v0.1.0-alpha.1
+[Unreleased]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-beta.1...HEAD
+[0.1.0-beta.1]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.3...v0.1.0-beta.1
