@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Scalengi Views consists of an open library of view engines and a local web shell. The library exposes the same public contract to the standalone shell and its integrations.
+Scalengi Views consists of an open-source library of view engines and a local web shell. The library exposes one source-level integration contract to the standalone shell and future integrations. It is currently distributed with the application rather than as a separate npm package.
 
 The functional unit is a **view instance**:
 
@@ -22,7 +22,7 @@ A view type may provide several **starting presets** when they genuinely share t
 
 ```text
 app shell
-   │ consumes only the public contract
+   │ consumes only the integration contract
    ▼
 ViewRegistry ── ViewDefinition
    │               ├── React renderer
@@ -52,7 +52,7 @@ The reverse dependency is forbidden: a view knows nothing about the shell, Index
 
 ### `library/src/view-registry.ts`
 
-Internal plug-in contract. One complete definition is enough to appear in the catalogue, create an instance, display its metrics, and provide its imports.
+Source-level integration contract for the application and view library. One complete definition is enough to appear in the catalogue, create an instance, display its metrics, and provide its imports.
 
 ### `library/src/configuration.ts`
 

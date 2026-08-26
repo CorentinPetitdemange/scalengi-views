@@ -16,4 +16,6 @@ Harassment, personal attacks, discrimination, disclosure of private information,
 
 ## Enforcement
 
-Incidents may be reported privately to the maintainer, `@CorentinPetitdemange`, through a GitHub security advisory. Reports will be reviewed confidentially and proportionately. Behaviour that is incompatible with this code may result in content removal or temporary or permanent exclusion from the project.
+Incidents may be reported privately to the maintainer at [corentin@scalengi.com](mailto:corentin@scalengi.com). Do not use a public issue for a confidential report.
+
+Reports will be reviewed confidentially and proportionately. Behaviour that is incompatible with this code may result in content removal or temporary or permanent exclusion from the project.

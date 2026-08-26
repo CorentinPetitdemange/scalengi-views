@@ -2,9 +2,9 @@
 
 <!-- What problem does this pull request solve? -->
 
-## Accepted issue
+## Related issue
 
-<!-- Required reference for a community contribution: Closes #123 -->
+<!-- When one exists: Closes #123 -->
 
 ## Changes
 
@@ -20,7 +20,6 @@
 - [ ] Normal and full-screen visual checks, when relevant
 - [ ] Documentation updated, when relevant
 - [ ] No secrets, business files, or personal data added
-- [ ] The linked issue has the `status: accepted` label for a community contribution
 
 ## Screenshots
 

@@ -1,6 +1,6 @@
 {
   "name": "scalengi-view",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-beta.1",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
   "packageManager": "pnpm@10.17.0",
@@ -33,7 +33,7 @@
     "fflate": "^0.8.3",
     "html-to-image": "^1.11.13",
     "lucide-react": "0.556.0",
-    "next": "16.2.6",
+    "next": "16.2.11",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "reactflow": "11.11.4",
@@ -50,13 +50,20 @@
     "@vitejs/plugin-react": "6.0.2",
     "@vitejs/plugin-rsc": "0.5.26",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.2.11",
     "react-server-dom-webpack": "19.2.6",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "vinext": "0.0.50",
     "vite": "8.0.13",
     "wrangler": "4.92.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "nanoid": "3.3.18",
+      "postcss": "8.5.26",
+      "sharp": "0.35.4"
+    }
   },
   "type": "module"
 }

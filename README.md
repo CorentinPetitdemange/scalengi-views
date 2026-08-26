@@ -8,6 +8,8 @@ Scalengi Views lets you create configurable views to analyse, explain, and steer
 
 > The project is currently in **alpha**. Formats and some interactions may still change.
 
+The view library is open source and distributed with the application. It is not currently published as a standalone npm package.
+
 ## Install
 
 [![Download for macOS](https://img.shields.io/badge/Download-macOS-111827?logo=apple&logoColor=white)](https://github.com/CorentinPetitdemange/scalengi-views/releases)

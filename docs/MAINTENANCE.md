@@ -1,43 +1,31 @@
 # Repository maintenance
 
-## The role of `main`
+This document describes the small set of maintainer tasks that are useful to contributors and release managers.
 
-`main` always contains a complete, tested, and releasable version of Scalengi Views. There is no permanent `develop` branch: changes live on short-lived branches and are integrated through pull requests.
+## Changes and releases
 
-Merging into `main` does not automatically create a release. Publishing is an explicit action represented by a SemVer tag created by the maintainer, for example `v0.1.0-alpha.2`. The release workflow rejects a tag whose commit does not belong to `main`.
+Changes are proposed through pull requests and validated by the `Quality` CI check. Visual changes also require a manual check in normal and full-screen layouts.
 
-## Change lifecycle
-
-1. For community contributions, create an issue and obtain the `status: accepted` label.
-2. Create a short-lived branch: `feat/…`, `fix/…`, `docs/…`, `refactor/…`, `test/…`, or `chore/…`.
-3. Open a pull request to `main`.
-4. Wait for the `Quality` CI check, resolve conversations, and perform visual verification when relevant.
-5. The maintainer merges with **squash**.
-6. GitHub automatically deletes the merged branch.
-
-Direct and forced pushes to `main` are forbidden. The branch requires a linear history, up-to-date CI, and resolved conversations, including for the maintainer.
-
-## Versions and releases
-
-The detailed lifecycle is documented in [`VERSIONING.md`](VERSIONING.md). In summary:
+Merging a pull request does not publish a release. Releases use Semantic Versioning and an explicit `v<version>` tag. The complete process is documented in [`VERSIONING.md`](VERSIONING.md).
 
 ```bash
 pnpm version:set 0.1.0-alpha.2
 pnpm version:check
 ```
 
-After the version-preparation pull request is merged into `main`, the maintainer creates the exact `v<version>` tag. GitHub Actions then builds the installers and creates the corresponding GitHub Release. A published tag or release is never moved or replaced.
+After the version change is merged, the maintainer creates the matching tag. GitHub Actions then builds the installers and creates the GitHub Release. Published versions and tags are never replaced; a fix always receives a new version.
 
 ## Dependencies
 
-Dependabot checks npm dependencies once a month and groups them into a single pull request. GitHub Actions updates are grouped into a separate monthly pull request. Every batch follows the same checks as product code; no update is merged merely because it is automated.
+Dependabot proposes monthly updates for npm packages and GitHub Actions. Dependency changes use the same CI checks as product changes.
 
-Major updates or overly broad batches may be closed and handled manually in coherent groups. Security alerts are handled separately and with priority.
+Before a release, run:
 
-## Cleanup
+```bash
+pnpm audit --prod
+pnpm lint
+pnpm test
+pnpm desktop:check
+```
 
-- a merged branch is deleted automatically;
-- a branch associated with a closed pull request is deleted when the pull request is closed;
-- a branch with no pull request or useful activity is deleted after its content is reviewed;
-- `main` and branches associated with active pull requests are never deleted;
-- generated artefacts, secrets, and business data are never committed.
+Known high-severity production vulnerabilities must be resolved or documented as non-applicable before publication.
