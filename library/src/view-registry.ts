@@ -2,7 +2,7 @@ import type { ComponentType } from "react";
 import { withExampleData, type ViewConfiguration, type WorkbookTemplateSpec } from "./configuration";
 import type { ViewDataset } from "./types";
 
-export type BuiltInViewType = "collaborator-journey" | "verbatim-cloud" | "partition-view" | "urbanisation-maturity" | "si-layers" | "si-metamodel" | "togaf-tracking";
+export type BuiltInViewType = "collaborator-journey" | "verbatim-cloud" | "partition-view" | "urbanisation-maturity" | "si-metamodel" | "togaf-tracking";
 export type ViewCatalogGroup = "organisation-experience" | "enterprise-architecture" | "diagnostic-maturity" | "transformation-governance";
 
 export const VIEW_CATALOG_GROUPS: ReadonlyArray<{ id: ViewCatalogGroup; label: string; description: string }> = [

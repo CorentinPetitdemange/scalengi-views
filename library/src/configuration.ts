@@ -213,6 +213,28 @@ export function blankConfiguration(configuration: ViewConfiguration): ViewConfig
   return { ...copy, label: "Structure personnalisée", sections: configuration.sections.map((section) => ({ ...section, items: [] })) };
 }
 
+const translatableItemKeys = new Set(["label", "plural", "description", "group"]);
+
+/** Localizes built-in display text while keeping identifiers and imported example data stable. */
+export function localizeConfiguration(configuration: ViewConfiguration, translateText: (text: string) => string): ViewConfiguration {
+  const copy = structuredClone(configuration);
+  copy.label = translateText(copy.label);
+  copy.sections = copy.sections.map((section) => ({
+    ...section,
+    title: translateText(section.title),
+    description: translateText(section.description),
+    itemLabel: translateText(section.itemLabel),
+    fields: section.fields.map((field) => ({
+      ...field,
+      label: translateText(field.label),
+      ...(field.placeholder ? { placeholder: translateText(field.placeholder) } : {}),
+      ...(field.choices ? { choices: field.choices.map((choice) => ({ ...choice, label: translateText(choice.label) })) } : {}),
+    })),
+    items: section.items.map((item) => Object.fromEntries(Object.entries(item).map(([key, value]) => [key, typeof value === "string" && translatableItemKeys.has(key) ? translateText(value) : value])) as ConfigurationItem),
+  }));
+  return copy;
+}
+
 export function withExampleData(configuration: ViewConfiguration, exampleData: ViewDataset): ViewConfiguration {
   return { ...structuredClone(configuration), exampleData: normalizeExampleData(exampleData) };
 }

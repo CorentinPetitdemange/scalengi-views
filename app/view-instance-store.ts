@@ -17,6 +17,8 @@ export type ViewSource =
 
 const DATABASE = "scalengi-views-local";
 const STORE = "view-instances";
+// Retired instances stay untouched in IndexedDB so a downgrade can still recover them.
+const RETIRED_VIEW_TYPES = new Set(["si-layers"]);
 const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
 const safeText = (value: unknown, maxLength: number) => typeof value === "string" && value.length <= maxLength ? value : null;
 
@@ -27,7 +29,7 @@ function normalizeInstance(value: unknown): ViewInstance | null {
   const name = safeText(value.name, 200);
   const createdAt = safeText(value.createdAt, 50);
   const updatedAt = safeText(value.updatedAt, 50);
-  if (!id || !storedType || !name?.trim() || !createdAt || !updatedAt) return null;
+  if (!id || !storedType || RETIRED_VIEW_TYPES.has(storedType) || !name?.trim() || !createdAt || !updatedAt) return null;
   const rawData = isRecord(value.data) ? value.data : {};
   const missingFeedbackLayer = !Array.isArray(rawData.feedbacks);
   let type = storedType;

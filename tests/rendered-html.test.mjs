@@ -22,7 +22,7 @@ test("server-renders the Scalengi Views shell", async () => {
 });
 
 test("keeps data, guides and Excel contracts scoped per view", async () => {
-  const [app, i18n, exportMenu, exportView, registry, builtins, builtinConfigurations, configuration, dataset, storage, collaboratorView, partitionView, urbanisationView, layersView, metamodelView, togafView, verbatimView, excelImport, agents, architecture, createViewGuide] = await Promise.all([
+  const [app, i18n, exportMenu, exportView, registry, builtins, builtinConfigurations, configuration, dataset, storage, collaboratorView, partitionView, urbanisationView, metamodelView, togafView, verbatimView, excelImport, agents, architecture, createViewGuide] = await Promise.all([
     readFile(new URL("../app/scalengi-views-app.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/i18n.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/view-export-menu.tsx", import.meta.url), "utf8"),
@@ -36,7 +36,6 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
     readFile(new URL("../library/src/CollaboratorJourneyView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/PartitionView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/UrbanisationRadarView.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../library/src/SILayersView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/SIMetamodelView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/TogafTrackingView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/VerbatimCloudView.tsx", import.meta.url), "utf8"),
@@ -82,6 +81,9 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(app, /Format Excel disponible dans Données/);
   assert.doesNotMatch(app, /Télécharger le modèle configuré/);
   assert.match(app, /VIEW_CATALOG_GROUPS/);
+  assert.match(app, /CreateViewScreen/);
+  assert.match(app, /localizeConfiguration/);
+  assert.doesNotMatch(app, /CreateViewModal|createOpen/);
   assert.match(app, /Exemple portable inclus dans le YAML/);
   assert.doesNotMatch(app, /aria-label="Changer de thème"/);
   assert.match(exportMenu, /Image \(PNG\)/);
@@ -103,7 +105,7 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(builtinConfigurations, /modele-vue-collaborateurs\.xlsx/);
   assert.match(builtinConfigurations, /modele-vue-en-decoupage\.xlsx/);
   assert.match(builtinConfigurations, /modele-diagnostic-urbanisation\.xlsx/);
-  assert.match(builtinConfigurations, /modele-si-par-couches\.xlsx/);
+  assert.doesNotMatch(builtinConfigurations, /modele-si-par-couches\.xlsx|si-layers/);
   assert.match(builtinConfigurations, /modele-metamodele-si\.xlsx/);
   assert.match(builtinConfigurations, /modele-togaf-adm\.xlsx/);
   assert.match(builtinConfigurations, /modele-analyse-verbatims\.xlsx/);
@@ -133,11 +135,9 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(urbanisationView, /Écarts prioritaires/);
   assert.match(urbanisationView, /Composer le diagnostic/);
   assert.match(urbanisationView, /requestFullscreen/);
-  assert.match(layersView, /Analyse d’impact inter-couches/);
-  assert.match(layersView, /Point focal/);
-  assert.match(layersView, /Profondeur/);
-  assert.match(layersView, /impactScope/);
-  assert.match(layersView, /requestFullscreen/);
+  assert.doesNotMatch(registry, /si-layers/);
+  assert.doesNotMatch(builtins, /siLayers|SILayers|si-layers/);
+  assert.match(storage, /RETIRED_VIEW_TYPES/);
   assert.match(metamodelView, /Métamodèle du SI/);
   assert.match(metamodelView, /Relation autorisée/);
   assert.doesNotMatch(metamodelView, /showCardinalities/);
@@ -181,7 +181,7 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(verbatimView, /requestFullscreen/);
   assert.match(excelImport, /Objectif Niveau d'Urbanisation/);
   assert.match(excelImport, /niveau_cartographie/);
-  assert.match(excelImport, /importSILayersExcel/);
+  assert.doesNotMatch(excelImport, /importSILayersExcel/);
   assert.match(excelImport, /importMetamodelExcel/);
   assert.match(excelImport, /importTogafExcel/);
   assert.match(excelImport, /importVerbatimExcel/);

@@ -45,17 +45,6 @@ const radarStandard = (): ViewConfiguration => ({
   sections: [{ id: "axes", title: "Axes du radar", description: "Chaque ligne devient un axe du diagnostic et une ligne préremplie du modèle Excel.", itemLabel: "axe", minItems: 3, fields: [text("id", "Identifiant"), text("label", "Libellé"), text("group", "Groupe"), number("target", "Objectif"), number("weight", "Poids")], items: sampleDataset.urbanisationIndicators.map((item) => ({ id: item.id, label: item.label, group: item.group, target: item.target, weight: item.weight })) }],
 });
 
-const layersStandard = (): ViewConfiguration => ({
-  version: 1, viewType: "si-layers", label: "Architecture en quatre couches", options: {},
-  sections: [
-    { id: "layers", title: "Couches du SI", description: "Bandes horizontales utilisées pour organiser les objets d’architecture.", itemLabel: "couche", minItems: 1, fields: [text("id", "Valeur"), text("label", "Libellé"), textarea("description", "Description"), color()], items: [
-      { id: "Métier", label: "Métier", description: "Ce que l’organisation doit savoir faire", color: "#7c3aed" }, { id: "Données", label: "Données", description: "Les objets d’information structurants", color: "#0284c7" }, { id: "Applications", label: "Applications", description: "Les solutions qui réalisent les capacités", color: "#059669" }, { id: "Technologies", label: "Technologies", description: "Les socles qui exécutent et relient le SI", color: "#d97706" },
-    ] },
-    { id: "statuses", title: "Statuts d’architecture", description: "Vocabulaire des décisions de trajectoire.", itemLabel: "statut", minItems: 1, fields: [text("id", "Valeur"), text("label", "Libellé")], items: ["Cible", "À renforcer", "À transformer", "À retirer"].map((label) => ({ id: label, label })) },
-    { id: "criticalities", title: "Niveaux de criticité", description: "Vocabulaire de criticité des objets.", itemLabel: "niveau", minItems: 1, fields: [text("id", "Valeur"), text("label", "Libellé")], items: ["Faible", "Moyenne", "Forte"].map((label) => ({ id: label, label })) },
-  ],
-});
-
 const metamodelStandard = (): ViewConfiguration => ({
   version: 1,
   viewType: "si-metamodel",
@@ -136,7 +125,7 @@ const verbatimStandard = (): ViewConfiguration => ({
   ],
 });
 
-const standardFactories: Record<string, () => ViewConfiguration> = { "collaborator-journey": collaboratorStandard, "verbatim-cloud": verbatimStandard, "partition-view": createCapabilityPartitionConfiguration, pos: capabilityStandard, "urban-pos": urbanPosStandard, "urbanisation-maturity": radarStandard, "si-layers": layersStandard, "si-metamodel": metamodelStandard, "togaf-tracking": togafStandard };
+const standardFactories: Record<string, () => ViewConfiguration> = { "collaborator-journey": collaboratorStandard, "verbatim-cloud": verbatimStandard, "partition-view": createCapabilityPartitionConfiguration, pos: capabilityStandard, "urban-pos": urbanPosStandard, "urbanisation-maturity": radarStandard, "si-metamodel": metamodelStandard, "togaf-tracking": togafStandard };
 export const createDefaultConfiguration = (viewType: string) => structuredClone(standardFactories[viewType]?.() ?? { version: 1, viewType, label: "Structure standard", sections: [], options: {} });
 export const createBlankConfiguration = (viewType: string) => viewType === "partition-view" ? createBlankPartitionConfiguration() : blankConfiguration(createDefaultConfiguration(viewType));
 
@@ -202,15 +191,6 @@ export function buildRadarTemplate(configuration: ViewConfiguration): WorkbookTe
   return { filename: "modele-diagnostic-urbanisation.xlsx", viewTitle: "Diagnostic configurable", sheets: [
     { name: "Diagnostic", description: "Une ligne par axe configuré.", columns: [{ key: "id", label: "id", width: 22 }, { key: "dimension", label: "dimension", width: 46 }, { key: "groupe", label: "groupe", width: 28 }, { key: "niveau_actuel", label: "niveau_actuel", width: 18, type: "number" }, { key: "objectif", label: "objectif", width: 14, type: "number" }, { key: "niveau_cartographie", label: "niveau_cartographie", width: 23, type: "number" }, { key: "poids", label: "poids", width: 12, type: "number" }, { key: "responsable", label: "responsable", width: 28 }, { key: "preuve", label: "preuve", width: 46 }, { key: "action", label: "action", width: 52 }], rows: axes.map((axis) => [axis.id, axis.label, axis.group, 0, Number(axis.target ?? 0), 0, Number(axis.weight ?? 1), "", "", ""]) },
     { ...guide("Les axes sont préremplis depuis la structure. Complétez uniquement les scores et informations de pilotage."), rows: [["niveau_actuel", "Score compris entre le minimum et le maximum configurés.", Number(configuration.options.scoreMin ?? 0)], ["axes", "Ne modifiez les identifiants que depuis l’écran Structure.", `${axes.length} axes préremplis`]] },
-  ] };
-}
-
-export function buildLayersTemplate(configuration: ViewConfiguration): WorkbookTemplateSpec {
-  const layers = itemLabels(configuration, "layers", "id"); const statuses = itemLabels(configuration, "statuses", "id"); const criticalities = itemLabels(configuration, "criticalities", "id");
-  return { filename: "modele-si-par-couches.xlsx", viewTitle: "SI par couches", sheets: [
-    { name: "Elements", description: "Objets positionnés dans les couches configurées.", columns: [{ key: "id", label: "id", width: 20 }, { key: "nom", label: "nom", width: 32 }, { key: "couche", label: "couche", width: 20, values: layers }, { key: "domaine", label: "domaine", width: 26 }, { key: "statut", label: "statut", width: 20, values: statuses }, { key: "criticite", label: "criticite", width: 16, values: criticalities }, { key: "responsable", label: "responsable", width: 28 }, { key: "description", label: "description", width: 54 }] },
-    { name: "Relations", description: "Dépendances entre objets.", columns: [{ key: "id", label: "id", width: 18 }, { key: "source_id", label: "source_id", width: 24 }, { key: "cible_id", label: "cible_id", width: 24 }, { key: "relation", label: "relation", width: 34 }] },
-    { ...guide("Les listes de couches, statuts et criticités proviennent de la configuration YAML."), rows: [["couches", "Valeurs autorisées dans Elements.couche.", layers.join(", ")], ["statuts", "Valeurs autorisées dans Elements.statut.", statuses.join(", ")]] },
   ] };
 }
 

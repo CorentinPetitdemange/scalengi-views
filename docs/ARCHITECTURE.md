@@ -81,8 +81,6 @@ Several values may be selected in one condition, and conditions may be combined 
 
 ### Layered information-system impact analysis
 
-`si-layers` answers an impact question, unlike the metamodel. Its overview presents objects in their configured layers. Selecting a focal point then computes a multi-level scope across directed relationships: incoming, outgoing, or both. Depth is capped at four levels, and out-of-scope objects disappear to preserve decision readability.
-
 ### Information System Metamodel
 
 The order of the `layers` section defines the top-to-bottom reading order of stacked layers. A transverse layer also has a `left` or `right` side; layers on the same side retain their list order.

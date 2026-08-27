@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { configurationFromYaml, configurationToYaml, upgradeConfigurationSchema, validateConfiguration, withExampleData } from "../library/src/configuration.ts";
+import { configurationFromYaml, configurationToYaml, localizeConfiguration, upgradeConfigurationSchema, validateConfiguration, withExampleData } from "../library/src/configuration.ts";
 import { createEmptyDataset, isDatasetEmpty, normalizeDataset } from "../library/src/dataset.ts";
 import { createWorkbookBytes } from "../library/src/xlsx-template.ts";
 
@@ -23,6 +23,21 @@ const validConfiguration = {
 test("round-trips a bounded YAML configuration", () => {
   const parsed = configurationFromYaml(configurationToYaml(validConfiguration), "test-view");
   assert.deepEqual(parsed, validConfiguration);
+});
+
+test("localizes built-in display text without changing technical identifiers", () => {
+  const source = structuredClone(validConfiguration);
+  source.sections[0].fields.push({ key: "kind", label: "Type", type: "select", choices: [{ value: "business", label: "Métier" }] });
+  source.sections[0].items = [{ id: "business", label: "Métier", description: "Couche métier", sheet: "Metier" }];
+  const localized = localizeConfiguration(source, (text) => `EN:${text}`);
+  assert.equal(localized.label, "EN:Configuration de test");
+  assert.equal(localized.sections[0].title, "EN:Axes");
+  assert.equal(localized.sections[0].items[0].label, "EN:Métier");
+  assert.equal(localized.sections[0].items[0].description, "EN:Couche métier");
+  assert.equal(localized.sections[0].items[0].id, "business");
+  assert.equal(localized.sections[0].items[0].sheet, "Metier");
+  assert.equal(localized.sections[0].fields[1].choices[0].value, "business");
+  assert.equal(source.sections[0].items[0].label, "Métier");
 });
 
 test("keeps the example dataset inside the portable YAML", () => {

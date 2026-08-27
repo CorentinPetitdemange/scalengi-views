@@ -39,7 +39,6 @@ The Codespace starts the application automatically and opens port **3000**. No S
 - **Collaborators**: responsibilities, processes, feedback, and relationships around teams;
 - **Partition View**: flexible levels, information, and relationships, with Business Capabilities and Urban Information System Map presets;
 - **Urbanisation Diagnostic**: configurable radar, gaps, evidence, owners, and actions;
-- **Information System Layers**: impact analysis around an element and its dependencies;
 - **Information System Metamodel**: object types, layers, permitted relations, and cardinalities;
 - **TOGAF ADM**: phases, progress, deliverables, decisions, risks, and blockers;
 - **Word Cloud**: visual analysis of verbatims, needs, and pain points.

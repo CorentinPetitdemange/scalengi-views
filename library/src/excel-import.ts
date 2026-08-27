@@ -1,5 +1,5 @@
 import readXlsxFile, { type CellValue, type Sheet } from "read-excel-file/browser";
-import type { Application, ArchitectureElement, ArchitectureRelation, Capability, Collaborator, Feedback, PartitionItem, PartitionRelation, Process, Responsibility, TogafItem, TogafPhase, UrbanBlock, UrbanDistrict, UrbanisationIndicator, UrbanZone, Verbatim } from "./types";
+import type { Application, Capability, Collaborator, Feedback, PartitionItem, PartitionRelation, Process, Responsibility, TogafItem, TogafPhase, UrbanBlock, UrbanDistrict, UrbanisationIndicator, UrbanZone, Verbatim } from "./types";
 import type { ViewImportResult } from "./view-registry";
 import { optionOf, sectionOf, validateConfiguration, type ConfigurationItem, type ViewConfiguration } from "./configuration";
 import { createDefaultConfiguration } from "./builtin-configurations";
@@ -291,36 +291,6 @@ export async function importUrbanisationExcel(file: File, configuration?: ViewCo
   if (indicators.length < 3) throw new Error("Diagnostic : au moins trois dimensions sont nécessaires pour construire le radar.");
   const warnings = indicators.length > 16 ? ["Le diagnostic contient plus de 16 dimensions. La vue s’ouvre sur les 10 écarts prioritaires pour préserver la lisibilité ; toutes les dimensions restent sélectionnables."] : [];
   return { data: { ...createEmptyDataset(), urbanisationIndicators: indicators }, rowCount: indicators.length, warnings };
-}
-
-export async function importSILayersExcel(file: File, configuration?: ViewConfiguration): Promise<ViewImportResult> {
-  const sheets = await readWorkbook(file);
-  const elementRows = recordsFromSheet(sheets, "Elements", ["id", "nom", "couche", "domaine", "statut", "criticite", "responsable", "description"]);
-  const relationRows = recordsFromSheet(sheets, "Relations", ["id", "source_id", "cible_id", "relation"]);
-  const layers = (sectionOf(configuration, "layers")?.items.map((item) => item.id) ?? ["Métier", "Données", "Applications", "Technologies"]) as ArchitectureElement["layer"][];
-  const statuses = (sectionOf(configuration, "statuses")?.items.map((item) => item.id) ?? ["Cible", "À renforcer", "À transformer", "À retirer"]) as ArchitectureElement["status"][];
-  const criticalities = (sectionOf(configuration, "criticalities")?.items.map((item) => item.id) ?? ["Faible", "Moyenne", "Forte"]) as ArchitectureElement["criticality"][];
-  const architectureElements: ArchitectureElement[] = elementRows.map((row, index) => {
-    const layer = asText(row.couche) as ArchitectureElement["layer"];
-    const status = asText(row.statut) as ArchitectureElement["status"];
-    const criticality = asText(row.criticite) as ArchitectureElement["criticality"];
-    if (layers.length && !layers.includes(layer)) throw new Error(`Elements : couche invalide "${layer}" à la ligne ${index + 2}.`);
-    if (statuses.length && !statuses.includes(status)) throw new Error(`Elements : statut invalide "${status}" à la ligne ${index + 2}.`);
-    if (criticalities.length && !criticalities.includes(criticality)) throw new Error(`Elements : criticité invalide "${criticality}" à la ligne ${index + 2}.`);
-    return { id: asText(row.id), name: asText(row.nom), layer, domain: asText(row.domaine) || "Non classé", status, criticality, owner: asText(row.responsable), description: asText(row.description) };
-  });
-  const architectureRelations: ArchitectureRelation[] = relationRows.map((row) => ({ id: asText(row.id), sourceId: asText(row.source_id), targetId: asText(row.cible_id), relation: asText(row.relation) || "Dépend de" }));
-  ensureUniqueIds(architectureElements, "Elements");
-  ensureUniqueIds(architectureRelations, "Relations");
-  const elementIds = new Set(architectureElements.map((item) => item.id));
-  for (const relation of architectureRelations) {
-    if (!elementIds.has(relation.sourceId)) throw new Error(`Relations : source inconnue ${relation.sourceId}.`);
-    if (!elementIds.has(relation.targetId)) throw new Error(`Relations : cible inconnue ${relation.targetId}.`);
-    if (relation.sourceId === relation.targetId) throw new Error(`Relations : ${relation.id} relie un élément à lui-même.`);
-  }
-  const orphanCount = architectureElements.filter((item) => !architectureRelations.some((relation) => relation.sourceId === item.id || relation.targetId === item.id)).length;
-  const warnings = orphanCount ? [`${orphanCount} élément${orphanCount > 1 ? "s sont" : " est"} isolé${orphanCount > 1 ? "s" : ""} : aucune relation n’est documentée.`] : [];
-  return { data: { ...createEmptyDataset(), architectureElements, architectureRelations }, rowCount: architectureElements.length + architectureRelations.length, warnings };
 }
 
 export async function importMetamodelExcel(file: File, configuration?: ViewConfiguration): Promise<ViewImportResult> {

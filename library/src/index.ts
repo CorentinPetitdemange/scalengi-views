@@ -1,11 +1,10 @@
 export { CollaboratorJourneyView } from "./CollaboratorJourneyView";
 export { UrbanisationRadarView } from "./UrbanisationRadarView";
-export { SILayersView } from "./SILayersView";
 export { SIMetamodelView } from "./SIMetamodelView";
 export { TogafTrackingView } from "./TogafTrackingView";
 export { VerbatimCloudView } from "./VerbatimCloudView";
 export { PartitionView } from "./PartitionView";
-export { collaboratorJourneyDefinition, verbatimCloudDefinition, partitionViewDefinition, urbanisationMaturityDefinition, siLayersDefinition, siMetamodelDefinition, togafTrackingDefinition, viewRegistry } from "./builtin-views";
+export { collaboratorJourneyDefinition, verbatimCloudDefinition, partitionViewDefinition, urbanisationMaturityDefinition, siMetamodelDefinition, togafTrackingDefinition, viewRegistry } from "./builtin-views";
 export { createCapabilityPartitionConfiguration, createUrbanPartitionConfiguration, createBlankPartitionConfiguration, migrateLegacyPartition } from "./partition-model";
 export { ViewRegistry, VIEW_CATALOG_GROUPS } from "./view-registry";
 export { sampleDataset } from "./sample-data";

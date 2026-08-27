@@ -1,11 +1,10 @@
 import { CollaboratorJourneyView } from "./CollaboratorJourneyView";
-import { buildCollaboratorTemplate, buildLayersTemplate, buildMetamodelTemplate, buildPartitionTemplate, buildRadarTemplate, buildTogafTemplate, buildVerbatimTemplate, createBlankConfiguration, createDefaultConfiguration } from "./builtin-configurations";
-import { importCollaboratorExcel, importMetamodelExcel, importPartitionExcel, importSILayersExcel, importTogafExcel, importUrbanisationExcel, importVerbatimExcel } from "./excel-import";
+import { buildCollaboratorTemplate, buildMetamodelTemplate, buildPartitionTemplate, buildRadarTemplate, buildTogafTemplate, buildVerbatimTemplate, createBlankConfiguration, createDefaultConfiguration } from "./builtin-configurations";
+import { importCollaboratorExcel, importMetamodelExcel, importPartitionExcel, importTogafExcel, importUrbanisationExcel, importVerbatimExcel } from "./excel-import";
 import { createEmptyDataset, datasetWith } from "./dataset";
 import { sampleDataset } from "./sample-data";
 import { PartitionView } from "./PartitionView";
 import { capabilityPartitionData, createBlankPartitionConfiguration, createCapabilityPartitionConfiguration, createUrbanPartitionConfiguration } from "./partition-model";
-import { SILayersView } from "./SILayersView";
 import { SIMetamodelView } from "./SIMetamodelView";
 import { TogafTrackingView } from "./TogafTrackingView";
 import { UrbanisationRadarView } from "./UrbanisationRadarView";
@@ -15,7 +14,6 @@ import { defineView, ViewRegistry } from "./view-registry";
 const collaboratorDemo = () => datasetWith({ collaborators: structuredClone(sampleDataset.collaborators), processes: structuredClone(sampleDataset.processes), responsibilities: structuredClone(sampleDataset.responsibilities), feedbacks: structuredClone(sampleDataset.feedbacks) });
 const partitionDemo = () => capabilityPartitionData(sampleDataset);
 const urbanisationDemo = () => datasetWith({ urbanisationIndicators: structuredClone(sampleDataset.urbanisationIndicators) });
-const siLayersDemo = () => datasetWith({ architectureElements: structuredClone(sampleDataset.architectureElements), architectureRelations: structuredClone(sampleDataset.architectureRelations) });
 const togafDemo = () => datasetWith({ togafPhases: structuredClone(sampleDataset.togafPhases), togafItems: structuredClone(sampleDataset.togafItems) });
 const verbatimDemo = () => datasetWith({ verbatims: structuredClone(sampleDataset.verbatims) });
 
@@ -163,41 +161,6 @@ export const urbanisationMaturityDefinition = defineView({
   },
 });
 
-export const siLayersDefinition = defineView({
-  id: "si-layers",
-  title: "Analyse d’impact du SI par couches",
-  shortTitle: "SI par couches",
-  demoName: "SI par couches — Démonstration",
-  category: "Architecture d’entreprise",
-  catalogGroup: "enterprise-architecture",
-  description: "Partir d’un objet et isoler ses impacts entrants et sortants à travers les couches métier, données, applications et technologies.",
-  icon: "layers",
-  accent: "violet",
-  insights: ["Analyse d’impact", "Dépendances critiques", "Propagation inter-couches"],
-  component: SILayersView,
-  createEmptyData: createEmptyDataset,
-  createDemoData: siLayersDemo,
-  createDefaultConfiguration: () => createDefaultConfiguration("si-layers"),
-  createBlankConfiguration: () => createBlankConfiguration("si-layers"),
-  buildTemplate: buildLayersTemplate,
-  importExcel: importSILayersExcel,
-  summarize: (data) => [{ label: "Éléments", value: data.architectureElements.length }, { label: "Relations", value: data.architectureRelations.length }, { label: "Domaines", value: new Set(data.architectureElements.map((item) => item.domain)).size }],
-  guide: {
-    purpose: "Cette vue sert à analyser un changement ou un incident : elle isole autour d’un point focal les dépendances entrantes et sortantes, leur profondeur, leur criticité et leur propagation entre les couches.",
-    questions: ["Quels objets peuvent affecter cet élément ?", "Quels objets risquent d’être affectés si celui-ci change ?", "À quelle profondeur et dans quelles couches l’impact se propage-t-il ?"],
-    steps: [
-      { title: "Décrire les éléments", description: "Classez chaque objet dans une couche, un domaine et un statut d’architecture." },
-      { title: "Relier les couches", description: "Ajoutez des relations explicites entre les identifiants, dans le sens qui convient à votre modèle." },
-      { title: "Explorer les impacts", description: "Sélectionnez un point focal, choisissez le sens entrant ou sortant et augmentez la profondeur pour suivre la propagation." },
-    ],
-    sheets: [
-      { name: "Elements", columns: ["id", "nom", "couche", "domaine", "statut", "criticite", "responsable", "description"], description: "Tous les objets d’architecture à positionner." },
-      { name: "Relations", columns: ["id", "source_id", "cible_id", "relation"], description: "Les dépendances entre deux objets existants." },
-      { name: "Mode d'emploi", columns: ["champ", "règle", "exemple"], description: "Les valeurs autorisées et règles de saisie." },
-    ],
-  },
-});
-
 export const siMetamodelDefinition = defineView({
   id: "si-metamodel",
   title: "Métamodèle du SI",
@@ -277,4 +240,4 @@ export const togafTrackingDefinition = defineView({
   },
 });
 
-export const viewRegistry = new ViewRegistry().registerMany([collaboratorJourneyDefinition, verbatimCloudDefinition, partitionViewDefinition, urbanisationMaturityDefinition, siLayersDefinition, siMetamodelDefinition, togafTrackingDefinition]);
+export const viewRegistry = new ViewRegistry().registerMany([collaboratorJourneyDefinition, verbatimCloudDefinition, partitionViewDefinition, urbanisationMaturityDefinition, siMetamodelDefinition, togafTrackingDefinition]);

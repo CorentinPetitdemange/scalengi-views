@@ -4,6 +4,15 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 ## [Unreleased]
 
+### Changed
+
+- replaced the new-view modal with an integrated creation screen and compact, square view cards grouped by use case;
+- localized built-in configuration labels and descriptions when a view is created.
+
+### Removed
+
+- removed the layered information-system impact view from the catalog and public library.
+
 ## [0.1.0-beta.1] - 2026-08-26
 
 ### Security
