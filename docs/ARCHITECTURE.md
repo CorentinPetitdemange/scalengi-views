@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Scalengi Views consists of an open-source library of view engines and a local web shell. The library exposes one source-level integration contract to the standalone shell and future integrations. It is currently distributed with the application rather than as a separate npm package.
+Scalengi Views consists of a source-available library of view engines and a local web shell. The library exposes one source-level integration contract to the standalone shell and future integrations. It is currently distributed with the application rather than as a separate npm package.
 
 The functional unit is a **view instance**:
 

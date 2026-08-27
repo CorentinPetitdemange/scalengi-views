@@ -1,14 +1,14 @@
 # Scalengi Views
 
 [![CI](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml)
-[![License: PolyForm Shield 1.0.0](https://img.shields.io/badge/License-PolyForm Shield 1.0.0-blue.svg)](LICENSE)
+[![License: PolyForm Shield 1.0.0](https://img.shields.io/badge/License-PolyForm_Shield_1.0.0-blue.svg)](LICENSE)
 [![Latest version](https://img.shields.io/github/v/release/CorentinPetitdemange/scalengi-views?include_prereleases&sort=semver&display_name=tag&label=version)](CHANGELOG.md)
 
 Scalengi Views lets you create configurable views to analyse, explain, and steer an information system. Each view combines a structure, data, and a representation suited to an enterprise-architecture question.
 
-> The project is currently in **alpha**. Formats and some interactions may still change.
+> The project is currently in **beta**. Formats and some interactions may still change.
 
-The view library is open source and distributed with the application. It is not currently published as a standalone npm package.
+The source code is publicly auditable under the PolyForm Shield 1.0.0 licence. Scalengi Views is source-available, not OSI Open Source, and the library is not currently published as a standalone npm package.
 
 ## Install
 
@@ -73,3 +73,13 @@ To discuss a connector or integration, contact [corentin@scalengi.com](mailto:co
 ## Licence
 
 Scalengi Views is distributed under the [PolyForm Shield 1.0.0 licence](LICENSE). Copyright © 2026 Corentin Petitdemange.
+
+In practical terms:
+
+- organizations may use, host, modify, and fork Scalengi Views for their own internal needs without a licence fee;
+- consultants may charge for implementation, configuration, training, and advisory services for an organization using Scalengi Views;
+- consultants may not charge a software licence fee, sublicense Scalengi Views, or operate it as their own hosted or managed product;
+- nobody may sell, rebrand, host, or provide Scalengi Views or a derivative as a competing product or service, even free of charge;
+- separate commercial rights may be granted in writing by Corentin Petitdemange for Scalengi partnerships, hosting, managed services, or other agreed uses.
+
+This summary is informational. The [licence text](LICENSE) controls if there is any inconsistency.

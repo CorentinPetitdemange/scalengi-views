@@ -4,7 +4,7 @@ Read this file before changing the repository. Then read the relevant document i
 
 ## Product boundaries
 
-- This repository is the standalone, open-source Scalengi Views application and view library.
+- This repository is the standalone, source-available Scalengi Views application and view library.
 - Do not edit another Scalengi repository from work performed here.
 - The application has no global repository and no active external connector. A view instance owns its structure and its data.
 - Browser-local Excel import and built-in demonstration datasets are the only data sources implemented today. A view has at most one active source. Do not add a network call, telemetry, authentication, D1/database storage, or a Scalengi connector unless the user explicitly requests it.

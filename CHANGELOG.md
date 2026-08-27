@@ -8,6 +8,7 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 - replaced the new-view modal with an integrated creation screen and compact, square view cards grouped by use case;
 - localized built-in configuration labels and descriptions when a view is created.
+- adopted PolyForm Shield 1.0.0 and clarified internal use, consulting, hosting, competing products, and contribution rights before public distribution.
 
 ### Removed
 
@@ -23,7 +24,7 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 - simplified the public contribution and maintenance guides;
 - harmonised GitHub issue forms in English and separated conduct reports from vulnerability reports;
-- clarified that the open-source view library is currently distributed with the application rather than as a standalone npm package.
+- clarified that the source-available view library is currently distributed with the application rather than as a standalone npm package.
 
 ## [0.1.0-alpha.3] - 2026-08-19
 

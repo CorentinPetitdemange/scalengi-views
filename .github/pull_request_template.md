@@ -20,6 +20,7 @@
 - [ ] Normal and full-screen visual checks, when relevant
 - [ ] Documentation updated, when relevant
 - [ ] No secrets, business files, or personal data added
+- [ ] I have read and accept the contributor licence terms in `CONTRIBUTING.md`
 
 ## Screenshots
 

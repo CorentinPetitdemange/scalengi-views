@@ -46,4 +46,8 @@ Follow [`docs/CREATE_A_VIEW.md`](docs/CREATE_A_VIEW.md). A view must be register
 
 ## Licence
 
-By submitting a contribution, you agree that it may be distributed under the project's [PolyForm Shield 1.0.0 licence](LICENSE).
+The project is source-available under the [PolyForm Shield 1.0.0 licence](LICENSE), not an OSI Open Source licence. Forks and changes are permitted only for purposes allowed by that licence.
+
+By submitting a contribution, you confirm that you have the right to provide it and grant Corentin Petitdemange a perpetual, worldwide, non-exclusive, irrevocable, royalty-free copyright licence to use, reproduce, modify, create derivative works from, publicly display, publicly perform, distribute, sublicense, and relicense that contribution under any terms. This grant allows Scalengi Views to remain available under PolyForm Shield while also supporting commercial licences and partnerships.
+
+The pull request template requires explicit acknowledgement of these contribution terms. Do not submit a contribution if you cannot grant these rights.
