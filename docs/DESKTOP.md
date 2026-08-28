@@ -36,8 +36,8 @@ pnpm desktop:build
 4. Create and push the corresponding tag:
 
 ```bash
-git tag v0.1.0-alpha.1
-git push origin v0.1.0-alpha.1
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
 The `Desktop release` workflow automatically builds and attaches installers to the GitHub Release.

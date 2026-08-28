@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml)
 [![License: PolyForm Shield 1.0.0](https://img.shields.io/badge/License-PolyForm_Shield_1.0.0-blue.svg)](LICENSE)
-[![Latest version](https://img.shields.io/static/v1?label=version&message=v0.1.0-beta.1&color=blue)](CHANGELOG.md)
+[![Latest version](https://img.shields.io/static/v1?label=version&message=v1.0.0&color=blue)](CHANGELOG.md)
 
 Scalengi Views lets you create configurable views to analyse, explain, and steer an information system. Each view combines a structure, data, and a representation suited to an enterprise-architecture question.
 
-> The project is currently in **beta**. Formats and some interactions may still change.
+The `1.0` release is the first stable version of Scalengi Views. Future incompatible changes will follow Semantic Versioning.
 
 The source code is publicly auditable under the PolyForm Shield 1.0.0 licence. Scalengi Views is source-available, not OSI Open Source, and the library is not currently published as a standalone npm package.
 
