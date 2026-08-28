@@ -5,14 +5,15 @@ import test from "node:test";
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("keeps the application version synchronized across web and native manifests", async () => {
-  const [packageSource, tauriSource, cargoSource, cargoLockSource] = await Promise.all([
-    read("package.json"), read("src-tauri/tauri.conf.json"), read("src-tauri/Cargo.toml"), read("src-tauri/Cargo.lock"),
+  const [packageSource, tauriSource, cargoSource, cargoLockSource, readme] = await Promise.all([
+    read("package.json"), read("src-tauri/tauri.conf.json"), read("src-tauri/Cargo.toml"), read("src-tauri/Cargo.lock"), read("README.md"),
   ]);
   const packageVersion = JSON.parse(packageSource).version;
   assert.match(packageVersion, /^\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?$/);
   assert.equal(JSON.parse(tauriSource).version, packageVersion);
   assert.equal(cargoSource.match(/^version = "([^"]+)"/m)?.[1], packageVersion);
   assert.equal(cargoLockSource.match(/\[\[package\]\]\nname = "scalengi-views"\nversion = "([^"]+)"/)?.[1], packageVersion);
+  assert.equal(readme.match(/img\.shields\.io\/static\/v1\?label=version&message=v([^&]+)&color=blue/)?.[1], packageVersion);
 });
 
 test("publishes tagged prereleases through the desktop workflow", async () => {
