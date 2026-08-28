@@ -9,7 +9,7 @@ Changes are proposed through pull requests and validated by the `Quality` CI che
 Merging a pull request does not publish a release. Releases use Semantic Versioning and an explicit `v<version>` tag. The complete process is documented in [`VERSIONING.md`](VERSIONING.md).
 
 ```bash
-pnpm version:set 0.1.0-alpha.2
+pnpm version:set 1.0.1
 pnpm version:check
 ```
 

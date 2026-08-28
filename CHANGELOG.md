@@ -4,6 +4,12 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-28
+
+### Added
+
+- published the first stable Scalengi Views release for macOS, Windows, and Linux.
+
 ### Changed
 
 - replaced the new-view modal with an integrated creation screen and compact, square view cards grouped by use case;
@@ -75,5 +81,6 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 [0.1.0-alpha.3]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/CorentinPetitdemange/scalengi-views/releases/tag/v0.1.0-alpha.1
-[Unreleased]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-beta.1...HEAD
+[Unreleased]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-beta.1...v1.0.0
 [0.1.0-beta.1]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.3...v0.1.0-beta.1
