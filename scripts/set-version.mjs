@@ -11,6 +11,7 @@ const packageUrl = new URL("../package.json", import.meta.url);
 const tauriUrl = new URL("../src-tauri/tauri.conf.json", import.meta.url);
 const cargoUrl = new URL("../src-tauri/Cargo.toml", import.meta.url);
 const cargoLockUrl = new URL("../src-tauri/Cargo.lock", import.meta.url);
+const readmeUrl = new URL("../README.md", import.meta.url);
 const packageJson = JSON.parse(await readFile(packageUrl, "utf8"));
 const currentVersion = packageJson.version;
 
@@ -34,6 +35,7 @@ if (compare(nextVersion, currentVersion) <= 0) {
 const tauriConfig = JSON.parse(await readFile(tauriUrl, "utf8"));
 const cargoToml = await readFile(cargoUrl, "utf8");
 const cargoLock = await readFile(cargoLockUrl, "utf8");
+const readme = await readFile(readmeUrl, "utf8");
 packageJson.version = nextVersion;
 tauriConfig.version = nextVersion;
 
@@ -42,12 +44,17 @@ const nextCargoLock = cargoLock.replace(
   /(\[\[package\]\]\nname = "scalengi-views"\nversion = ")[^"]+("\n)/,
   `$1${nextVersion}$2`,
 );
+const nextReadme = readme.replace(
+  /img\.shields\.io\/static\/v1\?label=version&message=v[^&]+&color=blue/,
+  `img.shields.io/static/v1?label=version&message=v${nextVersion}&color=blue`,
+);
 
 await Promise.all([
   writeFile(packageUrl, `${JSON.stringify(packageJson, null, 2)}\n`),
   writeFile(tauriUrl, `${JSON.stringify(tauriConfig, null, 2)}\n`),
   writeFile(cargoUrl, nextCargoToml),
   writeFile(cargoLockUrl, nextCargoLock),
+  writeFile(readmeUrl, nextReadme),
 ]);
 
 console.log(`Version préparée : ${currentVersion} → ${nextVersion}`);
