@@ -36,6 +36,9 @@ jobs:
             node -e "fetch('http://$container_ip:3000/').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"
             sleep 10
             node -e "fetch('http://$container_ip:3000/').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"
+            sed -i 's#^storeDir:.*#storeDir: /tmp/stale-pnpm-store#' node_modules/.modules.yaml
+            bash .devcontainer/setup.sh
+            node -e "fetch('http://$container_ip:3000/').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6

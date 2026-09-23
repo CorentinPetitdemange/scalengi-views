@@ -26,22 +26,27 @@ test("does not broaden the Vite allowlist outside Codespaces", () => {
 });
 
 test("builds and smoke-tests the Codespaces development environment", async () => {
-  const [devcontainerSource, setupScript, startScript, ciWorkflow] = await Promise.all([
+  const [devcontainerSource, devcontainerLockSource, setupScript, startScript, ciWorkflow] = await Promise.all([
     readFile(new URL("../.devcontainer/devcontainer.json", import.meta.url), "utf8"),
+    readFile(new URL("../.devcontainer/devcontainer-lock.json", import.meta.url), "utf8"),
     readFile(new URL("../.devcontainer/setup.sh", import.meta.url), "utf8"),
     readFile(new URL("../.devcontainer/start-demo.sh", import.meta.url), "utf8"),
     readFile(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8"),
   ]);
   const devcontainer = JSON.parse(devcontainerSource);
+  const devcontainerLock = JSON.parse(devcontainerLockSource);
+  const lockedNodeFeature = devcontainerLock.features["ghcr.io/devcontainers/features/node:2"];
 
   assert.equal(devcontainer.image, "mcr.microsoft.com/devcontainers/base:ubuntu-24.04");
   assert.ok(devcontainer.features["ghcr.io/devcontainers/features/node:2"]);
   assert.equal(devcontainer.features["ghcr.io/devcontainers/features/node:2"].version, "22.19.0");
   assert.equal(devcontainer.features["ghcr.io/devcontainers/features/node:2"].pnpmVersion, "10.17.0");
+  assert.match(lockedNodeFeature.resolved, /^ghcr\.io\/devcontainers\/features\/node@sha256:[a-f0-9]{64}$/);
+  assert.equal(lockedNodeFeature.integrity, lockedNodeFeature.resolved.slice(lockedNodeFeature.resolved.indexOf("sha256:")));
   assert.equal(devcontainer.features["ghcr.io/devcontainers/features/docker-in-docker:2"], undefined);
   assert.equal(devcontainer.portsAttributes["3000"].onAutoForward, "openBrowserOnce");
   assert.deepEqual(devcontainer.forwardPorts, [3000]);
-  assert.match(setupScript, /pnpm install --frozen-lockfile/);
+  assert.match(setupScript, /CI=true pnpm install --frozen-lockfile/);
   assert.match(setupScript, /pnpm version:check/);
   assert.doesNotMatch(setupScript, /docker/);
   assert.match(startScript, /pnpm dev --hostname 0\.0\.0\.0/);
@@ -54,6 +59,8 @@ test("builds and smoke-tests the Codespaces development environment", async () =
   assert.match(ciWorkflow, /hostname -I/);
   assert.match(ciWorkflow, /fetch\('http:\/\/\$container_ip:3000\/'\)/);
   assert.match(ciWorkflow, /sleep 10/);
+  assert.match(ciWorkflow, /storeDir: \/tmp\/stale-pnpm-store/);
+  assert.match(ciWorkflow, /bash \.devcontainer\/setup\.sh/);
 });
 
 test("publishes the persistent standalone demo container", async () => {
