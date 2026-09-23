@@ -5,6 +5,7 @@ import { ChevronDown, Focus, Layers3, Maximize2, Minimize2, Radar, Settings2, Ta
 import { optionOf, sectionOf, type ViewConfiguration } from "./configuration";
 import { useI18n } from "./i18n";
 import type { UrbanisationIndicator, ViewDataset } from "./types";
+import { ViewToolbar } from "./ViewToolbar";
 
 type SeriesKey = "target" | "current" | "mapping";
 type Scope = "priority" | "all" | "custom" | `group:${string}`;
@@ -56,7 +57,7 @@ function RadarChart({ indicators, visibleSeries, selectedId, onSelect }: { indic
 }
 
 export function UrbanisationRadarView({ data, configuration }: { data: ViewDataset; configuration?: ViewConfiguration }) {
-  const { locale, t } = useI18n();
+  const { t } = useI18n();
   const frameRef = useRef<HTMLElement>(null);
   const indicators = useMemo(() => {
     const imported = data.urbanisationIndicators ?? [];
@@ -92,12 +93,12 @@ export function UrbanisationRadarView({ data, configuration }: { data: ViewDatas
   const toggleCustom = (id: string) => { setCustomIds((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; }); setScope("custom"); };
 
   return <section ref={frameRef} className="view-workspace urbanisation-workspace">
-    <header className="urbanisation-header"><div><p className="eyebrow">{t("Diagnostic d’urbanisation")}</p><h1>{t("État et trajectoire du SI")}</h1></div><div className="urbanisation-header-actions">
+    <ViewToolbar className="urbanisation-header" title={t("État et trajectoire du SI")} icon={<Radar size={16} />}><div className="urbanisation-header-actions">
       <label className="filter-control urbanisation-scope"><select value={scope} onChange={(event) => setScope(event.target.value as Scope)} aria-label={t("Dimensions affichées")}><option value="priority">{priorityCount} {t("écarts prioritaires")}</option><option value="all">{t("Toutes les dimensions")} ({indicators.length})</option>{groups.map((group) => <option key={group} value={`group:${group}`}>{group}</option>)}<option value="custom">{t("Sélection personnalisée")} ({customIds.size})</option></select><ChevronDown size={15} /></label>
+      <div className="urbanisation-legend" aria-label={t("Séries visibles")}>{(Object.keys(seriesMeta) as SeriesKey[]).map((key) => <button key={key} className={visibleSeries[key] ? "active" : ""} onClick={() => setVisibleSeries((current) => ({ ...current, [key]: !current[key] }))}><i style={{ background: seriesMeta[key].color }} />{t(seriesMeta[key].label)}</button>)}</div>
       <button className={configurationOpen ? "secondary-action-button active" : "secondary-action-button"} onClick={() => setConfigurationOpen((value) => !value)}><Settings2 size={15} /> {t("Paramétrer")}</button>
       <button className="rf-fullscreen-button" onClick={() => void toggleFullscreen()}>{fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<span>{t(fullscreen ? "Quitter" : "Plein écran")}</span></button>
-    </div></header>
-    <div className="urbanisation-legend">{(Object.keys(seriesMeta) as SeriesKey[]).map((key) => <button key={key} className={visibleSeries[key] ? "active" : ""} onClick={() => setVisibleSeries((current) => ({ ...current, [key]: !current[key] }))}><i style={{ background: seriesMeta[key].color }} />{t(seriesMeta[key].label)}</button>)}<span>{locale === "fr" ? `${visibleIndicators.length} dimension${visibleIndicators.length > 1 ? "s" : ""} affichée${visibleIndicators.length > 1 ? "s" : ""}` : `${visibleIndicators.length} displayed dimension${visibleIndicators.length === 1 ? "" : "s"}`}</span></div>
+    </div></ViewToolbar>
     {!indicators.length ? <div className="urbanisation-empty" data-view-export-content><Radar size={32} /><h2>{t("Aucune évaluation chargée")}</h2><p>{t("Importez le modèle Excel de cette vue pour afficher votre diagnostic.")}</p></div> : <div className="urbanisation-body" data-view-export-content>
       <div className="radar-card"><div className="radar-card-heading"><div><span>{t("Lecture synthétique")}</span><strong>{scope === "priority" ? t("Priorités d’urbanisation") : scope === "all" ? t("Ensemble du diagnostic") : scope === "custom" ? t("Sélection personnalisée") : scope.slice(6)}</strong></div><small>{t("Cliquez sur un axe pour ouvrir son détail")}</small></div><RadarChart indicators={visibleIndicators} visibleSeries={visibleSeries} selectedId={selectedId} onSelect={(item) => setSelectedId(item.id)} /></div>
       <aside className="urbanisation-insights"><div className="urbanisation-kpis"><article><Target size={15} /><span>{t("Actuel")}</span><strong>{compact(average(indicators, "current"))}</strong></article><article><Focus size={15} /><span>{t("Cible")}</span><strong>{compact(average(indicators, "target"))}</strong></article><article><Layers3 size={15} /><span>{t("Cartographié")}</span><strong>{compact(average(indicators, "mapping"))}</strong></article><article className="gap-kpi"><Radar size={15} /><span>{t("Écart pondéré")}</span><strong>{compact(weightedGap)}</strong></article></div>

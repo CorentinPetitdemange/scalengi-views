@@ -17,13 +17,14 @@ test("server-renders the Scalengi Views shell", async () => {
   assert.match(html, /<title>Scalengi Views<\/title>/i);
   assert.match(html, /My views/);
   assert.match(html, /New view/);
-  assert.match(html, /STORAGE PER VIEW/);
+  assert.match(html, /Scalengi Views/);
   assert.match(html, /Loading local views/);
 });
 
 test("keeps data, guides and Excel contracts scoped per view", async () => {
-  const [app, i18n, exportMenu, exportView, registry, builtins, builtinConfigurations, configuration, dataset, storage, collaboratorView, partitionView, urbanisationView, metamodelView, togafView, verbatimView, excelImport, agents, architecture, createViewGuide] = await Promise.all([
+  const [app, sidebar, i18n, exportMenu, exportView, registry, builtins, builtinConfigurations, configuration, dataset, storage, collaboratorView, partitionView, urbanisationView, metamodelView, togafView, verbatimView, excelImport, agents, architecture, createViewGuide, viewToolbar] = await Promise.all([
     readFile(new URL("../app/scalengi-views-app.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/application-sidebar.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/i18n.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/view-export-menu.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/export-view.ts", import.meta.url), "utf8"),
@@ -43,10 +44,17 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
     readFile(new URL("../AGENTS.md", import.meta.url), "utf8"),
     readFile(new URL("../docs/ARCHITECTURE.md", import.meta.url), "utf8"),
     readFile(new URL("../docs/CREATE_A_VIEW.md", import.meta.url), "utf8"),
+    readFile(new URL("../library/src/ViewToolbar.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(app, /I18nProvider/);
-  assert.match(app, /APP_LOCALES\.map/);
-  assert.match(app, /className="language-select"/);
+  assert.match(app, /ApplicationSidebar/);
+  assert.match(sidebar, /APP_LOCALES\.map/);
+  assert.match(sidebar, /className="sidebar-settings-field"/);
+  assert.match(sidebar, /sidebar-hover-highlight/);
+  assert.match(sidebar, /event\.key\.toLowerCase\(\) === "b"/);
+  assert.match(viewToolbar, /common-view-toolbar/);
+  for (const renderer of [collaboratorView, partitionView, urbanisationView, metamodelView, togafView, verbatimView]) assert.match(renderer, /ViewToolbar/);
+  assert.doesNotMatch(app, /type Screen = .*settings/);
   assert.doesNotMatch(app, /language-quick-switch/);
   assert.match(i18n, /useState<AppLocale>\("en"\)/);
   assert.match(i18n, /export const APP_LOCALES/);
@@ -58,9 +66,7 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(app, /Renommer la vue/);
   assert.match(app, /name: nextName/);
   assert.match(app, /deleteViewInstance\(instance\.id\)/);
-  assert.match(app, /Scalengi Inventory/);
-  assert.match(app, /Scalengi App/);
-  assert.match(app, /API \/ BDD/);
+  assert.match(sidebar, /sidebar-settings-popover/);
   assert.doesNotMatch(app, /Chaque vue et ses données Excel sont conservées séparément/);
   assert.match(app, /Données de cette vue uniquement/);
   assert.match(app, /Configuration intrinsèque de la vue/);

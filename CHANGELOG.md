@@ -4,6 +4,25 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-23
+
+### Added
+
+- added a non-functional interconnection configuration preview for generic databases, Scalengi, Scalengi Inventory, REST APIs, and MCP;
+- added responsive navigation with the Scalengi logo, favorites, workspace controls, and local appearance preferences.
+
+### Changed
+
+- aligned the application menu with Scalengi's compact animated sidebar and hover behavior;
+- unified all six view renderers on one compact toolbar for titles, legends, filters, and full-screen actions;
+- enlarged the urbanization diagnostic priority panel and removed redundant title and legend rows;
+- moved view navigation into the View, Structure, Data, and Guide tab bar to recover vertical workspace space.
+
+### Fixed
+
+- preserved the animated sidebar highlight while moving between navigation entries;
+- improved toolbar and connection-page layouts across desktop and narrow viewports.
+
 ## [1.0.0] - 2026-08-28
 
 ### Added
@@ -81,6 +100,7 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 [0.1.0-alpha.3]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/CorentinPetitdemange/scalengi-views/releases/tag/v0.1.0-alpha.1
-[Unreleased]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-beta.1...v1.0.0
 [0.1.0-beta.1]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.3...v0.1.0-beta.1

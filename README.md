@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml)
 [![License: PolyForm Shield 1.0.0](https://img.shields.io/badge/License-PolyForm_Shield_1.0.0-blue.svg)](LICENSE)
-[![Latest version](https://img.shields.io/static/v1?label=version&message=v1.0.0&color=blue)](CHANGELOG.md)
+[![Latest version](https://img.shields.io/static/v1?label=version&message=v1.0.1&color=blue)](CHANGELOG.md)
 
 Scalengi Views lets you create configurable views to analyse, explain, and steer an information system. Each view combines a structure, data, and a representation suited to an enterprise-architecture question.
 
