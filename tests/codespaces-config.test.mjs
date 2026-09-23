@@ -46,6 +46,11 @@ test("builds and smoke-tests the Codespaces development environment", async () =
   assert.equal(devcontainer.features["ghcr.io/devcontainers/features/docker-in-docker:2"], undefined);
   assert.equal(devcontainer.portsAttributes["3000"].onAutoForward, "openBrowserOnce");
   assert.deepEqual(devcontainer.forwardPorts, [3000]);
+  assert.equal(
+    devcontainer.postCreateCommand,
+    "bash .devcontainer/setup.sh && bash .devcontainer/start-demo.sh",
+  );
+  assert.equal(devcontainer.postStartCommand, "bash .devcontainer/start-demo.sh");
   assert.match(setupScript, /CI=true pnpm install --frozen-lockfile/);
   assert.match(setupScript, /pnpm version:check/);
   assert.doesNotMatch(setupScript, /docker/);

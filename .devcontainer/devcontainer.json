@@ -20,7 +20,7 @@
       "protocol": "http"
     }
   },
-  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postCreateCommand": "bash .devcontainer/setup.sh && bash .devcontainer/start-demo.sh",
   "postStartCommand": "bash .devcontainer/start-demo.sh",
   "customizations": {
     "codespaces": {
