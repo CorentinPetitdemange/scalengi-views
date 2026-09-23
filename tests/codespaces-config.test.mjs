@@ -25,21 +25,42 @@ test("does not broaden the Vite allowlist outside Codespaces", () => {
   );
 });
 
-test("runs the Codespaces demo as a persistent standalone container", async () => {
-  const [devcontainerSource, composeSource, dockerfile, setupScript, startScript, nextConfig, workflow] = await Promise.all([
+test("builds and smoke-tests the Codespaces development environment", async () => {
+  const [devcontainerSource, setupScript, startScript, ciWorkflow] = await Promise.all([
     readFile(new URL("../.devcontainer/devcontainer.json", import.meta.url), "utf8"),
-    readFile(new URL("../.devcontainer/compose.yaml", import.meta.url), "utf8"),
-    readFile(new URL("../.devcontainer/Dockerfile", import.meta.url), "utf8"),
     readFile(new URL("../.devcontainer/setup.sh", import.meta.url), "utf8"),
     readFile(new URL("../.devcontainer/start-demo.sh", import.meta.url), "utf8"),
-    readFile(new URL("../next.config.ts", import.meta.url), "utf8"),
-    readFile(new URL("../.github/workflows/container.yml", import.meta.url), "utf8"),
+    readFile(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8"),
   ]);
   const devcontainer = JSON.parse(devcontainerSource);
 
-  assert.ok(devcontainer.features["ghcr.io/devcontainers/features/docker-in-docker:2"]);
+  assert.equal(devcontainer.image, "mcr.microsoft.com/devcontainers/base:ubuntu-24.04");
+  assert.ok(devcontainer.features["ghcr.io/devcontainers/features/node:2"]);
+  assert.equal(devcontainer.features["ghcr.io/devcontainers/features/node:2"].version, "22.19.0");
+  assert.equal(devcontainer.features["ghcr.io/devcontainers/features/node:2"].pnpmVersion, "10.17.0");
+  assert.equal(devcontainer.features["ghcr.io/devcontainers/features/docker-in-docker:2"], undefined);
   assert.equal(devcontainer.portsAttributes["3000"].onAutoForward, "openBrowserOnce");
   assert.deepEqual(devcontainer.forwardPorts, [3000]);
+  assert.match(setupScript, /pnpm install --frozen-lockfile/);
+  assert.match(setupScript, /pnpm version:check/);
+  assert.doesNotMatch(setupScript, /docker/);
+  assert.match(startScript, /pnpm dev -- --hostname 0\.0\.0\.0/);
+  assert.match(startScript, /fetch\('\$APP_URL'\)/);
+  assert.match(startScript, /nohup/);
+  assert.doesNotMatch(startScript, /docker/);
+  assert.match(ciWorkflow, /devcontainers\/ci@[a-f0-9]{40}/);
+  assert.match(ciWorkflow, /Build and smoke-test Codespaces devcontainer/);
+  assert.match(ciWorkflow, /fetch\('http:\/\/127\.0\.0\.1:3000\/'\)/);
+});
+
+test("publishes the persistent standalone demo container", async () => {
+  const [composeSource, dockerfile, nextConfig, workflow] = await Promise.all([
+    readFile(new URL("../.devcontainer/compose.yaml", import.meta.url), "utf8"),
+    readFile(new URL("../.devcontainer/Dockerfile", import.meta.url), "utf8"),
+    readFile(new URL("../next.config.ts", import.meta.url), "utf8"),
+    readFile(new URL("../.github/workflows/container.yml", import.meta.url), "utf8"),
+  ]);
+
   assert.match(composeSource, /restart: unless-stopped/);
   assert.match(composeSource, /ghcr\.io\/corentinpetitdemange\/scalengi-view:latest/);
   assert.match(composeSource, /SCALENGI_VIEWS_PORT:-3000/);
@@ -48,12 +69,6 @@ test("runs the Codespaces demo as a persistent standalone container", async () =
   assert.match(dockerfile, /HEALTHCHECK/);
   assert.match(dockerfile, /CMD \["node", "server\.js"\]/);
   assert.match(nextConfig, /output: "standalone"/);
-  assert.match(setupScript, /docker compose .* pull/);
-  assert.match(setupScript, /docker build --pull/);
-  assert.match(setupScript, /docker compose .* up --detach/);
-  assert.match(setupScript, /container_health.*healthy/);
-  assert.match(startScript, /docker compose .* up --detach/);
-  assert.doesNotMatch(startScript, /nohup|pnpm (?:dev|start)/);
   assert.match(workflow, /packages: write/);
   assert.match(workflow, /docker\/build-push-action@[a-f0-9]{40}/);
   assert.match(workflow, /ghcr\.io\/corentinpetitdemange\/scalengi-view:latest/);
