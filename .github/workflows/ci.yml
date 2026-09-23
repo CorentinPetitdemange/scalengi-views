@@ -31,7 +31,11 @@ jobs:
             node --version
             pnpm --version
             pnpm version:check
-            node -e "fetch('http://127.0.0.1:3000/').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"
+            container_ip="$(hostname -I | awk '{print $1}')"
+            test -n "$container_ip"
+            node -e "fetch('http://$container_ip:3000/').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"
+            sleep 10
+            node -e "fetch('http://$container_ip:3000/').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
