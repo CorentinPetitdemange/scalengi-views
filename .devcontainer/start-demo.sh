@@ -25,7 +25,10 @@ if [[ -f "$PID_FILE" ]]; then
 fi
 
 echo "Démarrage de Scalengi Views..."
-nohup pnpm dev -- --hostname 0.0.0.0 >"$LOG_FILE" 2>&1 &
+# pnpm forwards options directly to the script. Adding a standalone `--` here
+# would make Vinext ignore --hostname and bind only to localhost, which leaves
+# the external Codespaces port forward with a 502 response.
+nohup pnpm dev --hostname 0.0.0.0 >"$LOG_FILE" 2>&1 &
 server_pid=$!
 echo "$server_pid" >"$PID_FILE"
 

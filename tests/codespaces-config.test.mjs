@@ -44,13 +44,16 @@ test("builds and smoke-tests the Codespaces development environment", async () =
   assert.match(setupScript, /pnpm install --frozen-lockfile/);
   assert.match(setupScript, /pnpm version:check/);
   assert.doesNotMatch(setupScript, /docker/);
-  assert.match(startScript, /pnpm dev -- --hostname 0\.0\.0\.0/);
+  assert.match(startScript, /pnpm dev --hostname 0\.0\.0\.0/);
+  assert.doesNotMatch(startScript, /pnpm dev -- --hostname/);
   assert.match(startScript, /fetch\('\$APP_URL'\)/);
   assert.match(startScript, /nohup/);
   assert.doesNotMatch(startScript, /docker/);
   assert.match(ciWorkflow, /devcontainers\/ci@[a-f0-9]{40}/);
   assert.match(ciWorkflow, /Build and smoke-test Codespaces devcontainer/);
-  assert.match(ciWorkflow, /fetch\('http:\/\/127\.0\.0\.1:3000\/'\)/);
+  assert.match(ciWorkflow, /hostname -I/);
+  assert.match(ciWorkflow, /fetch\('http:\/\/\$container_ip:3000\/'\)/);
+  assert.match(ciWorkflow, /sleep 10/);
 });
 
 test("publishes the persistent standalone demo container", async () => {
