@@ -23,6 +23,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Build and smoke-test Codespaces devcontainer
+        uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3
+        with:
+          push: never
+          runCmd: |
+            node --version
+            pnpm --version
+            pnpm version:check
+            node -e "fetch('http://127.0.0.1:3000/').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"
+
       - name: Install pnpm
         uses: pnpm/action-setup@v6
 

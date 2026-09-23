@@ -1,6 +1,6 @@
 # Scalengi Views — demo environment
 
-The Codespace downloads the official demo image and starts it in a persistent Docker container. A local build is used as a fallback if the image is temporarily unavailable. The script waits for the health check to confirm a valid HTML page before reporting that the application is ready. Port **3000** should then open in a new tab.
+The Codespace installs the pinned Node.js and pnpm versions, restores the project dependencies, then starts the development server directly in the workspace. The startup script waits for a valid HTTP response before reporting that the application is ready. Port **3000** should then open in a new tab.
 
 ## Test the application
 
@@ -14,14 +14,14 @@ If the tab does not open automatically, open the **Ports** panel in VS Code and 
 ## Useful commands
 
 ```bash
-# Follow the container logs
-docker compose -f .devcontainer/compose.yaml logs -f
+# Follow the development server logs
+tail -f /tmp/scalengi-views-dev.log
 
 # Restart the application
-docker compose -f .devcontainer/compose.yaml restart
+bash .devcontainer/start-demo.sh
 
-# View its status and health check
-docker compose -f .devcontainer/compose.yaml ps
+# Check the application health
+node -e "fetch('http://127.0.0.1:3000/').then(r => console.log(r.status))"
 
 # Check the project
 pnpm exec tsc --noEmit
