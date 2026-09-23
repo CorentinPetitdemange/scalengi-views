@@ -6,6 +6,7 @@ import { optionOf, sectionOf } from "./configuration";
 import { useI18n } from "./i18n";
 import type { Verbatim } from "./types";
 import type { ViewRendererProps } from "./view-registry";
+import { ViewToolbar } from "./ViewToolbar";
 
 type CloudShape = "cloud" | "round" | "rectangle";
 type CloudWord = { key: string; label: string; count: number; score: number; color: string };
@@ -156,8 +157,9 @@ export function VerbatimCloudView({ data, configuration }: ViewRendererProps) {
   const fullscreen = () => document.querySelector(".verbatim-cloud-workspace")?.requestFullscreen?.();
 
   return <div className="verbatim-cloud-workspace">
-    <header className="verbatim-toolbar">
-      <div><span className="verbatim-view-icon"><Cloud size={20} /></span><div><strong>{t("Analyse des verbatims")}</strong><small>{t("Les mots dominants révèlent irritants, besoins et attentes")}</small></div></div>
+    <ViewToolbar className="verbatim-toolbar" title={t("Analyse des verbatims")} icon={<Cloud size={16} />}>
+      <div className="word-cloud-legend">{categories.map((item) => <span key={item.id}><i style={{ background: String(item.color ?? "#2563eb") }} />{String(item.label ?? item.id)}</span>)}</div>
+      <div className="verbatim-kpis"><span><MessageSquareText size={14} /><strong>{filtered.length}</strong> {t("verbatims")}</span><span><Users size={14} /><strong>{new Set(filtered.map((item) => item.team)).size}</strong> {t("équipes")}</span><span><Cloud size={14} /><strong>{words.length}</strong> {t("termes significatifs")}</span></div>
       <div className="verbatim-filters">
         <label className="verbatim-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("Rechercher un verbatim")} /></label>
         <select value={category} onChange={(event) => { setCategory(event.target.value); setSelectedWord(null); }} aria-label={t("Filtrer par catégorie")}><option value="all">{t("Toutes les catégories")}</option>{categories.map((item) => <option key={item.id} value={String(item.id)}>{String(item.label ?? item.id)}</option>)}</select>
@@ -165,17 +167,10 @@ export function VerbatimCloudView({ data, configuration }: ViewRendererProps) {
         <select className="cloud-shape-select" value={shape} onChange={(event) => setShape(asCloudShape(event.target.value))} aria-label={t("Forme du nuage de mots")}>{cloudShapes.map((item) => <option key={item.value} value={item.value}>{t(item.label)}</option>)}</select>
         <button className="icon-button" onClick={fullscreen} aria-label={t("Afficher en plein écran")}><Maximize2 size={17} /></button>
       </div>
-    </header>
-
-    <div className="verbatim-kpis">
-      <span><MessageSquareText size={16} /><strong>{filtered.length}</strong> {t("verbatims")}</span>
-      <span><Users size={16} /><strong>{new Set(filtered.map((item) => item.team)).size}</strong> {t("équipes")}</span>
-      <span><Cloud size={16} /><strong>{words.length}</strong> {t("termes significatifs")}</span>
-    </div>
+    </ViewToolbar>
 
     <main className="verbatim-layout" data-view-export-content>
       <section className="word-cloud-panel">
-        <div className="word-cloud-legend">{categories.map((item) => <span key={item.id}><i style={{ background: String(item.color ?? "#2563eb") }} />{String(item.label ?? item.id)}</span>)}</div>
         {words.length ? <div className="word-cloud-stage"><svg className={`word-cloud-svg shape-${shape}`} data-shape={shape} viewBox={shapeViewBox} role="img" aria-label={`${locale === "fr" ? "Nuage de mots — forme" : "Word cloud — shape"} ${t(cloudShapes.find((item) => item.value === shape)?.label ?? "Nuage")}`}>
           {placedWords.map((word) => <text key={word.key} x={word.x} y={word.y} fill={word.color} fontSize={word.fontSize} textAnchor="middle" dominantBaseline="middle" role="button" tabIndex={0} className={selectedWord === word.key ? "selected" : ""} aria-label={`${word.label}, ${word.count} ${t("verbatims")}`} onClick={() => setSelectedWord((current) => current === word.key ? null : word.key)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedWord((current) => current === word.key ? null : word.key); }}>{word.label}</text>)}
         </svg></div> : <div className="verbatim-empty"><Cloud size={34} /><strong>{t("Aucun terme à afficher")}</strong><p>{t("Ajoutez des verbatims ou élargissez les filtres.")}</p></div>}

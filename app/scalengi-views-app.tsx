@@ -1,20 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Braces, CheckCircle2, CircleHelp, Cloud, Database, Download, FileCode2, FileSpreadsheet, GalleryVerticalEnd, Grid2X2, Layers3, LayoutDashboard, List, MapPinned, Moon, Network, PanelLeftClose, PanelLeftOpen, Pencil, Plus, Radar as RadarIcon, RotateCcw, Route, Save, Settings, SlidersHorizontal, Star, Sun, Trash2, Upload, Users, X } from "lucide-react";
-import { APP_LOCALES, configurationFromYaml, configurationToYaml, createConfigurationItem, downloadWorkbookTemplate, I18nProvider, isDatasetEmpty, localizeConfiguration, MAX_YAML_BYTES, normalizeDataset, upgradeConfigurationSchema, useI18n, validateConfiguration, VIEW_CATALOG_GROUPS, viewRegistry, type AppLocale, type ViewConfiguration, type ViewDefinition } from "../library/src";
+import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Braces, CheckCircle2, CircleHelp, Cloud, Database, Download, FileCode2, FileSpreadsheet, GalleryVerticalEnd, Grid2X2, Layers3, LayoutDashboard, List, MapPinned, Network, PanelLeftOpen, Pencil, Plus, Radar as RadarIcon, RotateCcw, Route, Save, SlidersHorizontal, Star, Trash2, Upload, Users, X } from "lucide-react";
+import { configurationFromYaml, configurationToYaml, createConfigurationItem, downloadWorkbookTemplate, I18nProvider, isDatasetEmpty, localizeConfiguration, MAX_YAML_BYTES, normalizeDataset, upgradeConfigurationSchema, useI18n, validateConfiguration, VIEW_CATALOG_GROUPS, viewRegistry, type ViewConfiguration, type ViewDefinition } from "../library/src";
 import packageMetadata from "../package.json";
-import { deleteViewInstance, listViewInstances, saveViewInstance, type ViewInstance, type ViewSource } from "./view-instance-store";
+import { ApplicationSidebar } from "./application-sidebar";
+import { InterconnectionsScreen } from "./interconnections-screen";
+import { deleteViewInstance, listViewInstances, saveViewInstance, type ViewInstance } from "./view-instance-store";
 import { ViewExportMenu } from "./view-export-menu";
 
-type Screen = "catalog" | "create" | "instance" | "settings";
+type Screen = "catalog" | "create" | "instance" | "interconnections";
 type InstanceTab = "view" | "structure" | "data" | "guide";
 type CatalogLayout = "grid" | "list";
 const SETTINGS_KEY = "scalengi-view-settings-v1";
 const CATALOG_INITIALIZED_KEY = "scalengi-views-catalog-initialized-v1";
 const APP_VERSION = packageMetadata.version;
 const APP_CHANNEL = APP_VERSION.includes("-alpha.") ? "Alpha" : APP_VERSION.includes("-beta.") ? "Bêta" : APP_VERSION.includes("-rc.") ? "Release candidate" : "Stable";
-const APP_RELEASE_NOTE = APP_VERSION.includes("-") ? "Cette préversion peut évoluer et contenir des fonctionnalités incomplètes." : "Version stable de Scalengi Views.";
 
 const now = () => new Date().toISOString();
 const makeId = () => globalThis.crypto?.randomUUID?.() ?? `view-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -26,7 +27,6 @@ const optionLabel = (key: string) => ({ centerLabel: "Libellé du centre", radiu
 const optionChoices: Record<string, Array<{ value: string; label: string }>> = {
   cloudShape: [{ value: "cloud", label: "Nuage" }, { value: "round", label: "Rond" }, { value: "rectangle", label: "Rectangle" }],
 };
-const sourceLabel = (source?: ViewSource) => source?.kind === "demo" ? "Jeu d’exemple" : source?.kind === "excel" ? source.filename : "Données à ajouter";
 const itemCountLabel = (label: string, count: number) => count > 1 && label === "niveau" ? "niveaux" : count > 1 ? `${label}s` : label;
 
 function demoInstances(definitions = viewRegistry.list()): ViewInstance[] {
@@ -52,6 +52,7 @@ function ScalengiViewsShell() {
   const [instanceTab, setInstanceTab] = useState<InstanceTab>("view");
   const [instances, setInstances] = useState<ViewInstance[]>([]);
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [accent, setAccent] = useState<"blue" | "violet" | "emerald">("blue");
   const [catalogLayout, setCatalogLayout] = useState<CatalogLayout>("grid");
@@ -69,11 +70,12 @@ function ScalengiViewsShell() {
         try {
           const settings = localStorage.getItem(SETTINGS_KEY);
           if (settings) {
-            const parsed = JSON.parse(settings) as { theme?: typeof theme; accent?: typeof accent; catalogLayout?: CatalogLayout; favoriteIds?: unknown };
+            const parsed = JSON.parse(settings) as { theme?: typeof theme; accent?: typeof accent; catalogLayout?: CatalogLayout; favoriteIds?: unknown; sidebarCollapsed?: unknown };
             if (parsed.theme) setTheme(parsed.theme);
             if (parsed.accent) setAccent(parsed.accent);
             if (parsed.catalogLayout === "grid" || parsed.catalogLayout === "list") setCatalogLayout(parsed.catalogLayout);
             if (Array.isArray(parsed.favoriteIds)) setFavoriteIds(parsed.favoriteIds.filter((id): id is string => typeof id === "string").slice(0, 500));
+            if (typeof parsed.sidebarCollapsed === "boolean") setCollapsed(parsed.sidebarCollapsed);
           }
         } catch { /* Les préférences sont facultatives. */ }
         let stored = await listViewInstances();
@@ -122,8 +124,8 @@ function ScalengiViewsShell() {
   }, []);
 
   useEffect(() => {
-    if (ready) localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme, accent, catalogLayout, favoriteIds }));
-  }, [accent, catalogLayout, favoriteIds, ready, theme]);
+    if (ready) localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme, accent, catalogLayout, favoriteIds, sidebarCollapsed: collapsed }));
+  }, [accent, catalogLayout, collapsed, favoriteIds, ready, theme]);
 
   useEffect(() => () => {
     if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
@@ -169,29 +171,38 @@ function ScalengiViewsShell() {
     flash(t(useDemo ? "Vue créée avec le jeu de données d’exemple" : structure === "blank" ? "Vue créée avec une structure vide" : "Vue créée, prête à recevoir vos données"));
   };
 
-  const title = screen === "settings" ? t("Paramètres") : screen === "create" ? t("Nouvelle vue") : screen === "instance" && activeInstance ? activeInstance.name : t("Mes vues");
+  const title = screen === "interconnections" ? (locale === "fr" ? "Interconnexions" : "Connections") : screen === "create" ? t("Nouvelle vue") : screen === "instance" && activeInstance ? activeInstance.name : t("Mes vues");
   return (
-    <div className={`app-shell theme-${theme} accent-${accent} ${collapsed ? "sidebar-collapsed" : ""}`}>
-      <aside className="app-sidebar">
-        <div className="brand-row"><div className="brand-mark">S</div>{!collapsed && <div className="brand-copy"><strong>scalengi</strong><span>Views</span></div>}<button className="icon-button collapse-button" onClick={() => setCollapsed((value) => !value)} aria-label={t(collapsed ? "Ouvrir le menu" : "Réduire le menu")}>{collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</button></div>
-        <nav className="main-navigation" aria-label={t("Navigation principale")}>
-          <button className={screen === "catalog" ? "active" : ""} onClick={() => setScreen("catalog")} title={t("Mes vues")}><GalleryVerticalEnd /><span>{t("Mes vues")}</span><em>{instances.length}</em></button>
-          <button className={screen === "create" ? "new-view-nav active" : "new-view-nav"} onClick={() => setScreen("create")} title={t("Créer une vue")}><Plus /><span>{t("Nouvelle vue")}</span></button>
-          {!collapsed && favoriteInstances.length > 0 && <div className="sidebar-view-list"><label>{t("Favoris").toUpperCase()}</label>{favoriteInstances.map((instance) => { const definition = viewRegistry.get(instance.type); const Icon = definition ? iconFor(definition) : LayoutDashboard; return <button key={instance.id} className={screen === "instance" && instance.id === activeId ? "active" : ""} onClick={() => openInstance(instance.id)}><Icon /><span>{instance.name}</span><Star className="sidebar-favorite-icon" fill="currentColor" /></button>; })}</div>}
-          <button className={screen === "settings" ? "active" : ""} onClick={() => setScreen("settings")} title={t("Paramètres")}><Settings /><span>{t("Paramètres")}</span></button>
-        </nav>
-        {!collapsed && <div className="sidebar-context"><span>{t("Stockage par vue").toUpperCase()}</span><div><i /> {t("Mode local actif")}</div><small>{t("Chaque vue possède ses propres données sur cet appareil.")}</small></div>}
-        <div className="sidebar-footer"><div className="user-avatar">CM</div>{!collapsed && <div><strong>{t("Espace de démonstration")}</strong><span>{APP_CHANNEL} · v{APP_VERSION}</span></div>}</div>
-      </aside>
+    <div className={`app-shell theme-${theme} accent-${accent} ${collapsed ? "sidebar-collapsed" : ""} ${mobileSidebarOpen ? "sidebar-mobile-open" : ""}`}>
+      <ApplicationSidebar
+        collapsed={collapsed}
+        mobileOpen={mobileSidebarOpen}
+        instancesCount={instances.length}
+        catalogActive={screen === "catalog"}
+        createActive={screen === "create"}
+        favorites={favoriteInstances.map((instance) => { const definition = viewRegistry.get(instance.type); return { id: instance.id, name: instance.name, icon: definition ? iconFor(definition) : LayoutDashboard, active: screen === "instance" && instance.id === activeId }; })}
+        theme={theme}
+        accent={accent}
+        appVersion={APP_VERSION}
+        appChannel={APP_CHANNEL}
+        onCollapsedChange={setCollapsed}
+        onMobileOpenChange={setMobileSidebarOpen}
+        onCatalog={() => setScreen("catalog")}
+        onCreate={() => setScreen("create")}
+        onInterconnections={() => setScreen("interconnections")}
+        onOpenFavorite={openInstance}
+        onThemeChange={setTheme}
+        onAccentChange={setAccent}
+      />
 
-      <main className="app-main">
-        <header className="topbar"><div className="breadcrumb">{screen !== "catalog" && <button className="icon-button" onClick={() => setScreen("catalog")} aria-label={t("Retour aux vues")}><ArrowLeft size={17} /></button>}<LayoutDashboard size={16} /><span>/</span><strong>{title}</strong></div>{activeInstance && screen === "instance" && <div className="topbar-actions"><button className="data-status" onClick={() => setInstanceTab("data")}><i /> {t(sourceLabel(activeInstance.source))}</button></div>}</header>
+      <main className={`app-main ${screen === "instance" ? "app-main-instance" : ""}`}>
+        {screen !== "instance" && <header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu-button" type="button" onClick={() => setMobileSidebarOpen(true)} aria-label={t("Ouvrir le menu")}><PanelLeftOpen size={18} /></button>{screen !== "catalog" && <button className="icon-button" onClick={() => setScreen("catalog")} aria-label={t("Retour aux vues")}><ArrowLeft size={17} /></button>}<LayoutDashboard size={16} /><span>/</span><strong>{title}</strong></div></header>}
         <div className="screen-content">
+          {ready && screen === "interconnections" && <InterconnectionsScreen />}
           {!ready && <div className="loading-state">{t("Chargement des vues locales…")}</div>}
           {ready && screen === "catalog" && <ViewCatalog instances={instances} favoriteIds={favoriteIdSet} layout={catalogLayout} onFavoriteChange={toggleFavorite} onLayoutChange={setCatalogLayout} onOpen={openInstance} onCreate={() => setScreen("create")} />}
           {ready && screen === "create" && <CreateViewScreen onCancel={() => setScreen("catalog")} onCreate={createInstance} />}
-          {ready && screen === "instance" && activeInstance && activeDefinition && <InstanceWorkspace instance={activeInstance} definition={activeDefinition} tab={instanceTab} onTab={setInstanceTab} onSave={saveInstance} onDelete={removeInstance} onFlash={flash} />}
-          {ready && screen === "settings" && <SettingsScreen theme={theme} accent={accent} setTheme={setTheme} setAccent={setAccent} />}
+          {ready && screen === "instance" && activeInstance && activeDefinition && <InstanceWorkspace instance={activeInstance} definition={activeDefinition} onBack={() => setScreen("catalog")} onOpenMenu={() => setMobileSidebarOpen(true)} tab={instanceTab} onTab={setInstanceTab} onSave={saveInstance} onDelete={removeInstance} onFlash={flash} />}
         </div>
       </main>
       {toast && <div className="toast-message"><span>✓</span>{toast}</div>}
@@ -207,13 +218,13 @@ function ViewCatalog({ instances, favoriteIds, layout, onFavoriteChange, onLayou
   </div>;
 }
 
-function InstanceWorkspace({ instance, definition, tab, onTab, onSave, onDelete, onFlash }: { instance: ViewInstance; definition: ViewDefinition; tab: InstanceTab; onTab: (tab: InstanceTab) => void; onSave: (instance: ViewInstance) => Promise<void>; onDelete: (instance: ViewInstance) => Promise<void>; onFlash: (message: string) => void }) {
+function InstanceWorkspace({ instance, definition, tab, onTab, onSave, onDelete, onFlash, onBack, onOpenMenu }: { onBack: () => void; onOpenMenu: () => void; instance: ViewInstance; definition: ViewDefinition; tab: InstanceTab; onTab: (tab: InstanceTab) => void; onSave: (instance: ViewInstance) => Promise<void>; onDelete: (instance: ViewInstance) => Promise<void>; onFlash: (message: string) => void }) {
   const { t } = useI18n();
   const exportTargetRef = useRef<HTMLDivElement>(null);
   const ViewComponent = definition.component;
   const configuration = instance.configuration ?? definition.createDefaultConfiguration();
   return <div className="instance-workspace">
-    <div className="instance-tabs"><div className="instance-tab-title"><span className={`mini-view-icon view-${definition.accent}`}>{renderViewIcon(definition, 15)}</span><strong>{instance.name}</strong></div><div className="instance-tab-controls"><nav aria-label={t("Menu de la vue")}><button className={tab === "view" ? "active" : ""} onClick={() => onTab("view")}><LayoutDashboard size={15} /> {t("Vue")}</button><button className={tab === "structure" ? "active" : ""} onClick={() => onTab("structure")}><SlidersHorizontal size={15} /> {t("Structure")}</button><button className={tab === "data" ? "active" : ""} onClick={() => onTab("data")}><Database size={15} /> {t("Données")}</button><button className={tab === "guide" ? "active" : ""} onClick={() => onTab("guide")}><CircleHelp size={15} /> {t("Comment ça fonctionne")}</button></nav>{tab === "view" && <ViewExportMenu targetRef={exportTargetRef} filename={instance.name} onExported={onFlash} />}</div></div>
+    <div className="instance-tabs"><div className="instance-tab-title"><button className="icon-button mobile-menu-button" type="button" onClick={onOpenMenu} aria-label={t("Ouvrir le menu")}><PanelLeftOpen size={18}/></button><button className="icon-button" type="button" onClick={onBack} aria-label={t("Retour aux vues")}><ArrowLeft size={17}/></button><span className={`mini-view-icon view-${definition.accent}`}>{renderViewIcon(definition, 15)}</span><strong>{instance.name}</strong></div><div className="instance-tab-controls"><nav aria-label={t("Menu de la vue")}><button className={tab === "view" ? "active" : ""} onClick={() => onTab("view")}><LayoutDashboard size={15} /> {t("Vue")}</button><button className={tab === "structure" ? "active" : ""} onClick={() => onTab("structure")}><SlidersHorizontal size={15} /> {t("Structure")}</button><button className={tab === "data" ? "active" : ""} onClick={() => onTab("data")}><Database size={15} /> {t("Données")}</button><button className={tab === "guide" ? "active" : ""} onClick={() => onTab("guide")}><CircleHelp size={15} /> {t("Comment ça fonctionne")}</button></nav>{tab === "view" && <ViewExportMenu targetRef={exportTargetRef} filename={instance.name} onExported={onFlash} />}</div></div>
     {tab === "view" && <div className="view-export-surface" ref={exportTargetRef}><ViewComponent data={instance.data} configuration={configuration} /></div>}
     {tab === "structure" && <InstanceStructureScreen key={instance.id} instance={instance} definition={definition} onSave={onSave} onDelete={onDelete} onFlash={onFlash} />}
     {tab === "data" && <InstanceDataScreen instance={instance} definition={definition} onSave={onSave} onFlash={onFlash} />}
@@ -421,14 +432,4 @@ function CreateViewScreen({ onCancel, onCreate }: { onCancel: () => void; onCrea
       <aside className="create-view-setup"><div className="create-selected-view">{selected && <><span className={`view-icon view-${selected.accent}`}>{renderViewIcon(selected, 22)}</span><div><p className="eyebrow">{t("Vue sélectionnée")}</p><h2>{t(selected.title)}</h2><p>{t(selected.description)}</p></div></>}</div><label><span>{t("Nom de la vue")}</span><input value={name} onChange={(event) => setName(event.target.value)} /></label>{selected?.presets?.length ? <div className="creation-preset-choice"><span>{t("Point de départ")}</span><div>{selected.presets.map((preset) => <button type="button" key={preset.id} className={presetId === preset.id ? "selected" : ""} onClick={() => { setPresetId(preset.id); setName(`${t(preset.title)} — ${t("Nouvelle analyse")}`); const hasExample = Boolean(preset.createConfiguration().exampleData); if (!hasExample) setDataMode("empty"); }}><strong>{t(preset.title)}</strong><small>{t(preset.description)}</small></button>)}</div></div> : <div className="creation-structure-choice"><span>{t("Structure initiale")}</span><div><button type="button" className={structure === "standard" ? "selected" : ""} onClick={() => setStructure("standard")}><RotateCcw size={16} /><strong>{t("Modèle standard")}</strong><small>{t("Une base prête à adapter")}</small></button><button type="button" className={structure === "blank" ? "selected" : ""} onClick={() => { setStructure("blank"); setDataMode("empty"); }}><FileCode2 size={16} /><strong>{t("Page blanche")}</strong><small>{t("Tout définir vous-même")}</small></button></div></div>}<div className="creation-structure-choice"><span>{t("Données au démarrage")}</span><div><button type="button" className={dataMode === "demo" ? "selected" : ""} disabled={Boolean(selected?.presets?.length) && !presetHasExample} onClick={() => { setDataMode("demo"); setStructure("standard"); }}><Database size={16} /><strong>{t("Jeu d’exemple inclus")}</strong><small>{t(Boolean(selected?.presets?.length) && !presetHasExample ? "Non disponible pour une structure vierge" : "Activer l’exemple fourni par le YAML")}</small></button><button type="button" className={dataMode === "empty" ? "selected" : ""} onClick={() => setDataMode("empty")}><FileCode2 size={16} /><strong>{t("Aucune donnée")}</strong><small>{t("Importer votre fichier plus tard")}</small></button></div></div><div className="modal-note"><Database size={16} /><span>{t("Le modèle choisi contient son exemple dans le YAML. Il reste désactivable et ne cohabite jamais avec un fichier Excel actif.")}</span></div><div className="create-view-actions"><button className="secondary-button" onClick={onCancel}>{t("Annuler")}</button><button className="primary-button" disabled={!selected || !name.trim() || saving} onClick={() => { if (!selected) return; setSaving(true); void onCreate(selected, name.trim(), structure, dataMode, presetId || undefined).finally(() => setSaving(false)); }}><Plus size={16} /> {t(saving ? "Création…" : "Créer la vue")}</button></div></aside>
     </div>
   </div>;
-}
-
-function SettingsScreen({ theme, accent, setTheme, setAccent }: { theme: "light" | "dark"; accent: "blue" | "violet" | "emerald"; setTheme: (theme: "light" | "dark") => void; setAccent: (accent: "blue" | "violet" | "emerald") => void }) {
-  const { locale, setLocale, t } = useI18n();
-  const futureSources = [
-    { id: "inventory", icon: Database, title: "Scalengi Inventory", description: "Référentiel et inventaires" },
-    { id: "app", icon: Cloud, title: "Scalengi App", description: "Espace SaaS Scalengi" },
-    { id: "api", icon: Network, title: "API / BDD", description: "Connexion à une source externe" },
-  ];
-  return <div className="settings-screen page-screen"><div className="page-title-row"><div><p className="eyebrow">{t("Préférences locales")}</p><h1>{t("Paramètres")}</h1><p>{t("Adaptez l’interface à votre environnement de travail.")}</p></div></div><section className="settings-card"><div><h2>{t("Langue")}</h2><p>{t("Choisissez la langue de navigation. Les structures intégrées sont traduites ; vos données restent inchangées.")}</p></div><div className="setting-group"><label htmlFor="application-language">{t("Interface")}</label><select id="application-language" className="language-select" value={locale} onChange={(event) => setLocale(event.target.value as AppLocale)}>{APP_LOCALES.map((language) => <option key={language.code} value={language.code}>{language.label}</option>)}</select></div></section><section className="settings-card"><div><h2>{t("Apparence")}</h2><p>{t("Les vues utilisent les mêmes principes visuels que Scalengi.")}</p></div><div><div className="setting-group"><label>{t("Thème")}</label><div className="segmented-control"><button className={theme === "light" ? "active" : ""} onClick={() => setTheme("light")}><Sun size={16} /> {t("Clair")}</button><button className={theme === "dark" ? "active" : ""} onClick={() => setTheme("dark")}><Moon size={16} /> {t("Sombre")}</button></div></div><div className="setting-group"><label>{t("Couleur principale")}</label><div className="color-options">{(["blue", "violet", "emerald"] as const).map((color) => <button className={`${color} ${accent === color ? "active" : ""}`} key={color} onClick={() => setAccent(color)} aria-label={t(`Couleur ${color}`)} />)}</div></div></div></section><section className="settings-card source-settings-card"><div><h2>{t("Source des vues")}</h2><p>{t("Choisissez l’origine des données exploitées par Scalengi Views.")}</p></div><div className="source-mode-grid"><button className="source-mode active" aria-pressed="true"><FileSpreadsheet size={17} /><span><strong>{t("Local")}</strong><small>{t("Fichiers et données sur cet appareil")}</small></span><em>{t("Actif")}</em></button>{futureSources.map(({ id, icon: Icon, title, description }) => <button className="source-mode" key={id} disabled><Icon size={17} /><span><strong>{title}</strong><small>{t(description)}</small></span><em>{t("Bientôt")}</em></button>)}</div></section><section className="settings-card"><div><h2>{t("À propos")}</h2><p>{t("Version installée de Scalengi Views.")}</p></div><div className="version-status"><strong>{t(APP_CHANNEL)}</strong><span>{t("Version")} {APP_VERSION}</span><small>{t(APP_RELEASE_NOTE)}</small></div></section></div>;
 }
