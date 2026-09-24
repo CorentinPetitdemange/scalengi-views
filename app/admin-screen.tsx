@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { KeyRound, Pencil, Plus, ShieldCheck, Trash2, UserCheck, UserX, Users } from "lucide-react";
-import { ApiClientError, authApi, type AuthUser, type UserRole } from "./auth-client";
+import { ApiClientError, authApi, type AuthProvider, type AuthUser, type UserRole } from "./auth-client";
 
-const emptyDraft = { displayName: "", email: "", password: "", role: "member" as UserRole };
+const emptyDraft = { displayName: "", email: "", password: "", role: "member" as UserRole, authProvider: "local" as AuthProvider };
 
 export function AdminScreen({ currentUser }: { currentUser: AuthUser }) {
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [registrationEnabled, setRegistrationEnabled] = useState(false);
+  const [oidcEnabled, setOidcEnabled] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
@@ -18,11 +19,12 @@ export function AdminScreen({ currentUser }: { currentUser: AuthUser }) {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([authApi.listUsers(), authApi.registration()])
-      .then(([userResponse, registration]) => {
+    Promise.all([authApi.listUsers(), authApi.registration(), authApi.oidcConfig()])
+      .then(([userResponse, registration, oidc]) => {
         if (!cancelled) {
           setUsers(userResponse.users);
           setRegistrationEnabled(registration.enabled);
+          setOidcEnabled(oidc.enabled);
           setError(null);
         }
       })
@@ -53,7 +55,7 @@ export function AdminScreen({ currentUser }: { currentUser: AuthUser }) {
     }
   };
 
-  const update = async (user: AuthUser, changes: { role?: UserRole; isActive?: boolean }) => {
+  const update = async (user: AuthUser, changes: { role?: UserRole; isActive?: boolean; authProvider?: AuthProvider }) => {
     setPendingId(user.id);
     setError(null);
     try {
@@ -93,7 +95,7 @@ export function AdminScreen({ currentUser }: { currentUser: AuthUser }) {
     }
   };
 
-  const saveAccount = async (input: { displayName: string; password?: string }) => {
+  const saveAccount = async (input: { displayName: string; password?: string; authProvider: AuthProvider }) => {
     if (!editing) return;
     setPendingId(editing.id);
     setError(null);
@@ -130,10 +132,10 @@ export function AdminScreen({ currentUser }: { currentUser: AuthUser }) {
       </div>
     </section>
     {creating && (
-      <CreateUserModal draft={draft} pending={pendingId === "create"} onDraft={setDraft} onClose={() => setCreating(false)} onSubmit={create} />
+      <CreateUserModal draft={draft} oidcEnabled={oidcEnabled} pending={pendingId === "create"} onDraft={setDraft} onClose={() => setCreating(false)} onSubmit={create} />
     )}
     {editing && (
-      <EditUserModal user={editing} pending={pendingId === editing.id} onClose={() => setEditing(null)} onSubmit={saveAccount} />
+      <EditUserModal user={editing} oidcEnabled={oidcEnabled} pending={pendingId === editing.id} onClose={() => setEditing(null)} onSubmit={saveAccount} />
     )}
   </div>;
 }
@@ -141,14 +143,14 @@ function UserRow({ user, own, pending, onUpdate, onEdit, onRemove }: {
   user: AuthUser;
   own: boolean;
   pending: boolean;
-  onUpdate: (user: AuthUser, changes: { role?: UserRole; isActive?: boolean }) => Promise<void>;
+  onUpdate: (user: AuthUser, changes: { role?: UserRole; isActive?: boolean; authProvider?: AuthProvider }) => Promise<void>;
   onEdit: (user: AuthUser) => void;
   onRemove: (user: AuthUser) => Promise<void>;
 }) {
   return <div className="admin-user-row" role="row">
     <div className="admin-user-identity">
       <span className="user-avatar">{initials(user.displayName)}</span>
-      <span><strong>{user.displayName}{own && <em>Vous</em>}</strong><small>{user.email}</small></span>
+      <span><strong>{user.displayName}{own && <em>Vous</em>}</strong><small>{user.email} · {authProviderLabel(user.authProvider)}</small></span>
     </div>
     <select value={user.role} disabled={pending || own} aria-label={`Rôle de ${user.displayName}`} onChange={(event) => void onUpdate(user, { role: event.target.value as UserRole })}>
       <option value="admin">Administrateur</option>
@@ -164,29 +166,33 @@ function UserRow({ user, own, pending, onUpdate, onEdit, onRemove }: {
   </div>;
 }
 
-function EditUserModal({ user, pending, onClose, onSubmit }: {
+function EditUserModal({ user, oidcEnabled, pending, onClose, onSubmit }: {
   user: AuthUser;
+  oidcEnabled: boolean;
   pending: boolean;
   onClose: () => void;
-  onSubmit: (input: { displayName: string; password?: string }) => Promise<void>;
+  onSubmit: (input: { displayName: string; password?: string; authProvider: AuthProvider }) => Promise<void>;
 }) {
   const [displayName, setDisplayName] = useState(user.displayName);
   const [password, setPassword] = useState("");
+  const [authProvider, setAuthProvider] = useState(user.authProvider);
   return <div className="modal-backdrop" role="presentation">
-    <form className="modal admin-create-modal" onSubmit={(event) => { event.preventDefault(); void onSubmit({ displayName, ...(password ? { password } : {}) }); }}>
+    <form className="modal admin-create-modal" onSubmit={(event) => { event.preventDefault(); void onSubmit({ displayName, authProvider, ...(password ? { password } : {}) }); }}>
       <header className="modal-header"><div><p className="eyebrow">Compte utilisateur</p><h2>Modifier {user.displayName}</h2></div><button type="button" className="icon-button" onClick={onClose} aria-label="Fermer">×</button></header>
       <div className="modal-body">
         <label><span>Nom affiché</span><input required minLength={2} maxLength={100} value={displayName} onChange={(event) => setDisplayName(event.target.value)}/></label>
         <label><span>Adresse e-mail</span><input value={user.email} disabled/></label>
-        <label><span>Nouveau mot de passe (facultatif)</span><input type="password" minLength={12} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)}/><small><KeyRound size={12}/> Si renseigné, toutes les sessions de ce compte seront fermées.</small></label>
+        {oidcEnabled && <label><span>Méthode de connexion</span><select value={authProvider} onChange={(event) => setAuthProvider(event.target.value as AuthProvider)}><option value="local">Mot de passe local</option><option value="oidc">SSO uniquement</option><option value="both">SSO et mot de passe local</option></select><small>Le premier accès SSO ne sera lié qu’après cette autorisation explicite.</small></label>}
+        {authProvider !== "oidc" && <label><span>Nouveau mot de passe {user.authProvider === "oidc" ? "(requis)" : "(facultatif)"}</span><input type="password" required={user.authProvider === "oidc"} minLength={12} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)}/><small><KeyRound size={12}/> Si renseigné, toutes les sessions de ce compte seront fermées.</small></label>}
       </div>
-      <footer className="modal-footer"><button type="button" onClick={onClose}>Annuler</button><button className="primary-button" type="submit" disabled={pending || (!password && displayName.trim() === user.displayName)}>{pending ? "Enregistrement…" : "Enregistrer"}</button></footer>
+      <footer className="modal-footer"><button type="button" onClick={onClose}>Annuler</button><button className="primary-button" type="submit" disabled={pending || (!password && displayName.trim() === user.displayName && authProvider === user.authProvider)}>{pending ? "Enregistrement…" : "Enregistrer"}</button></footer>
     </form>
   </div>;
 }
 
-function CreateUserModal({ draft, pending, onDraft, onClose, onSubmit }: {
+function CreateUserModal({ draft, oidcEnabled, pending, onDraft, onClose, onSubmit }: {
   draft: typeof emptyDraft;
+  oidcEnabled: boolean;
   pending: boolean;
   onDraft: (draft: typeof emptyDraft) => void;
   onClose: () => void;
@@ -198,7 +204,9 @@ function CreateUserModal({ draft, pending, onDraft, onClose, onSubmit }: {
       <div className="modal-body">
         <label><span>Nom affiché</span><input required minLength={2} maxLength={100} value={draft.displayName} onChange={(event) => onDraft({ ...draft, displayName: event.target.value })}/></label>
         <label><span>Adresse e-mail</span><input type="email" required value={draft.email} onChange={(event) => onDraft({ ...draft, email: event.target.value })}/></label>
-        <label><span>Mot de passe initial</span><input type="password" required minLength={12} maxLength={128} value={draft.password} onChange={(event) => onDraft({ ...draft, password: event.target.value })}/><small>À transmettre par un canal sécurisé. L’utilisateur pourra le changer dans Mon compte.</small></label>
+        {oidcEnabled && <label><span>Méthode de connexion</span><select value={draft.authProvider} onChange={(event) => onDraft({ ...draft, authProvider: event.target.value as AuthProvider, password: event.target.value === "oidc" ? "" : draft.password })}><option value="local">Mot de passe local</option><option value="oidc">SSO uniquement</option><option value="both">SSO et mot de passe local</option></select></label>}
+        {draft.authProvider !== "oidc" && <label><span>Mot de passe initial</span><input type="password" required minLength={12} maxLength={128} value={draft.password} onChange={(event) => onDraft({ ...draft, password: event.target.value })}/><small>À transmettre par un canal sécurisé. L’utilisateur pourra le changer dans Mon compte.</small></label>}
+        {draft.authProvider === "oidc" && <small>Le compte sera lié à l’identité SSO lors de sa première connexion avec cette adresse e-mail vérifiée.</small>}
         <label><span>Rôle</span><select value={draft.role} onChange={(event) => onDraft({ ...draft, role: event.target.value as UserRole })}><option value="member">Membre</option><option value="admin">Administrateur</option></select></label>
       </div>
       <footer className="modal-footer"><button type="button" onClick={onClose}>Annuler</button><button className="primary-button" type="submit" disabled={pending}>{pending ? "Création…" : "Créer le compte"}</button></footer>
@@ -207,3 +215,4 @@ function CreateUserModal({ draft, pending, onDraft, onClose, onSubmit }: {
 }
 
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
+const authProviderLabel = (provider: AuthProvider) => provider === "local" ? "Local" : provider === "oidc" ? "SSO" : "Local + SSO";

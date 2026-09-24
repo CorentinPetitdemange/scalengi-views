@@ -1,47 +1,22 @@
-use argon2::{
-    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
-    Argon2,
-};
-use rand::{rngs::OsRng, RngCore};
-use sha2::{Digest, Sha256};
+use openidconnect::CsrfToken;
 use subtle::ConstantTimeEq;
 
 use crate::error::ApiError;
 
-pub const SESSION_COOKIE: &str = "scalengi_session";
-
 pub async fn hash_password(password: String) -> Result<String, ApiError> {
-    tokio::task::spawn_blocking(move || {
-        let salt = SaltString::generate(&mut OsRng);
-        Argon2::default()
-            .hash_password(password.as_bytes(), &salt)
-            .map(|hash| hash.to_string())
-            .map_err(|error| ApiError::Internal(format!("password hashing failed: {error}")))
-    })
-    .await
-    .map_err(|error| ApiError::Internal(format!("password task failed: {error}")))?
+    tokio::task::spawn_blocking(move || password_auth::generate_hash(password))
+        .await
+        .map_err(|error| ApiError::Internal(format!("password task failed: {error}")))
 }
 
 pub async fn verify_password(password: String, encoded: String) -> bool {
-    tokio::task::spawn_blocking(move || {
-        PasswordHash::new(&encoded).ok().is_some_and(|hash| {
-            Argon2::default()
-                .verify_password(password.as_bytes(), &hash)
-                .is_ok()
-        })
-    })
-    .await
-    .unwrap_or(false)
+    tokio::task::spawn_blocking(move || password_auth::verify_password(password, &encoded).is_ok())
+        .await
+        .unwrap_or(false)
 }
 
 pub fn random_token() -> String {
-    let mut bytes = [0_u8; 32];
-    OsRng.fill_bytes(&mut bytes);
-    hex(&bytes)
-}
-
-pub fn token_hash(token: &str) -> String {
-    hex(&Sha256::digest(token.as_bytes()))
+    CsrfToken::new_random().secret().to_owned()
 }
 
 pub fn constant_time_value_matches(expected: &str, provided: &str) -> bool {
@@ -120,14 +95,21 @@ pub fn validate_role(value: &str) -> Result<&str, ApiError> {
     }
 }
 
-fn hex(bytes: &[u8]) -> String {
-    const HEX: &[u8; 16] = b"0123456789abcdef";
-    let mut output = String::with_capacity(bytes.len() * 2);
-    for byte in bytes {
-        output.push(HEX[(byte >> 4) as usize] as char);
-        output.push(HEX[(byte & 0x0f) as usize] as char);
+pub fn validate_auth_provider(value: &str, oidc_enabled: bool) -> Result<&str, ApiError> {
+    match value {
+        "local" => Ok(value),
+        "oidc" | "both" if oidc_enabled => Ok(value),
+        "oidc" | "both" => Err(ApiError::bad_request(
+            "oidc_disabled",
+            "OIDC doit être configuré avant d’affecter ce mode de connexion.",
+            Some("authProvider"),
+        )),
+        _ => Err(ApiError::bad_request(
+            "invalid_auth_provider",
+            "Mode d’authentification invalide.",
+            Some("authProvider"),
+        )),
     }
-    output
 }
 
 #[cfg(test)]
@@ -142,10 +124,9 @@ mod tests {
     }
 
     #[test]
-    fn token_comparison_is_hash_based() {
+    fn token_comparison_is_constant_time() {
         let token = random_token();
-        let hash = token_hash(&token);
-        assert_eq!(hash, token_hash(&token));
-        assert_ne!(hash, token_hash("another-token"));
+        assert!(constant_time_value_matches(&token, &token));
+        assert!(!constant_time_value_matches(&token, "another-token"));
     }
 }

@@ -34,6 +34,13 @@ struct ErrorBody {
 }
 
 impl ApiError {
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::Client { code, .. } => code,
+            Self::Database(_) | Self::Internal(_) => "internal_error",
+        }
+    }
+
     pub fn bad_request(
         code: &'static str,
         message: impl Into<String>,

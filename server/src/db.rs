@@ -2,7 +2,7 @@ use std::path::Path;
 
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},
-    SqlitePool,
+    Row, SqlitePool,
 };
 
 use crate::error::ApiError;
@@ -35,6 +35,8 @@ async fn migrate(pool: &SqlitePool) -> Result<(), ApiError> {
             email TEXT NOT NULL COLLATE NOCASE UNIQUE,
             display_name TEXT NOT NULL,
             password_hash TEXT NOT NULL,
+            auth_provider TEXT NOT NULL DEFAULT 'local',
+            session_version TEXT NOT NULL,
             role TEXT NOT NULL CHECK (role IN ('admin', 'member')),
             is_active INTEGER NOT NULL DEFAULT 1,
             failed_login_attempts INTEGER NOT NULL DEFAULT 0,
@@ -44,17 +46,19 @@ async fn migrate(pool: &SqlitePool) -> Result<(), ApiError> {
             updated_at INTEGER NOT NULL
         );
 
-        CREATE TABLE IF NOT EXISTS sessions (
-            token_hash TEXT PRIMARY KEY NOT NULL,
-            user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            csrf_token TEXT NOT NULL,
-            created_at INTEGER NOT NULL,
-            expires_at INTEGER NOT NULL,
-            last_seen_at INTEGER NOT NULL
-        );
+        -- Versions before OIDC used a custom sessions table. The maintained tower-sessions
+        -- store uses `tower_sessions`; legacy sessions cannot be migrated safely.
+        DROP TABLE IF EXISTS sessions;
 
-        CREATE INDEX IF NOT EXISTS sessions_user_id ON sessions(user_id);
-        CREATE INDEX IF NOT EXISTS sessions_expires_at ON sessions(expires_at);
+        CREATE TABLE IF NOT EXISTS oidc_identities (
+            issuer TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            created_at INTEGER NOT NULL,
+            last_login_at INTEGER NOT NULL,
+            PRIMARY KEY (issuer, subject),
+            UNIQUE (user_id, issuer)
+        );
 
         CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY NOT NULL,
@@ -67,5 +71,30 @@ async fn migrate(pool: &SqlitePool) -> Result<(), ApiError> {
     )
     .execute(pool)
     .await?;
+    ensure_user_column(pool, "auth_provider", "TEXT NOT NULL DEFAULT 'local'").await?;
+    ensure_user_column(pool, "session_version", "TEXT NOT NULL DEFAULT ''").await?;
+    sqlx::query(
+        "UPDATE users SET session_version = lower(hex(randomblob(32))) WHERE session_version = ''",
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+async fn ensure_user_column(
+    pool: &SqlitePool,
+    name: &str,
+    definition: &str,
+) -> Result<(), ApiError> {
+    let exists = sqlx::query("PRAGMA table_info(users)")
+        .fetch_all(pool)
+        .await?
+        .iter()
+        .any(|row| row.get::<String, _>("name") == name);
+    if !exists {
+        sqlx::query(&format!("ALTER TABLE users ADD COLUMN {name} {definition}"))
+            .execute(pool)
+            .await?;
+    }
     Ok(())
 }

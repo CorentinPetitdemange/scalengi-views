@@ -1,12 +1,18 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
+pub const USER_COLUMNS: &str = "id, email, display_name, password_hash, auth_provider, session_version, role, is_active, failed_login_attempts, locked_until, last_login_at, created_at";
+pub const USER_SELECT_BY_ID: &str = "SELECT id, email, display_name, password_hash, auth_provider, session_version, role, is_active, failed_login_attempts, locked_until, last_login_at, created_at FROM users WHERE id = ?";
+pub const USER_SELECT_BY_EMAIL: &str = "SELECT id, email, display_name, password_hash, auth_provider, session_version, role, is_active, failed_login_attempts, locked_until, last_login_at, created_at FROM users WHERE email = ?";
+
 #[derive(Clone, Debug, FromRow)]
 pub struct UserRecord {
     pub id: String,
     pub email: String,
     pub display_name: String,
     pub password_hash: String,
+    pub auth_provider: String,
+    pub session_version: String,
     pub role: String,
     pub is_active: bool,
     pub failed_login_attempts: i64,
@@ -22,6 +28,7 @@ pub struct PublicUser {
     pub email: String,
     pub display_name: String,
     pub role: String,
+    pub auth_provider: String,
     pub is_active: bool,
     pub last_login_at: Option<i64>,
     pub created_at: i64,
@@ -34,6 +41,7 @@ impl From<UserRecord> for PublicUser {
             email: user.email,
             display_name: user.display_name,
             role: user.role,
+            auth_provider: user.auth_provider,
             is_active: user.is_active,
             last_login_at: user.last_login_at,
             created_at: user.created_at,
@@ -74,8 +82,9 @@ pub struct PasswordInput {
 pub struct AdminCreateUserInput {
     pub email: String,
     pub display_name: String,
-    pub password: String,
+    pub password: Option<String>,
     pub role: String,
+    pub auth_provider: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -85,6 +94,7 @@ pub struct AdminUpdateUserInput {
     pub role: Option<String>,
     pub is_active: Option<bool>,
     pub password: Option<String>,
+    pub auth_provider: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

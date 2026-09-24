@@ -83,7 +83,7 @@ function AuthenticatedApplication() {
   }, []);
   if (checking) return <div className="auth-loading"><span className="auth-brand-mark"/><strong>Scalengi Views</strong><small>Vérification de la session…</small></div>;
   if (serviceError) return <main className="auth-service-error"><span className="auth-brand-mark"/><h1>Connexion au service impossible</h1><p>{serviceError}</p><code>cargo run --manifest-path server/Cargo.toml</code><button type="button" onClick={() => void retrySession()}>Réessayer</button></main>;
-  if (!session) return <AuthScreen bootstrap={bootstrap ?? { hasAccounts: true, registrationEnabled: false }} onAuthenticated={setSession}/>;
+  if (!session) return <AuthScreen bootstrap={bootstrap ?? { hasAccounts: true, registrationEnabled: false, oidc: { enabled: false, providerName: null, localLoginEnabled: true, jitProvisioning: false, endSessionUrl: null } }} onAuthenticated={setSession}/>;
   configureViewStorage(session.user.id);
   return <ScalengiViewsShell session={session} onSessionChange={setSession} onSignedOut={() => { setSession(null); void authApi.bootstrap().then(setBootstrap); }}/>;
 }
@@ -238,7 +238,12 @@ function ScalengiViewsShell({ session, onSessionChange, onSignedOut }: { session
         onInterconnections={() => setScreen("interconnections")}
         onAccount={() => setScreen("account")}
         onAdmin={() => setScreen("admin")}
-        onLogout={() => void authApi.logout().then(onSignedOut).catch(() => flash("La déconnexion a échoué."))}
+        onLogout={() => void (async () => {
+          const oidc = await authApi.oidcConfig().catch(() => null);
+          await authApi.logout();
+          onSignedOut();
+          if (oidc?.endSessionUrl) window.location.assign(oidc.endSessionUrl);
+        })().catch(() => flash("La déconnexion a échoué."))}
         onOpenFavorite={openInstance}
         onThemeChange={setTheme}
         onAccentChange={setAccent}

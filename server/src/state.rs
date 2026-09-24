@@ -2,11 +2,11 @@ use std::sync::Arc;
 
 use sqlx::SqlitePool;
 
-use crate::config::Config;
+use crate::{config::Config, oidc::OidcService};
 
 #[derive(Clone)]
 pub struct AppState {
     pub pool: SqlitePool,
     pub config: Arc<Config>,
-    pub dummy_password_hash: Arc<String>,
+    pub oidc: Option<Arc<OidcService>>,
 }
