@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { ArrowRight, Building2, Eye, EyeOff, KeyRound, LockKeyhole, ShieldCheck } from "lucide-react";
+import { ArrowRight, Building2, Eye, EyeOff, GalleryVerticalEnd, KeyRound, Layers3, Route } from "lucide-react";
 import { ApiClientError, authApi, type BootstrapState, type Session } from "./auth-client";
 
 export function AuthScreen({ bootstrap, onAuthenticated }: { bootstrap: BootstrapState; onAuthenticated: (session: Session) => void }) {
@@ -44,11 +44,15 @@ export function AuthScreen({ bootstrap, onAuthenticated }: { bootstrap: Bootstra
     <section className="auth-brand-panel">
       <div className="auth-brand"><span className="auth-brand-mark"/><span>Scalengi Views</span></div>
       <div className="auth-brand-message">
-        <span className="auth-eyebrow"><ShieldCheck size={15}/> Espace protégé</span>
-        <h1>Les décisions d’architecture commencent dans un espace de confiance.</h1>
-        <p>Vos vues restent sur cet appareil. Votre compte contrôle qui peut ouvrir l’application et administrer les accès.</p>
+        <span className="auth-eyebrow"><GalleryVerticalEnd size={15}/> Décider avec une vue claire</span>
+        <h1>Transformez vos données d’architecture en décisions lisibles.</h1>
+        <p>Scalengi Views réunit structure, données et représentation pour expliquer un système d’information, révéler les écarts et partager une trajectoire compréhensible.</p>
       </div>
-      <div className="auth-security-note"><LockKeyhole size={18}/><div><strong>Session sécurisée</strong><span>Cookie inaccessible au navigateur, protection CSRF et mots de passe Argon2id.</span></div></div>
+      <div className="auth-value-list">
+        <span><Layers3 size={17}/><strong>Structurer</strong><small>Organisez capacités, couches, acteurs et transformations.</small></span>
+        <span><GalleryVerticalEnd size={17}/><strong>Visualiser</strong><small>Choisissez une vue adaptée à la décision à prendre.</small></span>
+        <span><Route size={17}/><strong>Aligner</strong><small>Rendez les constats et trajectoires partageables.</small></span>
+      </div>
     </section>
     <section className="auth-form-panel">
       <div className="auth-form-card">

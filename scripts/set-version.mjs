@@ -14,6 +14,7 @@ const cargoLockUrl = new URL("../src-tauri/Cargo.lock", import.meta.url);
 const authCargoUrl = new URL("../server/Cargo.toml", import.meta.url);
 const authCargoLockUrl = new URL("../server/Cargo.lock", import.meta.url);
 const readmeUrl = new URL("../README.md", import.meta.url);
+const moduleManifestUrl = new URL("../scalengi-module.json", import.meta.url);
 const packageJson = JSON.parse(await readFile(packageUrl, "utf8"));
 const currentVersion = packageJson.version;
 
@@ -40,8 +41,10 @@ const cargoLock = await readFile(cargoLockUrl, "utf8");
 const authCargoToml = await readFile(authCargoUrl, "utf8");
 const authCargoLock = await readFile(authCargoLockUrl, "utf8");
 const readme = await readFile(readmeUrl, "utf8");
+const moduleManifest = JSON.parse(await readFile(moduleManifestUrl, "utf8"));
 packageJson.version = nextVersion;
 tauriConfig.version = nextVersion;
+moduleManifest.version = nextVersion;
 
 const nextCargoToml = cargoToml.replace(/^version\s*=\s*"[^"]+"/m, `version = "${nextVersion}"`);
 const nextCargoLock = cargoLock.replace(
@@ -66,6 +69,7 @@ await Promise.all([
   writeFile(authCargoUrl, nextAuthCargoToml),
   writeFile(authCargoLockUrl, nextAuthCargoLock),
   writeFile(readmeUrl, nextReadme),
+  writeFile(moduleManifestUrl, `${JSON.stringify(moduleManifest, null, 2)}\n`),
 ]);
 
 console.log(`Version préparée : ${currentVersion} → ${nextVersion}`);

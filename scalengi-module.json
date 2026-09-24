@@ -1,0 +1,40 @@
+{
+  "$schema": "./scalengi-module.schema.json",
+  "schemaVersion": 1,
+  "id": "com.scalengi.views",
+  "name": "Scalengi Views",
+  "version": "1.2.0-alpha.1",
+  "kind": "feature",
+  "description": "Créer des représentations spécialisées pour analyser, expliquer et piloter un système d’information.",
+  "compatibility": {
+    "platformApi": "1.x",
+    "standalone": true
+  },
+  "distribution": {
+    "provider": "github-release",
+    "repository": "CorentinPetitdemange/scalengi-views",
+    "assetPattern": "scalengi-views-module-v{version}.zip"
+  },
+  "entrypoints": {
+    "module": "scalengi-views.mjs",
+    "stylesheet": "scalengi-views.css"
+  },
+  "exports": [
+    "ScalengiViewsApp",
+    "viewRegistry",
+    "ViewRegistry"
+  ],
+  "capabilities": [
+    "views.catalog",
+    "views.instances.local",
+    "views.import.excel",
+    "views.export.image"
+  ],
+  "permissions": {
+    "businessDataNetworkAccess": false,
+    "localStorage": [
+      "indexeddb",
+      "preferences"
+    ]
+  }
+}

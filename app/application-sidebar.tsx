@@ -26,9 +26,9 @@ type ApplicationSidebarProps = {
   onCatalog: () => void;
   onCreate: () => void;
   onInterconnections: () => void;
-  onAccount: () => void;
-  onAdmin: () => void;
-  onLogout: () => void;
+  onAccount?: () => void;
+  onAdmin?: () => void;
+  onLogout?: () => void;
   onOpenFavorite: (id: string) => void;
   onThemeChange: (theme: Theme) => void;
   onAccentChange: (accent: Accent) => void;
@@ -121,7 +121,7 @@ export function ApplicationSidebar({ collapsed, mobileOpen, instancesCount, cata
         <button className="sidebar-account-button" type="button" aria-haspopup="menu" aria-expanded={accountMenuOpen} onClick={() => { setAccountMenuOpen((open) => !open); setWorkspaceMenuOpen(false); setSettingsOpen(false); }} title={collapsed ? user.displayName : undefined}>
           <span className="user-avatar">{initials}</span><span className="sidebar-account-copy"><strong>{user.displayName}</strong><small>{user.role === "admin" ? "Administrateur" : "Membre"}</small></span><ChevronsUpDown size={16} />
         </button>
-        {accountMenuOpen && <div className="sidebar-dropdown account-dropdown" role="menu"><div className="account-menu-summary"><span className="user-avatar">{initials}</span><div><strong>{user.displayName}</strong><small>{user.email}</small></div></div><div className="sidebar-dropdown-separator"/><button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); navigate(onAccount); }}><UserRound size={16}/><span>Mon compte</span></button>{user.role === "admin" && <button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); navigate(onAdmin); }}><ShieldCheck size={16}/><span>Administration</span></button>}<button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); setSettingsOpen(true); }}><Settings size={16}/><span>{t("Paramètres")}</span></button><button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); setSettingsOpen(false); navigate(onInterconnections); }}><Network size={16}/><span>{locale === "fr" ? "Interconnexions" : "Connections"}</span></button><div className="sidebar-dropdown-separator"/><button className="account-logout-button" type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); onLogout(); }}><LogOut size={16}/><span>Se déconnecter</span></button><div className="sidebar-version-row"><span>{t(appChannel)}</span><small>v{appVersion}</small></div></div>}
+        {accountMenuOpen && <div className="sidebar-dropdown account-dropdown" role="menu"><div className="account-menu-summary"><span className="user-avatar">{initials}</span><div><strong>{user.displayName}</strong><small>{user.email}</small></div></div>{(onAccount || onAdmin) && <div className="sidebar-dropdown-separator"/>}{onAccount && <button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); navigate(onAccount); }}><UserRound size={16}/><span>Mon compte</span></button>}{user.role === "admin" && onAdmin && <button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); navigate(onAdmin); }}><ShieldCheck size={16}/><span>Administration</span></button>}<button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); setSettingsOpen(true); }}><Settings size={16}/><span>{t("Paramètres")}</span></button><button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); setSettingsOpen(false); navigate(onInterconnections); }}><Network size={16}/><span>{locale === "fr" ? "Interconnexions" : "Connections"}</span></button>{onLogout && <><div className="sidebar-dropdown-separator"/><button className="account-logout-button" type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); onLogout(); }}><LogOut size={16}/><span>Se déconnecter</span></button></>}<div className="sidebar-version-row"><span>{t(appChannel)}</span><small>v{appVersion}</small></div></div>}
       </footer>
 
 

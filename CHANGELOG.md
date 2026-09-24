@@ -4,6 +4,23 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 ## [Unreleased]
 
+## [1.2.0-alpha.1] - 2026-09-24
+
+### Added
+
+- added an administrator interface for provider-neutral OIDC configuration, discovery validation, domain policies, JIT provisioning, local-login fallback, and bootstrap controls;
+- added a versioned Scalengi module manifest, ESM entry point, host-authenticated mounting contract, package builder, and GitHub release asset for future platform installation;
+- documented the independent product boundaries between the future Scalengi platform, Views, Inventory, and paid platform capabilities.
+
+### Changed
+
+- redesigned the login introduction around the purpose of Scalengi Views instead of exposing authentication implementation details;
+- made the OIDC runtime configuration reloadable without restarting the Rust service while keeping the client secret exclusively in the server environment.
+
+### Security
+
+- kept OIDC client secrets outside the browser and SQLite configuration, validated provider discovery before activation, and retained CSRF, origin, administrator, HTTPS, verified-email, and exact-domain safeguards for SSO administration.
+
 ## [1.1.0] - 2026-09-24
 
 ### Added
@@ -113,7 +130,8 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 [0.1.0-alpha.3]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/CorentinPetitdemange/scalengi-views/releases/tag/v0.1.0-alpha.1
-[Unreleased]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.2.0-alpha.1...HEAD
+[1.2.0-alpha.1]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.1.0...v1.2.0-alpha.1
 [1.1.0]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-beta.1...v1.0.0

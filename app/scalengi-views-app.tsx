@@ -43,8 +43,17 @@ function demoInstances(definitions = viewRegistry.list()): ViewInstance[] {
   });
 }
 
-export function ScalengiViewsApp() {
-  return <I18nProvider><AuthenticatedApplication /></I18nProvider>;
+export type ScalengiViewsHost = {
+  session: Pick<Session, "user">;
+  openAccount?: () => void;
+  openAdministration?: () => void;
+  signOut?: () => void | Promise<void>;
+};
+
+export function ScalengiViewsApp({ host }: { host?: ScalengiViewsHost } = {}) {
+  return <I18nProvider>{host
+    ? <ScalengiViewsShell session={host.session} onSessionChange={() => undefined} onSignedOut={() => undefined} host={host}/>
+    : <AuthenticatedApplication />}</I18nProvider>;
 }
 
 function AuthenticatedApplication() {
@@ -88,7 +97,7 @@ function AuthenticatedApplication() {
   return <ScalengiViewsShell session={session} onSessionChange={setSession} onSignedOut={() => { setSession(null); void authApi.bootstrap().then(setBootstrap); }}/>;
 }
 
-function ScalengiViewsShell({ session, onSessionChange, onSignedOut }: { session: Session; onSessionChange: (session: Session) => void; onSignedOut: () => void }) {
+function ScalengiViewsShell({ session, onSessionChange, onSignedOut, host }: { session: Pick<Session, "user">; onSessionChange: (session: Session) => void; onSignedOut: () => void; host?: ScalengiViewsHost }) {
   const { locale, t } = useI18n();
   const [screen, setScreen] = useState<Screen>("catalog");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -236,9 +245,13 @@ function ScalengiViewsShell({ session, onSessionChange, onSignedOut }: { session
         onCatalog={() => setScreen("catalog")}
         onCreate={() => setScreen("create")}
         onInterconnections={() => setScreen("interconnections")}
-        onAccount={() => setScreen("account")}
-        onAdmin={() => setScreen("admin")}
+        onAccount={host ? host.openAccount : () => setScreen("account")}
+        onAdmin={host ? host.openAdministration : () => setScreen("admin")}
         onLogout={() => void (async () => {
+          if (host) {
+            await host.signOut?.();
+            return;
+          }
           const oidc = await authApi.oidcConfig().catch(() => null);
           await authApi.logout();
           onSignedOut();
@@ -253,10 +266,10 @@ function ScalengiViewsShell({ session, onSessionChange, onSignedOut }: { session
         {screen !== "instance" && <header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu-button" type="button" onClick={() => setMobileSidebarOpen(true)} aria-label={t("Ouvrir le menu")}><PanelLeftOpen size={18} /></button>{screen !== "catalog" && <button className="icon-button" onClick={() => setScreen("catalog")} aria-label={t("Retour aux vues")}><ArrowLeft size={17} /></button>}<LayoutDashboard size={16} /><span>/</span><strong>{title}</strong></div></header>}
         <div className="screen-content">
           {ready && screen === "interconnections" && <InterconnectionsScreen />}
-          {ready && screen === "account" && (
+          {ready && !host && screen === "account" && (
             <AccountScreen user={session.user} onSessionChange={onSessionChange} />
           )}
-          {ready && screen === "admin" && session.user.role === "admin" && (
+          {ready && !host && screen === "admin" && session.user.role === "admin" && (
             <AdminScreen currentUser={session.user} />
           )}
           {!ready && <div className="loading-state">{t("Chargement des vues locales…")}</div>}

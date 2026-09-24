@@ -21,6 +21,7 @@ use backend::AuthBackend;
 use config::Config;
 use state::AppState;
 use time::Duration;
+use tokio::sync::RwLock;
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
     set_header::SetResponseHeaderLayer,
@@ -43,18 +44,17 @@ async fn main() {
     let pool = db::connect(&config.database_path)
         .await
         .unwrap_or_else(|error| panic!("database error: {error}"));
-    let oidc = match config.oidc.clone() {
-        Some(oidc_config) => Some(Arc::new(
-            oidc::OidcService::discover(oidc_config)
-                .await
-                .unwrap_or_else(|error| panic!("configuration OIDC: {error}")),
-        )),
-        None => None,
-    };
+    let oidc = oidc::initialize_service(
+        &pool,
+        config.oidc.clone(),
+        config.oidc_client_secret.as_deref(),
+    )
+    .await
+    .unwrap_or_else(|error| panic!("configuration OIDC: {error}"));
     let state = AppState {
         pool,
         config: Arc::new(config.clone()),
-        oidc,
+        oidc: Arc::new(RwLock::new(oidc)),
     };
     let app = app(state).await.expect("initialize authentication layers");
     let listener = tokio::net::TcpListener::bind(config.bind)
@@ -125,6 +125,7 @@ async fn app(state: AppState) -> Result<Router, String> {
         .route("/api/admin/users", get(admin::list_users).post(admin::create_user))
         .route("/api/admin/users/{id}", patch(admin::update_user).delete(admin::delete_user))
         .route("/api/admin/settings/registration", get(admin::registration_setting).patch(admin::update_registration_setting))
+        .route("/api/admin/settings/oidc", get(oidc::admin_configuration).patch(oidc::update_admin_configuration))
         .fallback(|| async { (axum::http::StatusCode::NOT_FOUND, axum::Json(serde_json::json!({"error":{"code":"not_found","message":"Ressource introuvable."}}))) })
         .layer(SetResponseHeaderLayer::if_not_present(header::X_CONTENT_TYPE_OPTIONS, HeaderValue::from_static("nosniff")))
         .layer(SetResponseHeaderLayer::if_not_present(header::REFERRER_POLICY, HeaderValue::from_static("no-referrer")))
@@ -159,12 +160,13 @@ mod tests {
             cookie_secure: false,
             session_lifetime_seconds: 3600,
             oidc: None,
+            oidc_client_secret: None,
         };
         let pool = db::connect(&database_path).await.expect("test database");
         app(AppState {
             pool,
             config: Arc::new(config),
-            oidc: None,
+            oidc: Arc::new(RwLock::new(None)),
         })
         .await
         .expect("test app")
@@ -195,12 +197,13 @@ mod tests {
             cookie_secure: false,
             session_lifetime_seconds: 3600,
             oidc: Some(oidc_config),
+            oidc_client_secret: Some(security::random_token()),
         };
         let pool = db::connect(&database_path).await.expect("test database");
         app(AppState {
             pool,
             config: Arc::new(config),
-            oidc: Some(Arc::new(service)),
+            oidc: Arc::new(RwLock::new(Some(Arc::new(service)))),
         })
         .await
         .expect("test OIDC app")
@@ -643,5 +646,110 @@ mod tests {
             .await
             .expect("stale session response");
         assert_eq!(stale_session.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn sso_administration_is_admin_csrf_protected_and_never_accepts_secrets() {
+        let router = test_app().await;
+        let unauthenticated = router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/admin/settings/oidc")
+                    .body(Body::empty())
+                    .expect("unauthenticated request"),
+            )
+            .await
+            .expect("unauthenticated response");
+        assert_eq!(unauthenticated.status(), StatusCode::UNAUTHORIZED);
+
+        let admin = register_user(
+            &router,
+            "SSO Admin",
+            "sso-admin@example.com",
+            &strong_test_password(),
+        )
+        .await;
+        let settings = router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/admin/settings/oidc")
+                    .header("cookie", &admin.cookie)
+                    .body(Body::empty())
+                    .expect("settings request"),
+            )
+            .await
+            .expect("settings response");
+        assert_eq!(settings.status(), StatusCode::OK);
+        let settings_body = response_json(settings).await;
+        assert_eq!(settings_body["clientSecretConfigured"], false);
+        assert!(settings_body.get("clientSecret").is_none());
+
+        let disabled_configuration = serde_json::json!({
+            "enabled": false,
+            "providerName": "Enterprise SSO",
+            "issuerUrl": "",
+            "clientId": "",
+            "redirectUrl": "",
+            "allowedDomains": [],
+            "allowAnyDomain": false,
+            "jitProvisioning": false,
+            "localLoginEnabled": true,
+            "requireVerifiedEmail": true,
+            "bootstrapAdminEmail": null,
+            "endSessionUrl": null
+        });
+        let missing_csrf = router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("PATCH")
+                    .uri("/api/admin/settings/oidc")
+                    .header("content-type", "application/json")
+                    .header("origin", "http://localhost:3000")
+                    .header("cookie", &admin.cookie)
+                    .body(Body::from(disabled_configuration.to_string()))
+                    .expect("missing CSRF request"),
+            )
+            .await
+            .expect("missing CSRF response");
+        assert_eq!(missing_csrf.status(), StatusCode::FORBIDDEN);
+
+        let mut injected_secret = disabled_configuration.clone();
+        injected_secret["clientSecret"] = serde_json::Value::String(security::random_token());
+        let rejected_secret = router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("PATCH")
+                    .uri("/api/admin/settings/oidc")
+                    .header("content-type", "application/json")
+                    .header("origin", "http://localhost:3000")
+                    .header("cookie", &admin.cookie)
+                    .header("x-csrf-token", &admin.csrf)
+                    .body(Body::from(injected_secret.to_string()))
+                    .expect("secret injection request"),
+            )
+            .await
+            .expect("secret injection response");
+        assert_eq!(rejected_secret.status(), StatusCode::UNPROCESSABLE_ENTITY);
+
+        let saved = router
+            .oneshot(
+                Request::builder()
+                    .method("PATCH")
+                    .uri("/api/admin/settings/oidc")
+                    .header("content-type", "application/json")
+                    .header("origin", "http://localhost:3000")
+                    .header("cookie", &admin.cookie)
+                    .header("x-csrf-token", &admin.csrf)
+                    .body(Body::from(disabled_configuration.to_string()))
+                    .expect("valid SSO settings request"),
+            )
+            .await
+            .expect("valid SSO settings response");
+        assert_eq!(saved.status(), StatusCode::OK);
+        assert_eq!(response_json(saved).await["source"], "administration");
     }
 }

@@ -8,6 +8,7 @@ const cargoLock = await readFile(new URL("../src-tauri/Cargo.lock", import.meta.
 const authCargoToml = await readFile(new URL("../server/Cargo.toml", import.meta.url), "utf8");
 const authCargoLock = await readFile(new URL("../server/Cargo.lock", import.meta.url), "utf8");
 const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+const moduleManifest = JSON.parse(await readFile(new URL("../scalengi-module.json", import.meta.url), "utf8"));
 const cargoVersion = cargoToml.match(/^version\s*=\s*"([^"]+)"/m)?.[1];
 const cargoLockVersion = cargoLock.match(/\[\[package\]\]\nname = "scalengi-views"\nversion = "([^"]+)"/)?.[1];
 const authCargoVersion = authCargoToml.match(/^version\s*=\s*"([^"]+)"/m)?.[1];
@@ -20,6 +21,8 @@ assert.equal(cargoLockVersion, packageJson.version, "package.json et Cargo.lock 
 assert.equal(authCargoVersion, packageJson.version, "package.json et server/Cargo.toml doivent avoir la même version");
 assert.equal(authCargoLockVersion, packageJson.version, "package.json et server/Cargo.lock doivent avoir la même version");
 assert.equal(readmeVersion, packageJson.version, "le badge du README doit afficher la version de package.json");
+assert.equal(moduleManifest.version, packageJson.version, "scalengi-module.json doit avoir la même version que package.json");
+assert.equal(moduleManifest.id, "com.scalengi.views", "l’identifiant stable du module ne doit pas changer");
 
 const releaseTag = process.env.GITHUB_REF_NAME;
 if (releaseTag?.startsWith("v")) {

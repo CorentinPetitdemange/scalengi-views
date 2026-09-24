@@ -38,7 +38,11 @@ configuration · dataset · types · xlsx
 
 The `desktop/` entry point mounts the same `ScalengiViewsApp` through a static Vite build. `src-tauri/` contains only a minimal native shell; no view, data, authentication, or connector rule is duplicated there. The web application and macOS, Windows, and Linux applications therefore genuinely share `app/` and `library/`.
 
+The `module/` entry point packages that same application and registry as an ESM feature module. `scalengi-module.json` is the stable installation contract used by a future Scalengi platform; tagged releases attach the matching module archive alongside standalone installers. Host mode accepts an authenticated session and delegates account, administration, and logout navigation to the platform, so the embedded feature does not duplicate platform identity screens. See `docs/MODULE_INTEGRATION.md`.
+
 Authentication is a separate Rust service under `server/`. It stores identities, password hashes, sessions, roles, and the registration setting, but never view configurations or datasets. The shell consumes its `/api` contract and partitions IndexedDB by authenticated user id. See `docs/AUTHENTICATION.md`.
+
+The product boundaries remain explicit: Views and the future Inventory product are independently releasable free modules; the future Scalengi platform owns module activation and paid cross-product capabilities such as process or enterprise-system management. No platform feature or Inventory dependency is implemented in this repository.
 
 The reverse dependency is forbidden: a view knows nothing about the shell, IndexedDB, or another view.
 

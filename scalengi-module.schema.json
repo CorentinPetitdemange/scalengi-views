@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scalengi.com/schemas/module-v1.json",
+  "title": "Scalengi module manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "name", "version", "kind", "description", "compatibility", "distribution", "entrypoints", "exports", "capabilities", "permissions"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9-]*)+$", "maxLength": 128 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:alpha|beta|rc)\\.(0|[1-9][0-9]*))?$" },
+    "kind": { "enum": ["feature"] },
+    "description": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platformApi", "standalone"],
+      "properties": {
+        "platformApi": { "type": "string", "pattern": "^[1-9][0-9]*\\.x$" },
+        "standalone": { "type": "boolean" }
+      }
+    },
+    "distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "repository", "assetPattern"],
+      "properties": {
+        "provider": { "const": "github-release" },
+        "repository": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "assetPattern": { "type": "string", "pattern": "^[A-Za-z0-9_.{}-]+\\.zip$" }
+      }
+    },
+    "entrypoints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["module", "stylesheet"],
+      "properties": {
+        "module": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+\\.mjs$" },
+        "stylesheet": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+\\.css$" }
+      }
+    },
+    "exports": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9]*$" } },
+    "capabilities": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$" } },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["businessDataNetworkAccess", "localStorage"],
+      "properties": {
+        "businessDataNetworkAccess": { "type": "boolean" },
+        "localStorage": { "type": "array", "uniqueItems": true, "items": { "enum": ["indexeddb", "preferences"] } }
+      }
+    }
+  }
+}

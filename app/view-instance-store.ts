@@ -58,7 +58,7 @@ function normalizeInstance(value: unknown): ViewInstance | null {
 }
 
 export function configureViewStorage(ownerId: string) {
-  if (!/^[a-f0-9-]{36}$/i.test(ownerId)) throw new Error("Identifiant de compte invalide.");
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(ownerId)) throw new Error("Identifiant de compte invalide.");
   activeOwnerId = ownerId;
   if (!localStorage.getItem(LEGACY_OWNER_KEY)) localStorage.setItem(LEGACY_OWNER_KEY, ownerId);
 }

@@ -13,7 +13,7 @@ Incrementing the suffix publishes a new iteration of the same channel. A breakin
 
 ## Single source and validation
 
-The version is displayed in the application and must remain identical in `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `server/Cargo.toml`, and both local package entries in the Cargo lockfiles.
+The version is displayed in the application and must remain identical in `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `server/Cargo.toml`, `scalengi-module.json`, and both local package entries in the Cargo lockfiles.
 
 ```bash
 pnpm version:check
@@ -30,6 +30,6 @@ pnpm version:set 1.0.1
 4. Merge into `main`.
 5. Create and push the exact `v<version>` tag.
 
-The GitHub workflow then builds the installers and publishes the GitHub Release. Tags with a suffix are automatically marked as prereleases; stable tags are published as regular releases.
+The GitHub workflow then builds the installers, packages the matching platform module archive, and publishes both in the GitHub Release. Tags with a suffix are automatically marked as prereleases; stable tags are published as regular releases.
 
 A published release and tag are never replaced. A fix always produces a new version.
