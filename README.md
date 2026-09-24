@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml)
 [![License: PolyForm Shield 1.0.0](https://img.shields.io/badge/License-PolyForm_Shield_1.0.0-blue.svg)](LICENSE)
-[![Latest version](https://img.shields.io/static/v1?label=version&message=v1.0.1&color=blue)](CHANGELOG.md)
+[![Latest version](https://img.shields.io/static/v1?label=version&message=v1.1.0&color=blue)](CHANGELOG.md)
 
 Scalengi Views lets you create configurable views to analyse, explain, and steer an information system. Each view combines a structure, data, and a representation suited to an enterprise-architecture question.
 
@@ -22,7 +22,7 @@ Installers are available from [GitHub Releases](https://github.com/CorentinPetit
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CorentinPetitdemange/scalengi-views?quickstart=1)
 
-The Codespace starts the application automatically and opens port **3000**. No Scalengi account is required.
+The Codespace starts the application and its Rust authentication service automatically, then opens port **3000**. The first account created becomes the local administrator.
 
 ## Features
 
@@ -33,6 +33,7 @@ The Codespace starts the application automatically and opens port **3000**. No S
 - enable or replace a sample dataset;
 - use full-screen display and PNG/SVG export;
 - persist views and their data locally.
+- protect access with local accounts and administer members from the profile menu.
 
 ## Available views
 
@@ -49,18 +50,21 @@ Each view owns its configuration and exactly one active data source: sample, Exc
 
 ## Development
 
-Requirements: Node.js `>=22.13.0` and pnpm 10.
+Requirements: Node.js `>=22.13.0`, pnpm 10, and stable Rust.
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm auth:dev
 pnpm dev
 pnpm lint
 pnpm test
+pnpm auth:test
 ```
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Create a view type](docs/CREATE_A_VIEW.md)
 - [Desktop application](docs/DESKTOP.md)
+- [Authentication and account administration](docs/AUTHENTICATION.md)
 - [Versioning and releases](docs/VERSIONING.md)
 - [Repository maintenance](docs/MAINTENANCE.md)
 

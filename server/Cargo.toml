@@ -1,0 +1,30 @@
+[package]
+name = "scalengi-views-auth"
+version = "1.1.0"
+edition = "2021"
+license-file = "../LICENSE"
+publish = false
+
+[dependencies]
+axum = { version = "0.8", features = ["json"] }
+axum-login = "0.18"
+chrono = { version = "0.4", features = ["serde"] }
+openidconnect = { version = "4.0.1", features = ["reqwest"] }
+password-auth = "1.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio-rustls", "sqlite"] }
+subtle = "2.6"
+thiserror = "2"
+time = "0.3"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal"] }
+tower-http = { version = "0.6", features = ["cors", "set-header", "trace"] }
+tower-sessions = "0.14"
+tower-sessions-sqlx-store = { version = "0.15", default-features = false, features = ["sqlite"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[dev-dependencies]
+http-body-util = "0.1"
+tower = { version = "0.5", features = ["util"] }

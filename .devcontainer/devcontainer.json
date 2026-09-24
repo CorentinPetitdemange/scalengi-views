@@ -5,6 +5,9 @@
     "ghcr.io/devcontainers/features/node:2": {
       "version": "22.19.0",
       "pnpmVersion": "10.17.0"
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "stable"
     }
   },
   "hostRequirements": {
@@ -20,7 +23,7 @@
       "protocol": "http"
     }
   },
-  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postCreateCommand": "bash .devcontainer/setup.sh && bash .devcontainer/start-demo.sh",
   "postStartCommand": "bash .devcontainer/start-demo.sh",
   "customizations": {
     "codespaces": {

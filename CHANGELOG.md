@@ -4,6 +4,19 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-24
+
+### Added
+
+- added a dedicated Rust authentication service with local accounts, server-side sessions, administrator account management, and provider-neutral OIDC SSO;
+- added CodeQL security analysis for Rust and JavaScript/TypeScript on pull requests, the default branch, and a weekly schedule.
+
+### Security
+
+- added Argon2 password hashing, login throttling, CSRF and origin validation, session rotation, secure cookie settings, and last-administrator safeguards;
+- added OIDC authorization code flow with PKCE, state and nonce validation, exact issuer/domain controls, explicit account linking, and conservative JIT provisioning;
+- pinned the CodeQL workflow actions to immutable commits and enabled the extended security query suite.
+
 ## [1.0.1] - 2026-09-23
 
 ### Added
@@ -100,7 +113,8 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 [0.1.0-alpha.3]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/CorentinPetitdemange/scalengi-views/releases/tag/v0.1.0-alpha.1
-[Unreleased]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-beta.1...v1.0.0
 [0.1.0-beta.1]: https://github.com/CorentinPetitdemange/scalengi-views/compare/v0.1.0-alpha.3...v0.1.0-beta.1

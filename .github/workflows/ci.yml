@@ -23,6 +23,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Check Rust formatting
+        run: cargo fmt --manifest-path server/Cargo.toml -- --check
+
+      - name: Lint Rust authentication service
+        run: cargo clippy --locked --manifest-path server/Cargo.toml --all-targets -- -D warnings
+
+      - name: Test Rust authentication service
+        run: cargo test --locked --manifest-path server/Cargo.toml
+
       - name: Build and smoke-test Codespaces devcontainer
         uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3
         with:

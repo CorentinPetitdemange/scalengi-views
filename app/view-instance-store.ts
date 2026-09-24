@@ -15,8 +15,10 @@ export type ViewSource =
   | { kind: "demo"; activatedAt: string }
   | { kind: "excel"; filename: string; importedAt: string; rowCount: number };
 
-const DATABASE = "scalengi-views-local";
+const LEGACY_DATABASE = "scalengi-views-local";
+const LEGACY_OWNER_KEY = "scalengi-views-legacy-owner-v1";
 const STORE = "view-instances";
+let activeOwnerId: string | null = null;
 // Retired instances stay untouched in IndexedDB so a downgrade can still recover them.
 const RETIRED_VIEW_TYPES = new Set(["si-layers"]);
 const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -55,9 +57,20 @@ function normalizeInstance(value: unknown): ViewInstance | null {
   return { id, type, name: type === "pos" && name === "POS — Démonstration" ? "Capacités fonctionnelles — Démonstration" : name, data, configuration, createdAt, updatedAt, source };
 }
 
+export function configureViewStorage(ownerId: string) {
+  if (!/^[a-f0-9-]{36}$/i.test(ownerId)) throw new Error("Identifiant de compte invalide.");
+  activeOwnerId = ownerId;
+  if (!localStorage.getItem(LEGACY_OWNER_KEY)) localStorage.setItem(LEGACY_OWNER_KEY, ownerId);
+}
+
+function databaseName() {
+  if (!activeOwnerId) throw new Error("Le stockage des vues doit être associé à un compte authentifié.");
+  return localStorage.getItem(LEGACY_OWNER_KEY) === activeOwnerId ? LEGACY_DATABASE : `${LEGACY_DATABASE}-${activeOwnerId}`;
+}
+
 function openDatabase() {
   return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DATABASE, 1);
+    const request = indexedDB.open(databaseName(), 1);
     request.onupgradeneeded = () => {
       if (!request.result.objectStoreNames.contains(STORE)) request.result.createObjectStore(STORE, { keyPath: "id" });
     };

@@ -9,16 +9,14 @@ async function render() {
   return worker.fetch(new Request("http://localhost/", { headers: { accept: "text/html" } }), { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("server-renders the Scalengi Views shell", async () => {
+test("server-renders the protected Scalengi Views entry point", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
   assert.match(html, /<title>Scalengi Views<\/title>/i);
-  assert.match(html, /My views/);
-  assert.match(html, /New view/);
   assert.match(html, /Scalengi Views/);
-  assert.match(html, /Loading local views/);
+  assert.match(html, /Vérification de la session/);
 });
 
 test("keeps data, guides and Excel contracts scoped per view", async () => {

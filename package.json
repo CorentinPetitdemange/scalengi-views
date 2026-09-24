@@ -1,6 +1,6 @@
 {
   "name": "scalengi-view",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
   "packageManager": "pnpm@10.17.0",
@@ -17,6 +17,11 @@
   },
   "scripts": {
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
+    "auth:dev": "cargo run --manifest-path server/Cargo.toml",
+    "auth:check": "cargo check --manifest-path server/Cargo.toml",
+    "auth:format:check": "cargo fmt --manifest-path server/Cargo.toml -- --check",
+    "auth:lint": "cargo clippy --locked --manifest-path server/Cargo.toml --all-targets -- -D warnings",
+    "auth:test": "cargo test --manifest-path server/Cargo.toml",
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "desktop:web:dev": "vite --config desktop/vite.config.ts",
     "desktop:web:build": "vite build --config desktop/vite.config.ts",
@@ -27,7 +32,7 @@
     "version:set": "node scripts/set-version.mjs",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "test": "pnpm build && node --experimental-strip-types --test tests/*.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern dist-desktop --ignore-pattern src-tauri/target --ignore-pattern .next"
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern dist-desktop --ignore-pattern src-tauri/target --ignore-pattern server/target --ignore-pattern .next"
   },
   "dependencies": {
     "fflate": "^0.8.3",

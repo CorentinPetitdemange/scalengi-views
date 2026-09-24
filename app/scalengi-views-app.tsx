@@ -5,15 +5,17 @@ import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Braces, CheckCircle2, CircleHelp,
 import { configurationFromYaml, configurationToYaml, createConfigurationItem, downloadWorkbookTemplate, I18nProvider, isDatasetEmpty, localizeConfiguration, MAX_YAML_BYTES, normalizeDataset, upgradeConfigurationSchema, useI18n, validateConfiguration, VIEW_CATALOG_GROUPS, viewRegistry, type ViewConfiguration, type ViewDefinition } from "../library/src";
 import packageMetadata from "../package.json";
 import { ApplicationSidebar } from "./application-sidebar";
+import { AccountScreen } from "./account-screen";
+import { AdminScreen } from "./admin-screen";
+import { ApiClientError, authApi, type BootstrapState, type Session } from "./auth-client";
+import { AuthScreen } from "./auth-screen";
 import { InterconnectionsScreen } from "./interconnections-screen";
-import { deleteViewInstance, listViewInstances, saveViewInstance, type ViewInstance } from "./view-instance-store";
+import { configureViewStorage, deleteViewInstance, listViewInstances, saveViewInstance, type ViewInstance } from "./view-instance-store";
 import { ViewExportMenu } from "./view-export-menu";
 
-type Screen = "catalog" | "create" | "instance" | "interconnections";
+type Screen = "catalog" | "create" | "instance" | "interconnections" | "account" | "admin";
 type InstanceTab = "view" | "structure" | "data" | "guide";
 type CatalogLayout = "grid" | "list";
-const SETTINGS_KEY = "scalengi-view-settings-v1";
-const CATALOG_INITIALIZED_KEY = "scalengi-views-catalog-initialized-v1";
 const APP_VERSION = packageMetadata.version;
 const APP_CHANNEL = APP_VERSION.includes("-alpha.") ? "Alpha" : APP_VERSION.includes("-beta.") ? "Bêta" : APP_VERSION.includes("-rc.") ? "Release candidate" : "Stable";
 
@@ -42,10 +44,51 @@ function demoInstances(definitions = viewRegistry.list()): ViewInstance[] {
 }
 
 export function ScalengiViewsApp() {
-  return <I18nProvider><ScalengiViewsShell /></I18nProvider>;
+  return <I18nProvider><AuthenticatedApplication /></I18nProvider>;
 }
 
-function ScalengiViewsShell() {
+function AuthenticatedApplication() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [bootstrap, setBootstrap] = useState<BootstrapState | null>(null);
+  const [serviceError, setServiceError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
+
+  const retrySession = async () => {
+    setChecking(true);
+    try {
+      setSession(await authApi.session());
+      setServiceError(null);
+    } catch (reason) {
+      if (reason instanceof ApiClientError && reason.status === 401) {
+        try { setBootstrap(await authApi.bootstrap()); setServiceError(null); }
+        catch { setServiceError("Le service d’authentification Rust n’est pas joignable."); }
+      } else {
+        setServiceError("Le service d’authentification Rust n’est pas joignable.");
+      }
+    } finally { setChecking(false); }
+  };
+  useEffect(() => {
+    let cancelled = false;
+    authApi.session()
+      .then((restored) => { if (!cancelled) { setSession(restored); setServiceError(null); } })
+      .catch(async (reason) => {
+        if (cancelled) return;
+        if (reason instanceof ApiClientError && reason.status === 401) {
+          try { const state = await authApi.bootstrap(); if (!cancelled) { setBootstrap(state); setServiceError(null); } }
+          catch { if (!cancelled) setServiceError("Le service d’authentification Rust n’est pas joignable."); }
+        } else setServiceError("Le service d’authentification Rust n’est pas joignable.");
+      })
+      .finally(() => { if (!cancelled) setChecking(false); });
+    return () => { cancelled = true; };
+  }, []);
+  if (checking) return <div className="auth-loading"><span className="auth-brand-mark"/><strong>Scalengi Views</strong><small>Vérification de la session…</small></div>;
+  if (serviceError) return <main className="auth-service-error"><span className="auth-brand-mark"/><h1>Connexion au service impossible</h1><p>{serviceError}</p><code>cargo run --manifest-path server/Cargo.toml</code><button type="button" onClick={() => void retrySession()}>Réessayer</button></main>;
+  if (!session) return <AuthScreen bootstrap={bootstrap ?? { hasAccounts: true, registrationEnabled: false, oidc: { enabled: false, providerName: null, localLoginEnabled: true, jitProvisioning: false, endSessionUrl: null } }} onAuthenticated={setSession}/>;
+  configureViewStorage(session.user.id);
+  return <ScalengiViewsShell session={session} onSessionChange={setSession} onSignedOut={() => { setSession(null); void authApi.bootstrap().then(setBootstrap); }}/>;
+}
+
+function ScalengiViewsShell({ session, onSessionChange, onSignedOut }: { session: Session; onSessionChange: (session: Session) => void; onSignedOut: () => void }) {
   const { locale, t } = useI18n();
   const [screen, setScreen] = useState<Screen>("catalog");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -61,6 +104,8 @@ function ScalengiViewsShell() {
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const bootstrapStartedRef = useRef(false);
+  const settingsKey = `scalengi-view-settings-v1:${session.user.id}`;
+  const catalogInitializedKey = `scalengi-views-catalog-initialized-v1:${session.user.id}`;
 
   useEffect(() => {
     if (bootstrapStartedRef.current) return;
@@ -68,7 +113,7 @@ function ScalengiViewsShell() {
     void (async () => {
       try {
         try {
-          const settings = localStorage.getItem(SETTINGS_KEY);
+          const settings = localStorage.getItem(settingsKey);
           if (settings) {
             const parsed = JSON.parse(settings) as { theme?: typeof theme; accent?: typeof accent; catalogLayout?: CatalogLayout; favoriteIds?: unknown; sidebarCollapsed?: unknown };
             if (parsed.theme) setTheme(parsed.theme);
@@ -88,7 +133,7 @@ function ScalengiViewsShell() {
           demoKeys.add(key); return true;
         });
         if (duplicateDemoIds.length) await Promise.all(duplicateDemoIds.map(deleteViewInstance));
-        const catalogWasInitialized = localStorage.getItem(CATALOG_INITIALIZED_KEY) === "true";
+        const catalogWasInitialized = localStorage.getItem(catalogInitializedKey) === "true";
         if (!stored.length && !catalogWasInitialized) {
           stored = demoInstances();
           await Promise.all(stored.map(saveViewInstance));
@@ -117,15 +162,15 @@ function ScalengiViewsShell() {
             await Promise.all(stored.map(saveViewInstance));
           }
         }
-        localStorage.setItem(CATALOG_INITIALIZED_KEY, "true");
+        localStorage.setItem(catalogInitializedKey, "true");
         setInstances(stored);
       } finally { setReady(true); }
     })();
-  }, []);
+  }, [catalogInitializedKey, settingsKey]);
 
   useEffect(() => {
-    if (ready) localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme, accent, catalogLayout, favoriteIds, sidebarCollapsed: collapsed }));
-  }, [accent, catalogLayout, collapsed, favoriteIds, ready, theme]);
+    if (ready) localStorage.setItem(settingsKey, JSON.stringify({ theme, accent, catalogLayout, favoriteIds, sidebarCollapsed: collapsed }));
+  }, [accent, catalogLayout, collapsed, favoriteIds, ready, settingsKey, theme]);
 
   useEffect(() => () => {
     if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
@@ -171,7 +216,7 @@ function ScalengiViewsShell() {
     flash(t(useDemo ? "Vue créée avec le jeu de données d’exemple" : structure === "blank" ? "Vue créée avec une structure vide" : "Vue créée, prête à recevoir vos données"));
   };
 
-  const title = screen === "interconnections" ? (locale === "fr" ? "Interconnexions" : "Connections") : screen === "create" ? t("Nouvelle vue") : screen === "instance" && activeInstance ? activeInstance.name : t("Mes vues");
+  const title = screen === "interconnections" ? (locale === "fr" ? "Interconnexions" : "Connections") : screen === "account" ? "Mon compte" : screen === "admin" ? "Administration" : screen === "create" ? t("Nouvelle vue") : screen === "instance" && activeInstance ? activeInstance.name : t("Mes vues");
   return (
     <div className={`app-shell theme-${theme} accent-${accent} ${collapsed ? "sidebar-collapsed" : ""} ${mobileSidebarOpen ? "sidebar-mobile-open" : ""}`}>
       <ApplicationSidebar
@@ -185,11 +230,20 @@ function ScalengiViewsShell() {
         accent={accent}
         appVersion={APP_VERSION}
         appChannel={APP_CHANNEL}
+        user={session.user}
         onCollapsedChange={setCollapsed}
         onMobileOpenChange={setMobileSidebarOpen}
         onCatalog={() => setScreen("catalog")}
         onCreate={() => setScreen("create")}
         onInterconnections={() => setScreen("interconnections")}
+        onAccount={() => setScreen("account")}
+        onAdmin={() => setScreen("admin")}
+        onLogout={() => void (async () => {
+          const oidc = await authApi.oidcConfig().catch(() => null);
+          await authApi.logout();
+          onSignedOut();
+          if (oidc?.endSessionUrl) window.location.assign(oidc.endSessionUrl);
+        })().catch(() => flash("La déconnexion a échoué."))}
         onOpenFavorite={openInstance}
         onThemeChange={setTheme}
         onAccentChange={setAccent}
@@ -199,6 +253,12 @@ function ScalengiViewsShell() {
         {screen !== "instance" && <header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu-button" type="button" onClick={() => setMobileSidebarOpen(true)} aria-label={t("Ouvrir le menu")}><PanelLeftOpen size={18} /></button>{screen !== "catalog" && <button className="icon-button" onClick={() => setScreen("catalog")} aria-label={t("Retour aux vues")}><ArrowLeft size={17} /></button>}<LayoutDashboard size={16} /><span>/</span><strong>{title}</strong></div></header>}
         <div className="screen-content">
           {ready && screen === "interconnections" && <InterconnectionsScreen />}
+          {ready && screen === "account" && (
+            <AccountScreen user={session.user} onSessionChange={onSessionChange} />
+          )}
+          {ready && screen === "admin" && session.user.role === "admin" && (
+            <AdminScreen currentUser={session.user} />
+          )}
           {!ready && <div className="loading-state">{t("Chargement des vues locales…")}</div>}
           {ready && screen === "catalog" && <ViewCatalog instances={instances} favoriteIds={favoriteIdSet} layout={catalogLayout} onFavoriteChange={toggleFavorite} onLayoutChange={setCatalogLayout} onOpen={openInstance} onCreate={() => setScreen("create")} />}
           {ready && screen === "create" && <CreateViewScreen onCancel={() => setScreen("catalog")} onCreate={createInstance} />}

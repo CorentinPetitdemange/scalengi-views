@@ -4,16 +4,31 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 readonly APP_URL="http://127.0.0.1:3000/"
+readonly AUTH_URL="http://127.0.0.1:8787/health"
 readonly LOG_FILE="/tmp/scalengi-views-dev.log"
 readonly PID_FILE="/tmp/scalengi-views-dev.pid"
+readonly AUTH_LOG_FILE="/tmp/scalengi-views-auth.log"
+readonly AUTH_PID_FILE="/tmp/scalengi-views-auth.pid"
 
-is_ready() {
+app_is_ready() {
   node -e "fetch('$APP_URL').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
 }
 
-if is_ready; then
+auth_is_ready() {
+  node -e "fetch('$AUTH_URL').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+}
+
+if app_is_ready && auth_is_ready; then
   echo "Scalengi Views est déjà disponible sur http://localhost:3000"
   exit 0
+fi
+
+if [[ -f "$AUTH_PID_FILE" ]]; then
+  previous_auth_pid="$(cat "$AUTH_PID_FILE")"
+  if kill -0 "$previous_auth_pid" 2>/dev/null; then
+    kill "$previous_auth_pid"
+  fi
+  rm -f "$AUTH_PID_FILE"
 fi
 
 if [[ -f "$PID_FILE" ]]; then
@@ -25,6 +40,9 @@ if [[ -f "$PID_FILE" ]]; then
 fi
 
 echo "Démarrage de Scalengi Views..."
+nohup cargo run --manifest-path server/Cargo.toml >"$AUTH_LOG_FILE" 2>&1 &
+auth_pid=$!
+echo "$auth_pid" >"$AUTH_PID_FILE"
 # pnpm forwards options directly to the script. Adding a standalone `--` here
 # would make Vinext ignore --hostname and bind only to localhost, which leaves
 # the external Codespaces port forward with a 502 response.
@@ -33,7 +51,7 @@ server_pid=$!
 echo "$server_pid" >"$PID_FILE"
 
 for attempt in $(seq 1 60); do
-  if is_ready; then
+  if app_is_ready && auth_is_ready; then
     echo ""
     echo "======================================"
     echo "  Scalengi Views"
@@ -49,9 +67,16 @@ for attempt in $(seq 1 60); do
     exit 1
   fi
 
+  if ! kill -0 "$auth_pid" 2>/dev/null; then
+    echo "Le serveur d’authentification s’est arrêté pendant son démarrage." >&2
+    tail -n 100 "$AUTH_LOG_FILE" >&2
+    exit 1
+  fi
+
   sleep 1
 done
 
 echo "L’application n’est pas devenue disponible dans le délai prévu." >&2
 tail -n 100 "$LOG_FILE" >&2
+tail -n 100 "$AUTH_LOG_FILE" >&2
 exit 1

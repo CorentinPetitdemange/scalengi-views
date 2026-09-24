@@ -12,6 +12,7 @@ echo "Installation des dépendances..."
 # node_modules directory during a Codespaces rebuild instead of aborting while
 # waiting for an interactive confirmation.
 CI=true pnpm install --frozen-lockfile
+cargo fetch --locked --manifest-path server/Cargo.toml
 
 echo "Vérification de la configuration desktop..."
 pnpm version:check

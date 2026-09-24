@@ -45,6 +45,12 @@ export default defineConfig(async () => {
 
   const codespacesForwardedHost = getCodespacesForwardedHost();
   const server = {
+    port: 3000,
+    strictPort: true,
+    proxy: {
+      "/api": "http://127.0.0.1:8787",
+      "/health": "http://127.0.0.1:8787",
+    },
     ...(codespacesForwardedHost
       ? { allowedHosts: [codespacesForwardedHost] }
       : {}),
