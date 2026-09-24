@@ -118,9 +118,12 @@ mod tests {
 
     #[test]
     fn password_policy_rejects_weak_and_identity_passwords() {
-        assert!(validate_password("short", "alice@example.com").is_err());
-        assert!(validate_password("Alice-Example-42!", "alice@example.com").is_err());
-        assert!(validate_password("Correct-Horse-42!", "alice@example.com").is_ok());
+        let short = "x".repeat(5);
+        let identity_password = format!("Alice-Example-42!{}", random_token());
+        let strong_password = format!("Aa1!{}", random_token());
+        assert!(validate_password(&short, "alice@example.com").is_err());
+        assert!(validate_password(&identity_password, "alice@example.com").is_err());
+        assert!(validate_password(&strong_password, "alice@example.com").is_ok());
     }
 
     #[test]

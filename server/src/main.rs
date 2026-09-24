@@ -176,7 +176,7 @@ mod tests {
         let oidc_config = config::OidcConfig {
             issuer_url: "https://id.example.com".into(),
             client_id: "scalengi-test".into(),
-            client_secret: "test-secret".into(),
+            client_secret: security::random_token(),
             redirect_url: "http://localhost/api/auth/oidc/callback".into(),
             provider_name: "Test IdP".into(),
             allowed_domains: vec!["example.com".into()],
@@ -214,6 +214,10 @@ mod tests {
             .header("origin", "http://localhost:3000")
             .body(Body::from(body.to_string()))
             .expect("request")
+    }
+
+    fn strong_test_password() -> String {
+        format!("Aa1!{}", security::random_token())
     }
 
     struct TestSession {
@@ -279,6 +283,7 @@ mod tests {
     #[tokio::test]
     async fn first_account_is_admin_and_registration_closes() {
         let router = test_app().await;
+        let admin_password = strong_test_password();
         let response = router
             .clone()
             .oneshot(json_request(
@@ -287,7 +292,7 @@ mod tests {
                 serde_json::json!({
                     "displayName": "Admin Test",
                     "email": "admin@example.com",
-                    "password": "Correct-Horse-42!"
+                    "password": admin_password
                 }),
             ))
             .await
@@ -324,7 +329,7 @@ mod tests {
                 serde_json::json!({
                     "displayName": "Second User",
                     "email": "second@example.com",
-                    "password": "Granite-Bridge-42!"
+                    "password": strong_test_password()
                 }),
             ))
             .await
@@ -436,7 +441,7 @@ mod tests {
                         serde_json::json!({
                             "displayName": "Session Rotation",
                             "email": "rotation@example.com",
-                            "password": "Correct-Horse-42!"
+                            "password": strong_test_password()
                         })
                         .to_string(),
                     ))
@@ -474,7 +479,7 @@ mod tests {
                         serde_json::json!({
                             "displayName": "Attacker",
                             "email": "attacker@example.com",
-                            "password": "Correct-Horse-42!"
+                            "password": strong_test_password()
                         })
                         .to_string(),
                     ))
@@ -484,13 +489,9 @@ mod tests {
             .expect("forged response");
         assert_eq!(forged_registration.status(), StatusCode::FORBIDDEN);
 
-        let admin = register_user(
-            &router,
-            "Admin Test",
-            "admin@example.com",
-            "Correct-Horse-42!",
-        )
-        .await;
+        let admin_password = strong_test_password();
+        let admin =
+            register_user(&router, "Admin Test", "admin@example.com", &admin_password).await;
         let without_csrf = router
             .clone()
             .oneshot(
@@ -550,13 +551,10 @@ mod tests {
     #[tokio::test]
     async fn admin_changes_are_role_protected_and_invalidate_existing_sessions() {
         let router = test_app().await;
-        let admin = register_user(
-            &router,
-            "Admin Test",
-            "admin@example.com",
-            "Correct-Horse-42!",
-        )
-        .await;
+        let admin_password = strong_test_password();
+        let member_password = strong_test_password();
+        let admin =
+            register_user(&router, "Admin Test", "admin@example.com", &admin_password).await;
         let created = router
             .clone()
             .oneshot(
@@ -571,7 +569,7 @@ mod tests {
                         serde_json::json!({
                             "displayName": "Member Test",
                             "email": "member@example.com",
-                            "password": "Granite-Bridge-42!",
+                            "password": member_password.clone(),
                             "role": "member",
                             "authProvider": "local"
                         })
@@ -595,7 +593,7 @@ mod tests {
                     "/api/auth/login",
                     serde_json::json!({
                         "email": "member@example.com",
-                        "password": "Granite-Bridge-42!"
+                        "password": member_password
                     }),
                 ))
                 .await

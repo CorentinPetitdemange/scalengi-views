@@ -144,11 +144,16 @@ mod tests {
     use crate::security::{hash_password, random_token};
     use uuid::Uuid;
 
-    async fn backend_with_local_user() -> (AuthBackend, SqlitePool, String) {
+    fn strong_test_password() -> String {
+        format!("Aa1!{}", random_token())
+    }
+
+    async fn backend_with_local_user() -> (AuthBackend, SqlitePool, String, String) {
         let database_path =
             std::env::temp_dir().join(format!("scalengi-auth-backend-{}.sqlite3", Uuid::new_v4()));
         let pool = crate::db::connect(&database_path).await.expect("database");
-        let password_hash = hash_password("Correct-Horse-42!".into())
+        let password = strong_test_password();
+        let password_hash = hash_password(password.clone())
             .await
             .expect("password hash");
         let dummy_hash = hash_password(random_token()).await.expect("dummy hash");
@@ -163,7 +168,12 @@ mod tests {
             .execute(&pool)
             .await
             .expect("user");
-        (AuthBackend::new(pool.clone(), dummy_hash), pool, id)
+        (
+            AuthBackend::new(pool.clone(), dummy_hash),
+            pool,
+            id,
+            password,
+        )
     }
 
     fn credentials(password: &str) -> Credentials {
@@ -175,17 +185,18 @@ mod tests {
 
     #[tokio::test]
     async fn successful_login_resets_failures_and_five_failures_lock_the_account() {
-        let (backend, pool, id) = backend_with_local_user().await;
+        let (backend, pool, id, password) = backend_with_local_user().await;
+        let wrong_password = strong_test_password();
 
         for _ in 0..4 {
             assert!(backend
-                .authenticate(credentials("Wrong-Password-42!"))
+                .authenticate(credentials(&wrong_password))
                 .await
                 .expect("failed authentication")
                 .is_none());
         }
         assert!(backend
-            .authenticate(credentials("Correct-Horse-42!"))
+            .authenticate(credentials(&password))
             .await
             .expect("successful authentication")
             .is_some());
@@ -200,13 +211,13 @@ mod tests {
 
         for _ in 0..5 {
             assert!(backend
-                .authenticate(credentials("Wrong-Password-42!"))
+                .authenticate(credentials(&wrong_password))
                 .await
                 .expect("failed authentication")
                 .is_none());
         }
         assert!(backend
-            .authenticate(credentials("Correct-Horse-42!"))
+            .authenticate(credentials(&password))
             .await
             .expect("locked authentication")
             .is_none());
@@ -221,11 +232,11 @@ mod tests {
 
     #[tokio::test]
     async fn unknown_inactive_and_sso_only_accounts_never_authenticate_locally() {
-        let (backend, pool, id) = backend_with_local_user().await;
+        let (backend, pool, id, password) = backend_with_local_user().await;
         assert!(backend
             .authenticate(Credentials {
                 email: "missing@example.com".into(),
-                password: "Correct-Horse-42!".into(),
+                password: password.clone(),
             })
             .await
             .expect("unknown authentication")
@@ -237,7 +248,7 @@ mod tests {
             .await
             .expect("deactivate user");
         assert!(backend
-            .authenticate(credentials("Correct-Horse-42!"))
+            .authenticate(credentials(&password))
             .await
             .expect("inactive authentication")
             .is_none());
@@ -248,7 +259,7 @@ mod tests {
             .await
             .expect("switch provider");
         assert!(backend
-            .authenticate(credentials("Correct-Horse-42!"))
+            .authenticate(credentials(&password))
             .await
             .expect("SSO-only authentication")
             .is_none());

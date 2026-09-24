@@ -594,7 +594,7 @@ mod tests {
         OidcConfig {
             issuer_url: "https://id.example.com".into(),
             client_id: "client".into(),
-            client_secret: "secret".into(),
+            client_secret: random_token(),
             redirect_url: "https://app.example.com/api/auth/oidc/callback".into(),
             provider_name: "Example".into(),
             allowed_domains: vec!["example.com".into()],
@@ -645,8 +645,8 @@ mod tests {
         let pool = crate::db::connect(&database_path).await.expect("database");
         let now = Utc::now().timestamp();
         let user_id = Uuid::new_v4().to_string();
-        sqlx::query("INSERT INTO users(id, email, display_name, password_hash, auth_provider, session_version, role, is_active, created_at, updated_at) VALUES (?, 'alice@example.com', 'Alice', 'hash', 'local', ?, 'member', 1, ?, ?)")
-            .bind(&user_id).bind(random_token()).bind(now).bind(now).execute(&pool).await.expect("user");
+        sqlx::query("INSERT INTO users(id, email, display_name, password_hash, auth_provider, session_version, role, is_active, created_at, updated_at) VALUES (?, 'alice@example.com', 'Alice', ?, 'local', ?, 'member', 1, ?, ?)")
+            .bind(&user_id).bind(random_token()).bind(random_token()).bind(now).bind(now).execute(&pool).await.expect("user");
         let oidc_config = config();
         let state = AppState {
             pool: pool.clone(),
