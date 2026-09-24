@@ -22,7 +22,7 @@ Installers are available from [GitHub Releases](https://github.com/CorentinPetit
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CorentinPetitdemange/scalengi-views?quickstart=1)
 
-The Codespace starts the application automatically and opens port **3000**. No Scalengi account is required.
+The Codespace starts the application and its Rust authentication service automatically, then opens port **3000**. The first account created becomes the local administrator.
 
 ## Features
 
@@ -33,6 +33,7 @@ The Codespace starts the application automatically and opens port **3000**. No S
 - enable or replace a sample dataset;
 - use full-screen display and PNG/SVG export;
 - persist views and their data locally.
+- protect access with local accounts and administer members from the profile menu.
 
 ## Available views
 
@@ -49,18 +50,21 @@ Each view owns its configuration and exactly one active data source: sample, Exc
 
 ## Development
 
-Requirements: Node.js `>=22.13.0` and pnpm 10.
+Requirements: Node.js `>=22.13.0`, pnpm 10, and stable Rust.
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm auth:dev
 pnpm dev
 pnpm lint
 pnpm test
+pnpm auth:test
 ```
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Create a view type](docs/CREATE_A_VIEW.md)
 - [Desktop application](docs/DESKTOP.md)
+- [Authentication and account administration](docs/AUTHENTICATION.md)
 - [Versioning and releases](docs/VERSIONING.md)
 - [Repository maintenance](docs/MAINTENANCE.md)
 

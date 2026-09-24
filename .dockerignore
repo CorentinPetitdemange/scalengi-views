@@ -1,9 +1,16 @@
 .git
 .github
 .next
+.pnpm-store
+.vinext
 .openai
 .wrangler
+build
 dist
+dist-desktop
+server/target
+server/data
+src-tauri/target
 node_modules
 outputs
 work

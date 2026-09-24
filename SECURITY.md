@@ -19,4 +19,6 @@ Receipt will be acknowledged as soon as possible. The vulnerability and its fix 
 
 ## Current scope
 
-Scalengi Views runs locally in the browser. Excel, YAML, and IndexedDB inputs are considered untrusted. No business file may be sent to a server without an explicit product decision.
+Scalengi Views keeps view structures and imported business data in the browser. Excel, YAML, and IndexedDB inputs are considered untrusted. No business file is sent to the authentication service.
+
+Accounts and sessions are handled by the Rust service documented in [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md). Production deployments must use HTTPS, enable secure cookies, keep the authentication database on a restricted persistent volume, and route `/api` on the same origin as the application.

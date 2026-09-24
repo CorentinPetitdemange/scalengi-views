@@ -23,6 +23,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Validate Rust authentication service
+        run: cargo test --locked --manifest-path server/Cargo.toml
+
       - name: Build and smoke-test Codespaces devcontainer
         uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3
         with:

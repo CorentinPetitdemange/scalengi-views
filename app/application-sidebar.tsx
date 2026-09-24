@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
-import { Check, ChevronsUpDown, GalleryVerticalEnd, Moon, Network, Plus, Settings, Star, Sun, X, type LucideIcon } from "lucide-react";
+import { Check, ChevronsUpDown, GalleryVerticalEnd, LogOut, Moon, Network, Plus, Settings, ShieldCheck, Star, Sun, UserRound, X, type LucideIcon } from "lucide-react";
 import { APP_LOCALES, useI18n, type AppLocale } from "../library/src";
+import type { AuthUser } from "./auth-client";
 
 export type SidebarFavorite = { id: string; name: string; icon: LucideIcon; active: boolean };
 type Theme = "light" | "dark";
@@ -19,11 +20,15 @@ type ApplicationSidebarProps = {
   accent: Accent;
   appVersion: string;
   appChannel: string;
+  user: AuthUser;
   onCollapsedChange: (collapsed: boolean) => void;
   onMobileOpenChange: (open: boolean) => void;
   onCatalog: () => void;
   onCreate: () => void;
   onInterconnections: () => void;
+  onAccount: () => void;
+  onAdmin: () => void;
+  onLogout: () => void;
   onOpenFavorite: (id: string) => void;
   onThemeChange: (theme: Theme) => void;
   onAccentChange: (accent: Accent) => void;
@@ -36,7 +41,7 @@ function ScalengiMark() {
   return <span className="scalengi-brand-mark" aria-hidden="true" />;
 }
 
-export function ApplicationSidebar({ collapsed, mobileOpen, instancesCount, catalogActive, createActive, favorites, theme, accent, appVersion, appChannel, onCollapsedChange, onMobileOpenChange, onCatalog, onCreate, onInterconnections, onOpenFavorite, onThemeChange, onAccentChange }: ApplicationSidebarProps) {
+export function ApplicationSidebar({ collapsed, mobileOpen, instancesCount, catalogActive, createActive, favorites, theme, accent, appVersion, appChannel, user, onCollapsedChange, onMobileOpenChange, onCatalog, onCreate, onInterconnections, onAccount, onAdmin, onLogout, onOpenFavorite, onThemeChange, onAccentChange }: ApplicationSidebarProps) {
   const { locale, setLocale, t } = useI18n();
   const rootRef = useRef<HTMLElement>(null);
   const navigationRef = useRef<HTMLElement>(null);
@@ -87,6 +92,7 @@ export function ApplicationSidebar({ collapsed, mobileOpen, instancesCount, cata
     if (item) moveHighlight(item);
   };
   const navigate = (action: () => void) => { action(); onMobileOpenChange(false); };
+  const initials = user.displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
 
   return <>
     <button className="sidebar-mobile-backdrop" type="button" aria-label={t("Fermer le menu")} aria-hidden={!mobileOpen} tabIndex={mobileOpen ? 0 : -1} onClick={() => onMobileOpenChange(false)} />
@@ -112,10 +118,10 @@ export function ApplicationSidebar({ collapsed, mobileOpen, instancesCount, cata
       </div>
 
       <footer className="sidebar-footer">
-        <button className="sidebar-account-button" type="button" aria-haspopup="menu" aria-expanded={accountMenuOpen} onClick={() => { setAccountMenuOpen((open) => !open); setWorkspaceMenuOpen(false); setSettingsOpen(false); }} title={collapsed ? t("Espace de démonstration") : undefined}>
-          <span className="user-avatar">SV</span><span className="sidebar-account-copy"><strong>{t("Espace de démonstration")}</strong><small>{t(appChannel)} · v{appVersion}</small></span><ChevronsUpDown size={16} />
+        <button className="sidebar-account-button" type="button" aria-haspopup="menu" aria-expanded={accountMenuOpen} onClick={() => { setAccountMenuOpen((open) => !open); setWorkspaceMenuOpen(false); setSettingsOpen(false); }} title={collapsed ? user.displayName : undefined}>
+          <span className="user-avatar">{initials}</span><span className="sidebar-account-copy"><strong>{user.displayName}</strong><small>{user.role === "admin" ? "Administrateur" : "Membre"}</small></span><ChevronsUpDown size={16} />
         </button>
-        {accountMenuOpen && <div className="sidebar-dropdown account-dropdown" role="menu"><div className="account-menu-summary"><span className="user-avatar">SV</span><div><strong>{t("Espace de démonstration")}</strong><small>Scalengi Views</small></div></div><div className="sidebar-dropdown-separator"/><button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); setSettingsOpen(true); }}><Settings size={16}/><span>{t("Paramètres")}</span></button><button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); setSettingsOpen(false); navigate(onInterconnections); }}><Network size={16}/><span>{locale === "fr" ? "Interconnexions" : "Connections"}</span></button><div className="sidebar-dropdown-separator"/><div className="sidebar-version-row"><span>{t(appChannel)}</span><small>v{appVersion}</small></div></div>}
+        {accountMenuOpen && <div className="sidebar-dropdown account-dropdown" role="menu"><div className="account-menu-summary"><span className="user-avatar">{initials}</span><div><strong>{user.displayName}</strong><small>{user.email}</small></div></div><div className="sidebar-dropdown-separator"/><button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); navigate(onAccount); }}><UserRound size={16}/><span>Mon compte</span></button>{user.role === "admin" && <button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); navigate(onAdmin); }}><ShieldCheck size={16}/><span>Administration</span></button>}<button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); setSettingsOpen(true); }}><Settings size={16}/><span>{t("Paramètres")}</span></button><button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); setSettingsOpen(false); navigate(onInterconnections); }}><Network size={16}/><span>{locale === "fr" ? "Interconnexions" : "Connections"}</span></button><div className="sidebar-dropdown-separator"/><button className="account-logout-button" type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); onLogout(); }}><LogOut size={16}/><span>Se déconnecter</span></button><div className="sidebar-version-row"><span>{t(appChannel)}</span><small>v{appVersion}</small></div></div>}
       </footer>
 
 

@@ -36,7 +36,9 @@ core library
 configuration · dataset · types · xlsx
 ```
 
-The `desktop/` entry point mounts the same `ScalengiViewsApp` through a static Vite build. `src-tauri/` contains only a minimal native shell; no view, data, or connector rule is duplicated there. The web application and macOS, Windows, and Linux applications therefore genuinely share `app/` and `library/`.
+The `desktop/` entry point mounts the same `ScalengiViewsApp` through a static Vite build. `src-tauri/` contains only a minimal native shell; no view, data, authentication, or connector rule is duplicated there. The web application and macOS, Windows, and Linux applications therefore genuinely share `app/` and `library/`.
+
+Authentication is a separate Rust service under `server/`. It stores identities, password hashes, sessions, roles, and the registration setting, but never view configurations or datasets. The shell consumes its `/api` contract and partitions IndexedDB by authenticated user id. See `docs/AUTHENTICATION.md`.
 
 The reverse dependency is forbidden: a view knows nothing about the shell, IndexedDB, or another view.
 
@@ -101,7 +103,7 @@ The XLSX template is generated in the browser from the active configuration. Imp
 
 ## Storage and security
 
-- IndexedDB stores instances; localStorage stores only theme, colour, language, and catalogue preferences.
+- IndexedDB stores instances in a database partitioned by authenticated user; localStorage stores only theme, colour, language, catalogue preferences, and the owner of the legacy local database.
 - No file or business content is sent to a server.
 - The enabled sample comes from the current configuration; when absent, the application offers the complete standard model.
 - YAML, Excel, and IndexedDB are untrusted boundaries.

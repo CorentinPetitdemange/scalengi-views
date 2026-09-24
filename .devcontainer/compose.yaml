@@ -7,3 +7,8 @@ services:
     init: true
     ports:
       - "${SCALENGI_VIEWS_PORT:-3000}:3000"
+    volumes:
+      - scalengi-views-auth:/app/data
+
+volumes:
+  scalengi-views-auth:
