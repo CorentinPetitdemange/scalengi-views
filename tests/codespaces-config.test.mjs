@@ -54,7 +54,7 @@ test("builds and smoke-tests the Codespaces development environment", async () =
   assert.equal(devcontainer.postStartCommand, "bash .devcontainer/start-demo.sh");
   assert.match(setupScript, /CI=true pnpm install --frozen-lockfile/);
   assert.match(setupScript, /pnpm version:check/);
-  assert.match(setupScript, /cargo fetch --locked --manifest-path server\/Cargo\.toml/);
+  assert.match(setupScript, /cargo build --locked --manifest-path server\/Cargo\.toml/);
   assert.doesNotMatch(setupScript, /docker/);
   assert.match(startScript, /pnpm dev --hostname 0\.0\.0\.0/);
   assert.match(startScript, /cargo run --manifest-path server\/Cargo\.toml/);
