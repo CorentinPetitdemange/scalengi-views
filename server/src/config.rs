@@ -8,6 +8,7 @@ pub struct Config {
     pub cookie_secure: bool,
     pub session_lifetime_seconds: i64,
     pub oidc: Option<OidcConfig>,
+    pub oidc_client_secret: Option<String>,
 }
 
 #[derive(Clone)]
@@ -52,6 +53,7 @@ impl Config {
             .map_err(|error| format!("SCALENGI_AUTH_SESSION_HOURS invalide: {error}"))?
             .clamp(1, 168)
             * 3600;
+        let oidc_client_secret = optional("SCALENGI_OIDC_CLIENT_SECRET");
         let oidc = if parse_bool("SCALENGI_OIDC_ENABLED", false)? {
             let allowed_domains = csv("SCALENGI_OIDC_ALLOWED_DOMAINS")
                 .into_iter()
@@ -70,7 +72,9 @@ impl Config {
             Some(OidcConfig {
                 issuer_url: required("SCALENGI_OIDC_ISSUER_URL")?,
                 client_id: required("SCALENGI_OIDC_CLIENT_ID")?,
-                client_secret: required("SCALENGI_OIDC_CLIENT_SECRET")?,
+                client_secret: oidc_client_secret.clone().ok_or_else(|| {
+                    "SCALENGI_OIDC_CLIENT_SECRET est requis quand OIDC est activé".to_owned()
+                })?,
                 redirect_url: required("SCALENGI_OIDC_REDIRECT_URL")?,
                 provider_name: env::var("SCALENGI_OIDC_PROVIDER_NAME")
                     .unwrap_or_else(|_| "SSO d’entreprise".into()),
@@ -93,6 +97,7 @@ impl Config {
             cookie_secure,
             session_lifetime_seconds,
             oidc,
+            oidc_client_secret,
         })
     }
 }

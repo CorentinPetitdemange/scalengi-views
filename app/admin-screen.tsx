@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { KeyRound, Pencil, Plus, ShieldCheck, Trash2, UserCheck, UserX, Users } from "lucide-react";
-import { ApiClientError, authApi, type AuthProvider, type AuthUser, type UserRole } from "./auth-client";
+import { Building2, KeyRound, Pencil, Plus, Save, ShieldCheck, Trash2, UserCheck, UserX, Users } from "lucide-react";
+import { ApiClientError, authApi, type AuthProvider, type AuthUser, type OidcAdminSettings, type OidcAdminSettingsInput, type UserRole } from "./auth-client";
 
 const emptyDraft = { displayName: "", email: "", password: "", role: "member" as UserRole, authProvider: "local" as AuthProvider };
 
@@ -10,6 +10,7 @@ export function AdminScreen({ currentUser }: { currentUser: AuthUser }) {
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [registrationEnabled, setRegistrationEnabled] = useState(false);
   const [oidcEnabled, setOidcEnabled] = useState(false);
+  const [oidcSettings, setOidcSettings] = useState<OidcAdminSettings | null>(null);
   const [draft, setDraft] = useState(emptyDraft);
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
@@ -19,12 +20,13 @@ export function AdminScreen({ currentUser }: { currentUser: AuthUser }) {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([authApi.listUsers(), authApi.registration(), authApi.oidcConfig()])
+    Promise.all([authApi.listUsers(), authApi.registration(), authApi.oidcAdminSettings()])
       .then(([userResponse, registration, oidc]) => {
         if (!cancelled) {
           setUsers(userResponse.users);
           setRegistrationEnabled(registration.enabled);
           setOidcEnabled(oidc.enabled);
+          setOidcSettings(oidc);
           setError(null);
         }
       })
@@ -119,6 +121,7 @@ export function AdminScreen({ currentUser }: { currentUser: AuthUser }) {
       <div><ShieldCheck size={18}/><span><strong>Inscription libre</strong><small>{registrationEnabled ? "Les visiteurs peuvent créer un compte membre." : "Seuls les administrateurs peuvent créer des comptes."}</small></span></div>
       <button type="button" role="switch" aria-checked={registrationEnabled} className={`toggle-switch ${registrationEnabled ? "active" : ""}`} disabled={pendingId === "registration"} onClick={toggleRegistration}><span/></button>
     </section>
+    {oidcSettings && <SsoSettingsCard settings={oidcSettings} onSaved={(settings) => { setOidcSettings(settings); setOidcEnabled(settings.enabled); }} onError={setError}/>}
     {error && <div className="account-feedback error" role="alert">{error}</div>}
     <section className="admin-users-card">
       <header>
@@ -139,6 +142,82 @@ export function AdminScreen({ currentUser }: { currentUser: AuthUser }) {
     )}
   </div>;
 }
+
+function SsoSettingsCard({ settings, onSaved, onError }: {
+  settings: OidcAdminSettings;
+  onSaved: (settings: OidcAdminSettings) => void;
+  onError: (message: string | null) => void;
+}) {
+  const [draft, setDraft] = useState<OidcAdminSettingsInput>(() => editableOidcSettings(settings));
+  const [domains, setDomains] = useState(settings.allowedDomains.join(", "));
+  const [saving, setSaving] = useState(false);
+  const update = <K extends keyof OidcAdminSettingsInput>(key: K, value: OidcAdminSettingsInput[K]) => setDraft((current) => ({ ...current, [key]: value }));
+  const save = async (event: FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    onError(null);
+    try {
+      const saved = await authApi.updateOidcAdminSettings({
+        ...draft,
+        allowedDomains: domains.split(",").map((domain) => domain.trim()).filter(Boolean),
+        bootstrapAdminEmail: draft.bootstrapAdminEmail?.trim() || null,
+        endSessionUrl: draft.endSessionUrl?.trim() || null,
+      });
+      setDraft(editableOidcSettings(saved));
+      setDomains(saved.allowedDomains.join(", "));
+      onSaved(saved);
+    } catch (reason) {
+      onError(reason instanceof ApiClientError ? reason.message : "La configuration SSO n’a pas pu être enregistrée.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  return <form className="admin-sso-card" onSubmit={save}>
+    <header>
+      <div className="admin-sso-heading"><span className="admin-sso-icon"><Building2 size={18}/></span><div><strong>Authentification SSO</strong><small>Configurez un fournisseur OpenID Connect pour cette installation de Views.</small></div></div>
+      <button type="button" role="switch" aria-label="Activer le SSO" aria-checked={draft.enabled} className={`toggle-switch ${draft.enabled ? "active" : ""}`} onClick={() => update("enabled", !draft.enabled)}><span/></button>
+    </header>
+    <div className="admin-sso-status">
+      <span className={settings.clientSecretConfigured ? "ready" : "warning"}>{settings.clientSecretConfigured ? "Secret client disponible" : "Secret client manquant"}</span>
+      <small>{settings.source === "environment" ? "Configuration initiale issue de l’environnement" : settings.source === "administration" ? "Configuration administrée dans Views" : "SSO non configuré"}</small>
+    </div>
+    <div className="admin-sso-grid">
+      <label><span>Nom affiché</span><input required maxLength={100} value={draft.providerName} onChange={(event) => update("providerName", event.target.value)} placeholder="Microsoft Entra ID"/></label>
+      <label><span>URL de l’émetteur</span><input required={draft.enabled} type="url" maxLength={2048} value={draft.issuerUrl} onChange={(event) => update("issuerUrl", event.target.value)} placeholder="https://login.example.com/tenant/v2.0"/></label>
+      <label><span>Identifiant client</span><input required={draft.enabled} maxLength={512} value={draft.clientId} onChange={(event) => update("clientId", event.target.value)} placeholder="Identifiant de l’application OIDC"/></label>
+      <label><span>URL de retour</span><input required={draft.enabled} type="url" maxLength={2048} value={draft.redirectUrl} onChange={(event) => update("redirectUrl", event.target.value)} placeholder="https://views.example.com/api/auth/oidc/callback"/></label>
+      <label className="wide"><span>Domaines e-mail autorisés</span><input disabled={draft.allowAnyDomain} value={domains} onChange={(event) => setDomains(event.target.value)} placeholder="entreprise.fr, filiale.fr"/><small>Séparez les domaines par une virgule. Les sous-domaines ne sont pas implicitement autorisés.</small></label>
+      <label><span>Administrateur SSO initial</span><input type="email" maxLength={254} value={draft.bootstrapAdminEmail ?? ""} onChange={(event) => update("bootstrapAdminEmail", event.target.value || null)} placeholder="admin@entreprise.fr"/></label>
+      <label><span>URL de déconnexion (facultative)</span><input type="url" maxLength={2048} value={draft.endSessionUrl ?? ""} onChange={(event) => update("endSessionUrl", event.target.value || null)} placeholder="https://id.example.com/logout"/></label>
+    </div>
+    <div className="admin-sso-options">
+      <SsoOption label="Autoriser tous les domaines" detail="À réserver aux fournisseurs dont le tenant est déjà strictement limité." checked={draft.allowAnyDomain} onChange={(checked) => update("allowAnyDomain", checked)}/>
+      <SsoOption label="Création automatique des membres" detail="Le JIT crée uniquement des comptes membre après validation OIDC." checked={draft.jitProvisioning} onChange={(checked) => update("jitProvisioning", checked)}/>
+      <SsoOption label="Conserver la connexion locale" detail="Recommandé comme accès de secours pour les administrateurs." checked={draft.localLoginEnabled} onChange={(checked) => update("localLoginEnabled", checked)}/>
+      <SsoOption label="Exiger un e-mail vérifié" detail="Empêche l’utilisation d’une adresse non vérifiée par le fournisseur." checked={draft.requireVerifiedEmail} onChange={(checked) => update("requireVerifiedEmail", checked)}/>
+    </div>
+    <footer><div><KeyRound size={14}/><span>Le secret n’est jamais envoyé au navigateur ni enregistré dans la base. Injectez-le avec <code>SCALENGI_OIDC_CLIENT_SECRET</code>.</span></div><button className="primary-button" type="submit" disabled={saving}><Save size={15}/>{saving ? "Validation du fournisseur…" : "Enregistrer le SSO"}</button></footer>
+  </form>;
+}
+
+function SsoOption({ label, detail, checked, onChange }: { label: string; detail: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return <label><span><strong>{label}</strong><small>{detail}</small></span><button type="button" role="switch" aria-checked={checked} className={`toggle-switch ${checked ? "active" : ""}`} onClick={() => onChange(!checked)}><span/></button></label>;
+}
+
+const editableOidcSettings = (settings: OidcAdminSettings): OidcAdminSettingsInput => ({
+  enabled: settings.enabled,
+  providerName: settings.providerName,
+  issuerUrl: settings.issuerUrl,
+  clientId: settings.clientId,
+  redirectUrl: settings.redirectUrl,
+  allowedDomains: settings.allowedDomains,
+  allowAnyDomain: settings.allowAnyDomain,
+  jitProvisioning: settings.jitProvisioning,
+  localLoginEnabled: settings.localLoginEnabled,
+  requireVerifiedEmail: settings.requireVerifiedEmail,
+  bootstrapAdminEmail: settings.bootstrapAdminEmail,
+  endSessionUrl: settings.endSessionUrl,
+});
 function UserRow({ user, own, pending, onUpdate, onEdit, onRemove }: {
   user: AuthUser;
   own: boolean;

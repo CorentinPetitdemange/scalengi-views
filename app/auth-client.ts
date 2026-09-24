@@ -22,6 +22,23 @@ export type OidcConfig = {
 };
 export type BootstrapState = { hasAccounts: boolean; registrationEnabled: boolean; oidc: OidcConfig };
 export type RegistrationSetting = { enabled: boolean };
+export type OidcAdminSettings = {
+  enabled: boolean;
+  providerName: string;
+  issuerUrl: string;
+  clientId: string;
+  redirectUrl: string;
+  allowedDomains: string[];
+  allowAnyDomain: boolean;
+  jitProvisioning: boolean;
+  localLoginEnabled: boolean;
+  requireVerifiedEmail: boolean;
+  bootstrapAdminEmail: string | null;
+  endSessionUrl: string | null;
+  clientSecretConfigured: boolean;
+  source: "administration" | "environment" | "default";
+};
+export type OidcAdminSettingsInput = Omit<OidcAdminSettings, "clientSecretConfigured" | "source">;
 
 type RuntimeConfig = { authApiUrl?: string };
 
@@ -84,4 +101,6 @@ export const authApi = {
   deleteUser: (id: string) => request<void>(`/admin/users/${encodeURIComponent(id)}`, { method: "DELETE" }),
   registration: () => request<RegistrationSetting>("/admin/settings/registration"),
   updateRegistration: (enabled: boolean) => request<RegistrationSetting>("/admin/settings/registration", { method: "PATCH", body: JSON.stringify({ enabled }) }),
+  oidcAdminSettings: () => request<OidcAdminSettings>("/admin/settings/oidc"),
+  updateOidcAdminSettings: (settings: OidcAdminSettingsInput) => request<OidcAdminSettings>("/admin/settings/oidc", { method: "PATCH", body: JSON.stringify(settings) }),
 };

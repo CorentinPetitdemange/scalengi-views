@@ -1,6 +1,8 @@
+use std::sync::Arc;
+
 use axum::{
     extract::{Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     response::Redirect,
     Json,
 };
@@ -17,7 +19,10 @@ use sqlx::{Sqlite, Transaction};
 use uuid::Uuid;
 
 use crate::{
-    auth::ensure_csrf_token,
+    auth::{
+        authenticate_mutation, authenticated_user, ensure_csrf_token, require_admin,
+        require_allowed_origin,
+    },
     backend::{find_user_by_id, AuthBackend},
     config::OidcConfig,
     error::ApiError,
@@ -28,6 +33,7 @@ use crate::{
 
 const FLOW_SESSION_KEY: &str = "oidc.pending_flow";
 const FLOW_MAX_AGE_SECONDS: i64 = 10 * 60;
+const SETTINGS_KEY: &str = "oidc_configuration";
 
 type ConfiguredClient = CoreClient<
     EndpointSet,
@@ -57,8 +63,8 @@ pub struct PublicOidcConfig {
 }
 
 impl PublicOidcConfig {
-    pub fn from_state(state: &AppState) -> Self {
-        match &state.oidc {
+    pub async fn from_state(state: &AppState) -> Self {
+        match state.oidc_service().await {
             Some(service) => Self {
                 enabled: true,
                 provider_name: Some(service.config.provider_name.clone()),
@@ -74,6 +80,127 @@ impl PublicOidcConfig {
                 end_session_url: None,
             },
         }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct OidcSettings {
+    pub enabled: bool,
+    pub provider_name: String,
+    pub issuer_url: String,
+    pub client_id: String,
+    pub redirect_url: String,
+    pub allowed_domains: Vec<String>,
+    pub allow_any_domain: bool,
+    pub jit_provisioning: bool,
+    pub local_login_enabled: bool,
+    pub require_verified_email: bool,
+    pub bootstrap_admin_email: Option<String>,
+    pub end_session_url: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AdminOidcSettings {
+    #[serde(flatten)]
+    pub settings: OidcSettings,
+    pub client_secret_configured: bool,
+    pub source: &'static str,
+}
+
+impl OidcSettings {
+    fn from_runtime(config: &OidcConfig) -> Self {
+        Self {
+            enabled: true,
+            provider_name: config.provider_name.clone(),
+            issuer_url: config.issuer_url.clone(),
+            client_id: config.client_id.clone(),
+            redirect_url: config.redirect_url.clone(),
+            allowed_domains: config.allowed_domains.clone(),
+            allow_any_domain: config.allow_any_domain,
+            jit_provisioning: config.jit_provisioning,
+            local_login_enabled: config.local_login_enabled,
+            require_verified_email: config.require_verified_email,
+            bootstrap_admin_email: config.bootstrap_admin_email.clone(),
+            end_session_url: config.end_session_url.clone(),
+        }
+    }
+
+    fn disabled() -> Self {
+        Self {
+            enabled: false,
+            provider_name: "SSO d’entreprise".into(),
+            issuer_url: String::new(),
+            client_id: String::new(),
+            redirect_url: String::new(),
+            allowed_domains: Vec::new(),
+            allow_any_domain: false,
+            jit_provisioning: false,
+            local_login_enabled: true,
+            require_verified_email: true,
+            bootstrap_admin_email: None,
+            end_session_url: None,
+        }
+    }
+
+    fn validated(
+        mut self,
+        client_secret: Option<&str>,
+    ) -> Result<(Self, Option<OidcConfig>), ApiError> {
+        self.provider_name = required_text("providerName", self.provider_name, 100)?;
+        self.issuer_url = self.issuer_url.trim().to_owned();
+        self.client_id = self.client_id.trim().to_owned();
+        self.redirect_url = self.redirect_url.trim().to_owned();
+        self.allowed_domains = normalize_domains(self.allowed_domains)?;
+        self.bootstrap_admin_email = normalized_optional_email(self.bootstrap_admin_email)?;
+        self.end_session_url =
+            normalized_optional_text("endSessionUrl", self.end_session_url, 2048)?;
+        if !self.enabled {
+            return Ok((self, None));
+        }
+        self.issuer_url = required_text("issuerUrl", self.issuer_url, 2048)?;
+        self.client_id = required_text("clientId", self.client_id, 512)?;
+        self.redirect_url = required_text("redirectUrl", self.redirect_url, 2048)?;
+        if self.allowed_domains.is_empty() && !self.allow_any_domain {
+            return Err(ApiError::bad_request(
+                "oidc_domain_required",
+                "Ajoutez au moins un domaine autorisé ou autorisez explicitement tous les domaines.",
+                Some("allowedDomains"),
+            ));
+        }
+        if !self.local_login_enabled && self.bootstrap_admin_email.is_none() {
+            return Err(ApiError::bad_request(
+                "oidc_bootstrap_admin_required",
+                "Une adresse d’administrateur initial est requise avant de désactiver la connexion locale.",
+                Some("bootstrapAdminEmail"),
+            ));
+        }
+        let client_secret = client_secret.filter(|value| !value.trim().is_empty()).ok_or_else(|| {
+            ApiError::bad_request(
+                "oidc_client_secret_missing",
+                "Le secret client doit être injecté dans SCALENGI_OIDC_CLIENT_SECRET avant d’activer le SSO.",
+                None,
+            )
+        })?;
+        let config = OidcConfig {
+            issuer_url: self.issuer_url.clone(),
+            client_id: self.client_id.clone(),
+            client_secret: client_secret.to_owned(),
+            redirect_url: self.redirect_url.clone(),
+            provider_name: self.provider_name.clone(),
+            allowed_domains: self.allowed_domains.clone(),
+            allow_any_domain: self.allow_any_domain,
+            jit_provisioning: self.jit_provisioning,
+            local_login_enabled: self.local_login_enabled,
+            require_verified_email: self.require_verified_email,
+            bootstrap_admin_email: self.bootstrap_admin_email.clone(),
+            end_session_url: self.end_session_url.clone(),
+        };
+        validate_oidc_config(&config).map_err(|message| {
+            ApiError::bad_request("oidc_configuration_invalid", message, None)
+        })?;
+        Ok((self, Some(config)))
     }
 }
 
@@ -101,14 +228,10 @@ pub struct CallbackQuery {
 
 impl OidcService {
     pub async fn discover(config: OidcConfig) -> Result<Self, String> {
-        validate_endpoint_url("SCALENGI_OIDC_ISSUER_URL", &config.issuer_url)?;
-        validate_endpoint_url("SCALENGI_OIDC_REDIRECT_URL", &config.redirect_url)?;
-        if let Some(end_session_url) = config.end_session_url.as_deref() {
-            validate_endpoint_url("SCALENGI_OIDC_END_SESSION_URL", end_session_url)?;
-        }
+        validate_oidc_config(&config)?;
         let http_client = reqwest::ClientBuilder::new()
-            // OIDC discovery and token endpoints are server-controlled URLs. Redirects are
-            // deliberately disabled, as recommended by the openidconnect crate, to avoid SSRF.
+            // OIDC endpoints are controlled by a trusted administrator. Redirects are disabled,
+            // as recommended by the openidconnect crate, to keep that network boundary explicit.
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .map_err(|error| format!("client HTTP OIDC: {error}"))?;
@@ -170,6 +293,41 @@ impl OidcService {
     }
 }
 
+pub async fn initialize_service(
+    pool: &sqlx::SqlitePool,
+    environment_config: Option<OidcConfig>,
+    client_secret: Option<&str>,
+) -> Result<Option<Arc<OidcService>>, String> {
+    let stored = sqlx::query_scalar::<_, String>("SELECT value FROM settings WHERE key = ?")
+        .bind(SETTINGS_KEY)
+        .fetch_optional(pool)
+        .await
+        .map_err(|error| format!("lecture configuration OIDC: {error}"))?;
+    let runtime = if let Some(value) = stored {
+        let settings: OidcSettings = serde_json::from_str(&value)
+            .map_err(|error| format!("configuration OIDC enregistrée invalide: {error}"))?;
+        settings
+            .validated(client_secret)
+            .map_err(|error| format!("configuration OIDC enregistrée: {error}"))?
+            .1
+    } else {
+        environment_config
+    };
+    match runtime {
+        Some(config) => Ok(Some(Arc::new(OidcService::discover(config).await?))),
+        None => Ok(None),
+    }
+}
+
+fn validate_oidc_config(config: &OidcConfig) -> Result<(), String> {
+    validate_endpoint_url("URL de l’émetteur", &config.issuer_url)?;
+    validate_endpoint_url("URL de retour", &config.redirect_url)?;
+    if let Some(end_session_url) = config.end_session_url.as_deref() {
+        validate_endpoint_url("URL de déconnexion", end_session_url)?;
+    }
+    Ok(())
+}
+
 fn validate_endpoint_url(label: &str, value: &str) -> Result<(), String> {
     let url = reqwest::Url::parse(value).map_err(|error| format!("{label} invalide: {error}"))?;
     let local = matches!(url.host_str(), Some("localhost" | "127.0.0.1" | "::1"));
@@ -186,8 +344,185 @@ fn validate_endpoint_url(label: &str, value: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn required_text(
+    field: &'static str,
+    value: String,
+    max_length: usize,
+) -> Result<String, ApiError> {
+    let value = value.trim().to_owned();
+    if value.is_empty() || value.len() > max_length {
+        return Err(ApiError::bad_request(
+            "oidc_field_invalid",
+            format!(
+                "Le champ {field} est requis et doit contenir au maximum {max_length} caractères."
+            ),
+            Some(field),
+        ));
+    }
+    Ok(value)
+}
+
+fn normalized_optional_text(
+    field: &'static str,
+    value: Option<String>,
+    max_length: usize,
+) -> Result<Option<String>, ApiError> {
+    let value = value
+        .map(|item| item.trim().to_owned())
+        .filter(|item| !item.is_empty());
+    if value.as_ref().is_some_and(|item| item.len() > max_length) {
+        return Err(ApiError::bad_request(
+            "oidc_field_invalid",
+            format!("Le champ {field} doit contenir au maximum {max_length} caractères."),
+            Some(field),
+        ));
+    }
+    Ok(value)
+}
+
+fn normalized_optional_email(value: Option<String>) -> Result<Option<String>, ApiError> {
+    value
+        .filter(|item| !item.trim().is_empty())
+        .map(|item| normalize_email(&item))
+        .transpose()
+}
+
+fn normalize_domains(domains: Vec<String>) -> Result<Vec<String>, ApiError> {
+    let mut normalized = domains
+        .into_iter()
+        .flat_map(|value| {
+            value
+                .split(',')
+                .map(str::trim)
+                .filter(|domain| !domain.is_empty())
+                .map(str::to_ascii_lowercase)
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    normalized.sort();
+    normalized.dedup();
+    if normalized.len() > 100
+        || normalized.iter().any(|domain| {
+            domain.len() > 253
+                || domain.starts_with('.')
+                || domain.ends_with('.')
+                || !domain.contains('.')
+                || !domain
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-'))
+        })
+    {
+        return Err(ApiError::bad_request(
+            "oidc_domain_invalid",
+            "La liste contient un domaine invalide.",
+            Some("allowedDomains"),
+        ));
+    }
+    Ok(normalized)
+}
+
 pub async fn configuration(State(state): State<AppState>) -> Json<PublicOidcConfig> {
-    Json(PublicOidcConfig::from_state(&state))
+    Json(PublicOidcConfig::from_state(&state).await)
+}
+
+pub async fn admin_configuration(
+    State(state): State<AppState>,
+    auth_session: AuthSession<AuthBackend>,
+) -> Result<Json<AdminOidcSettings>, ApiError> {
+    let actor = authenticated_user(&auth_session)?;
+    require_admin(&actor)?;
+    let stored = sqlx::query_scalar::<_, String>("SELECT value FROM settings WHERE key = ?")
+        .bind(SETTINGS_KEY)
+        .fetch_optional(&state.pool)
+        .await?;
+    let (settings, source) = if let Some(value) = stored {
+        (
+            serde_json::from_str(&value)
+                .map_err(|error| ApiError::Internal(format!("stored OIDC settings: {error}")))?,
+            "administration",
+        )
+    } else if let Some(service) = state.oidc_service().await {
+        (OidcSettings::from_runtime(&service.config), "environment")
+    } else {
+        (OidcSettings::disabled(), "default")
+    };
+    Ok(Json(AdminOidcSettings {
+        settings,
+        client_secret_configured: state.config.oidc_client_secret.is_some(),
+        source,
+    }))
+}
+
+pub async fn update_admin_configuration(
+    State(state): State<AppState>,
+    auth_session: AuthSession<AuthBackend>,
+    headers: HeaderMap,
+    Json(settings): Json<OidcSettings>,
+) -> Result<Json<AdminOidcSettings>, ApiError> {
+    require_allowed_origin(&state, &headers)?;
+    let actor = authenticate_mutation(&auth_session, &headers).await?;
+    require_admin(&actor)?;
+    ensure_admin_access_path(&state, &settings).await?;
+    let (settings, runtime) = settings.validated(state.config.oidc_client_secret.as_deref())?;
+    let service = match runtime {
+        Some(config) => Some(Arc::new(OidcService::discover(config).await.map_err(
+            |error| {
+                ApiError::bad_request(
+                    "oidc_discovery_failed",
+                    format!("Le fournisseur OIDC n’a pas pu être validé : {error}"),
+                    Some("issuerUrl"),
+                )
+            },
+        )?)),
+        None => None,
+    };
+    let value = serde_json::to_string(&settings)
+        .map_err(|error| ApiError::Internal(format!("serialize OIDC settings: {error}")))?;
+    sqlx::query(
+        "INSERT INTO settings(key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    )
+    .bind(SETTINGS_KEY)
+    .bind(value)
+    .execute(&state.pool)
+    .await?;
+    *state.oidc.write().await = service;
+    Ok(Json(AdminOidcSettings {
+        settings,
+        client_secret_configured: state.config.oidc_client_secret.is_some(),
+        source: "administration",
+    }))
+}
+
+async fn ensure_admin_access_path(
+    state: &AppState,
+    settings: &OidcSettings,
+) -> Result<(), ApiError> {
+    let accessible_admins = if settings.enabled && !settings.local_login_enabled {
+        sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM users WHERE role = 'admin' AND is_active = 1 AND auth_provider IN ('oidc', 'both')",
+        )
+        .fetch_one(&state.pool)
+        .await?
+    } else if !settings.enabled {
+        sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM users WHERE role = 'admin' AND is_active = 1 AND auth_provider IN ('local', 'both') AND password_hash <> ''",
+        )
+        .fetch_one(&state.pool)
+        .await?
+    } else {
+        return Ok(());
+    };
+    if accessible_admins == 0 {
+        return Err(ApiError::conflict(
+            "admin_access_required",
+            if settings.enabled {
+                "Autorisez d’abord le SSO pour au moins un administrateur actif avant de désactiver la connexion locale."
+            } else {
+                "Conservez au moins un administrateur actif avec un mot de passe local avant de désactiver le SSO."
+            },
+        ));
+    }
+    Ok(())
 }
 
 pub async fn start(
@@ -195,7 +530,7 @@ pub async fn start(
     auth_session: AuthSession<AuthBackend>,
     Query(query): Query<StartQuery>,
 ) -> Result<Redirect, ApiError> {
-    let service = state.oidc.as_ref().ok_or_else(oidc_disabled)?;
+    let service = state.oidc_service().await.ok_or_else(oidc_disabled)?;
     let return_to = safe_return_path(query.return_to.as_deref()).unwrap_or_else(|| "/".into());
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
     let (authorization_url, csrf_state, nonce) = service
@@ -244,7 +579,7 @@ async fn callback_inner(
     mut auth_session: AuthSession<AuthBackend>,
     query: CallbackQuery,
 ) -> Result<Redirect, ApiError> {
-    let service = state.oidc.as_ref().ok_or_else(oidc_disabled)?;
+    let service = state.oidc_service().await.ok_or_else(oidc_disabled)?;
     // The flow is consumed before any validation or network request, making callbacks single-use.
     let pending = auth_session
         .session
@@ -368,7 +703,7 @@ async fn resolve_identity(
     email: &str,
     display_name: &str,
 ) -> Result<UserRecord, ApiError> {
-    let service = state.oidc.as_ref().ok_or_else(oidc_disabled)?;
+    let service = state.oidc_service().await.ok_or_else(oidc_disabled)?;
     let now = Utc::now().timestamp();
     let mut transaction = state.pool.begin().await?;
     if let Some(user_id) = sqlx::query_scalar::<_, String>(
@@ -638,6 +973,50 @@ mod tests {
         assert!(validate_endpoint_url("issuer", "https://id.example.com/#fragment").is_err());
     }
 
+    #[test]
+    fn administered_settings_reject_unsafe_activation() {
+        let mut settings = OidcSettings::from_runtime(&config());
+        let secret = random_token();
+        assert!(settings.clone().validated(None).is_err());
+        settings.allowed_domains.clear();
+        assert!(settings.clone().validated(Some(&secret)).is_err());
+        settings.allow_any_domain = true;
+        settings.local_login_enabled = false;
+        assert!(settings.clone().validated(Some(&secret)).is_err());
+        settings.bootstrap_admin_email = Some("ADMIN@EXAMPLE.COM".into());
+        let runtime = settings
+            .validated(Some(&secret))
+            .expect("validated settings")
+            .1
+            .expect("enabled OIDC");
+        assert_eq!(
+            runtime.bootstrap_admin_email.as_deref(),
+            Some("admin@example.com")
+        );
+        assert_eq!(runtime.client_secret, secret);
+    }
+
+    #[test]
+    fn disabled_settings_do_not_require_or_serialize_a_secret() {
+        let settings = OidcSettings::disabled();
+        assert!(settings
+            .clone()
+            .validated(None)
+            .expect("disabled")
+            .1
+            .is_none());
+        let response = AdminOidcSettings {
+            settings,
+            client_secret_configured: true,
+            source: "environment",
+        };
+        let secret = random_token();
+        let serialized = serde_json::to_string(&response).expect("serialize response");
+        assert!(!serialized.contains(&secret));
+        assert!(!serialized.contains("clientSecret\""));
+        assert!(serialized.contains("clientSecretConfigured"));
+    }
+
     #[tokio::test]
     async fn existing_local_account_requires_explicit_sso_authorization() {
         let database_path =
@@ -657,8 +1036,11 @@ mod tests {
                 cookie_secure: false,
                 session_lifetime_seconds: 3600,
                 oidc: Some(oidc_config.clone()),
+                oidc_client_secret: Some(oidc_config.client_secret.clone()),
             }),
-            oidc: Some(Arc::new(OidcService::for_test(oidc_config))),
+            oidc: Arc::new(tokio::sync::RwLock::new(Some(Arc::new(
+                OidcService::for_test(oidc_config),
+            )))),
         };
 
         let rejected = resolve_identity(
@@ -731,8 +1113,11 @@ mod tests {
                 cookie_secure: false,
                 session_lifetime_seconds: 3600,
                 oidc: Some(oidc_config.clone()),
+                oidc_client_secret: Some(oidc_config.client_secret.clone()),
             }),
-            oidc: Some(Arc::new(OidcService::for_test(oidc_config))),
+            oidc: Arc::new(tokio::sync::RwLock::new(Some(Arc::new(
+                OidcService::for_test(oidc_config),
+            )))),
         };
 
         let premature = resolve_identity(

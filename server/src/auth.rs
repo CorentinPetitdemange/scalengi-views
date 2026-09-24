@@ -42,12 +42,12 @@ pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<BootstrapRe
         .fetch_one(&state.pool)
         .await?
         > 0;
-    let registration_enabled = local_login_enabled(&state)
+    let registration_enabled = local_login_enabled(&state).await
         && (!has_accounts || setting_enabled(&state, "registration_enabled").await?);
     Ok(Json(BootstrapResponse {
         has_accounts,
         registration_enabled,
-        oidc: PublicOidcConfig::from_state(&state),
+        oidc: PublicOidcConfig::from_state(&state).await,
     }))
 }
 
@@ -58,7 +58,7 @@ pub async fn register(
     Json(body): Json<RegisterInput>,
 ) -> Result<Json<SessionResponse>, ApiError> {
     require_allowed_origin(&state, &headers)?;
-    if !local_login_enabled(&state) {
+    if !local_login_enabled(&state).await {
         return Err(ApiError::forbidden(
             "La création de comptes locaux est désactivée.",
         ));
@@ -127,7 +127,7 @@ pub async fn login(
     Json(body): Json<Credentials>,
 ) -> Result<Json<SessionResponse>, ApiError> {
     require_allowed_origin(&state, &headers)?;
-    if !local_login_enabled(&state) {
+    if !local_login_enabled(&state).await {
         return Err(invalid_credentials());
     }
     let user = auth_session
@@ -309,10 +309,10 @@ async fn session_response(
     }))
 }
 
-fn local_login_enabled(state: &AppState) -> bool {
+async fn local_login_enabled(state: &AppState) -> bool {
     state
-        .oidc
-        .as_ref()
+        .oidc_service()
+        .await
         .is_none_or(|service| service.config.local_login_enabled)
 }
 

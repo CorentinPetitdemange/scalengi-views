@@ -88,6 +88,8 @@ Issuer, callback and logout endpoints must use HTTPS; HTTP is accepted only for 
 
 Some enterprise providers omit `email_verified`. Relaxing `SCALENGI_OIDC_REQUIRE_VERIFIED_EMAIL` is an explicit trust decision and should only be done after confirming the provider contract and tenant restriction.
 
+Administrators can manage the non-secret OIDC configuration from **Administration → Authentification SSO**. Saving an enabled configuration performs OIDC Discovery before activation and applies it without restarting the Rust service. The client secret deliberately remains server-only in `SCALENGI_OIDC_CLIENT_SECRET`: it is never returned to the browser or written to SQLite. Environment variables provide the initial configuration; after the first save, the administered SQLite configuration takes precedence while continuing to use the injected secret.
+
 Example (secrets omitted):
 
 ```bash
@@ -142,6 +144,7 @@ Administrator endpoints:
 - `GET/POST /api/admin/users`
 - `PATCH/DELETE /api/admin/users/{id}`
 - `GET/PATCH /api/admin/settings/registration`
+- `GET/PATCH /api/admin/settings/oidc`
 
 ## Deployment
 

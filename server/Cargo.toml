@@ -1,6 +1,6 @@
 [package]
 name = "scalengi-views-auth"
-version = "1.1.0"
+version = "1.2.0-alpha.1"
 edition = "2021"
 license-file = "../LICENSE"
 publish = false
@@ -17,7 +17,7 @@ sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio-r
 subtle = "2.6"
 thiserror = "2"
 time = "0.3"
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "sync"] }
 tower-http = { version = "0.6", features = ["cors", "set-header", "trace"] }
 tower-sessions = "0.14"
 tower-sessions-sqlx-store = { version = "0.15", default-features = false, features = ["sqlite"] }

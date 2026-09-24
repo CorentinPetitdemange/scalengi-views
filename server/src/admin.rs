@@ -63,8 +63,8 @@ pub async fn create_user(
     require_admin(&actor)?;
     let email = normalize_email(&body.email)?;
     let display_name = validate_display_name(&body.display_name)?;
-    let auth_provider =
-        validate_auth_provider(&body.auth_provider, state.oidc.is_some())?.to_owned();
+    let oidc_enabled = state.oidc_service().await.is_some();
+    let auth_provider = validate_auth_provider(&body.auth_provider, oidc_enabled)?.to_owned();
     let role = validate_role(&body.role)?.to_owned();
     let password_hash = password_for_provider(body.password, &email, &auth_provider).await?;
     let now = Utc::now().timestamp();
@@ -139,8 +139,9 @@ pub async fn update_user(
         Some(value) => validate_role(&value)?.to_owned(),
         None => current.role.clone(),
     };
+    let oidc_enabled = state.oidc_service().await.is_some();
     let next_provider = match body.auth_provider {
-        Some(value) => validate_auth_provider(&value, state.oidc.is_some())?.to_owned(),
+        Some(value) => validate_auth_provider(&value, oidc_enabled)?.to_owned(),
         None => current.auth_provider.clone(),
     };
     let new_password = body.password.filter(|value| !value.is_empty());

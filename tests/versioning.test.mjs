@@ -5,13 +5,14 @@ import test from "node:test";
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("keeps the application version synchronized across web, native and server manifests", async () => {
-  const [packageSource, tauriSource, cargoSource, cargoLockSource, authCargoSource, authCargoLockSource, readme] = await Promise.all([
+  const [packageSource, tauriSource, cargoSource, cargoLockSource, authCargoSource, authCargoLockSource, moduleSource, readme] = await Promise.all([
     read("package.json"),
     read("src-tauri/tauri.conf.json"),
     read("src-tauri/Cargo.toml"),
     read("src-tauri/Cargo.lock"),
     read("server/Cargo.toml"),
     read("server/Cargo.lock"),
+    read("scalengi-module.json"),
     read("README.md"),
   ]);
   const packageVersion = JSON.parse(packageSource).version;
@@ -21,6 +22,7 @@ test("keeps the application version synchronized across web, native and server m
   assert.equal(cargoLockSource.match(/\[\[package\]\]\nname = "scalengi-views"\nversion = "([^"]+)"/)?.[1], packageVersion);
   assert.equal(authCargoSource.match(/^version = "([^"]+)"/m)?.[1], packageVersion);
   assert.equal(authCargoLockSource.match(/\[\[package\]\]\nname = "scalengi-views-auth"\nversion = "([^"]+)"/)?.[1], packageVersion);
+  assert.equal(JSON.parse(moduleSource).version, packageVersion);
   assert.equal(readme.match(/img\.shields\.io\/static\/v1\?label=version&message=v([^&]+)&color=blue/)?.[1], packageVersion);
 });
 
@@ -47,5 +49,28 @@ test("publishes tagged prereleases through the desktop workflow", async () => {
   assert.doesNotMatch(workflow, /^\s+APPLE_CERTIFICATE: \$\{\{ secrets\.APPLE_CERTIFICATE \}\}/m);
   assert.match(workflow, /--target aarch64-apple-darwin --bundles dmg/);
   assert.match(workflow, /--target x86_64-apple-darwin --bundles dmg/);
+  assert.match(workflow, /pnpm module:package/);
+  assert.match(workflow, /gh release upload "\$GITHUB_REF_NAME" dist-module\/\*\.zip --clobber/);
   assert.doesNotMatch(workflow, /version prioritaire|à valider/);
+});
+
+test("publishes a bounded installable module contract", async () => {
+  const [manifestSource, schemaSource, entrySource, integrationGuide] = await Promise.all([
+    read("scalengi-module.json"),
+    read("scalengi-module.schema.json"),
+    read("module/entry.ts"),
+    read("docs/MODULE_INTEGRATION.md"),
+  ]);
+  const manifest = JSON.parse(manifestSource);
+  const schema = JSON.parse(schemaSource);
+  assert.equal(manifest.schemaVersion, 1);
+  assert.equal(manifest.id, "com.scalengi.views");
+  assert.equal(manifest.compatibility.standalone, true);
+  assert.equal(manifest.permissions.businessDataNetworkAccess, false);
+  assert.match(manifest.distribution.assetPattern, /^scalengi-views-module-v\{version\}\.zip$/);
+  assert.equal(schema.properties.schemaVersion.const, 1);
+  assert.equal(schema.additionalProperties, false);
+  assert.match(entrySource, /ScalengiViewsApp/);
+  assert.match(entrySource, /export \* from "\.\.\/library\/src"/);
+  assert.match(integrationGuide, /platform owns the workspace, identity, navigation, module lifecycle/i);
 });
