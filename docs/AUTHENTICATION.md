@@ -44,6 +44,8 @@ Checks:
 
 ```bash
 pnpm auth:check
+pnpm auth:format:check
+pnpm auth:lint
 pnpm auth:test
 ```
 

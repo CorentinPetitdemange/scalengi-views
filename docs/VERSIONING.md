@@ -13,7 +13,7 @@ Incrementing the suffix publishes a new iteration of the same channel. A breakin
 
 ## Single source and validation
 
-The version is displayed in the application and must remain identical in `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and the local package entry in `src-tauri/Cargo.lock`.
+The version is displayed in the application and must remain identical in `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `server/Cargo.toml`, and both local package entries in the Cargo lockfiles.
 
 ```bash
 pnpm version:check

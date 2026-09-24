@@ -128,5 +128,41 @@ mod tests {
         let token = random_token();
         assert!(constant_time_value_matches(&token, &token));
         assert!(!constant_time_value_matches(&token, "another-token"));
+        assert!(!constant_time_value_matches(&token, &format!("{token}x")));
+    }
+
+    #[test]
+    fn email_normalization_is_bounded_and_rejects_ambiguous_values() {
+        assert_eq!(
+            normalize_email("  Alice@Example.COM ").expect("normalized email"),
+            "alice@example.com"
+        );
+        assert!(normalize_email("alice example@example.com").is_err());
+        assert!(normalize_email("alice@localhost").is_err());
+        assert!(normalize_email("@example.com").is_err());
+        assert!(normalize_email(&format!("{}@example.com", "a".repeat(65))).is_err());
+    }
+
+    #[test]
+    fn display_names_reject_control_characters_and_invalid_lengths() {
+        assert_eq!(
+            validate_display_name("  Alice Example  ").expect("display name"),
+            "Alice Example"
+        );
+        assert!(validate_display_name("A").is_err());
+        assert!(validate_display_name("Alice\nAdmin").is_err());
+        assert!(validate_display_name(&"a".repeat(101)).is_err());
+    }
+
+    #[test]
+    fn roles_and_authentication_providers_are_allowlisted() {
+        assert_eq!(validate_role("admin").expect("admin role"), "admin");
+        assert!(validate_role("owner").is_err());
+        assert_eq!(
+            validate_auth_provider("both", true).expect("combined provider"),
+            "both"
+        );
+        assert!(validate_auth_provider("both", false).is_err());
+        assert!(validate_auth_provider("saml", true).is_err());
     }
 }

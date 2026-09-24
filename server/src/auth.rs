@@ -293,7 +293,6 @@ pub fn require_allowed_origin(state: &AppState, headers: &HeaderMap) -> Result<(
         .allowed_origins
         .iter()
         .any(|allowed| allowed == origin)
-        || origin_matches_host(origin, headers)
     {
         return Ok(());
     }
@@ -315,19 +314,6 @@ fn local_login_enabled(state: &AppState) -> bool {
         .oidc
         .as_ref()
         .is_none_or(|service| service.config.local_login_enabled)
-}
-
-fn origin_matches_host(origin: &str, headers: &HeaderMap) -> bool {
-    let origin_authority = origin
-        .split_once("://")
-        .map(|(_, authority)| authority)
-        .unwrap_or(origin)
-        .trim_end_matches('/');
-    let request_host = headers
-        .get("x-forwarded-host")
-        .or_else(|| headers.get(header::HOST))
-        .and_then(|value| value.to_str().ok());
-    request_host.is_some_and(|host| host.eq_ignore_ascii_case(origin_authority))
 }
 
 fn invalid_credentials() -> ApiError {

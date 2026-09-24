@@ -628,6 +628,16 @@ mod tests {
         assert!(validate_sso_email("user@example.com", None, &cfg).is_err());
     }
 
+    #[test]
+    fn oidc_endpoints_require_https_outside_loopback_development() {
+        assert!(validate_endpoint_url("issuer", "https://id.example.com").is_ok());
+        assert!(validate_endpoint_url("issuer", "http://localhost:8080").is_ok());
+        assert!(validate_endpoint_url("issuer", "http://127.0.0.1:8080").is_ok());
+        assert!(validate_endpoint_url("issuer", "http://id.example.com").is_err());
+        assert!(validate_endpoint_url("issuer", "https://user:pass@id.example.com").is_err());
+        assert!(validate_endpoint_url("issuer", "https://id.example.com/#fragment").is_err());
+    }
+
     #[tokio::test]
     async fn existing_local_account_requires_explicit_sso_authorization() {
         let database_path =
@@ -700,5 +710,74 @@ mod tests {
         .await
         .expect_err("linked identity must respect a later SSO revocation");
         assert_eq!(revoked.code(), "oidc_account_inactive");
+    }
+
+    #[tokio::test]
+    async fn sso_bootstrap_is_exact_and_jit_users_never_become_admins() {
+        let database_path = std::env::temp_dir().join(format!(
+            "scalengi-oidc-bootstrap-{}.sqlite3",
+            Uuid::new_v4()
+        ));
+        let pool = crate::db::connect(&database_path).await.expect("database");
+        let mut oidc_config = config();
+        oidc_config.jit_provisioning = true;
+        oidc_config.bootstrap_admin_email = Some("admin@example.com".into());
+        let state = AppState {
+            pool: pool.clone(),
+            config: Arc::new(Config {
+                bind: "127.0.0.1:0".parse().expect("bind"),
+                database_path,
+                allowed_origins: vec![],
+                cookie_secure: false,
+                session_lifetime_seconds: 3600,
+                oidc: Some(oidc_config.clone()),
+            }),
+            oidc: Some(Arc::new(OidcService::for_test(oidc_config))),
+        };
+
+        let premature = resolve_identity(
+            &state,
+            "https://id.example.com",
+            "member-before-admin",
+            "member@example.com",
+            "Member",
+        )
+        .await
+        .expect_err("bootstrap administrator must authenticate first");
+        assert_eq!(premature.code(), "oidc_bootstrap_admin_required");
+
+        let admin = resolve_identity(
+            &state,
+            "https://id.example.com",
+            "admin-subject",
+            "admin@example.com",
+            "Administrator",
+        )
+        .await
+        .expect("bootstrap administrator");
+        assert_eq!(admin.role, "admin");
+
+        let member = resolve_identity(
+            &state,
+            "https://id.example.com",
+            "member-subject",
+            "member@example.com",
+            "Member",
+        )
+        .await
+        .expect("JIT member");
+        assert_eq!(member.role, "member");
+
+        let same_identity = resolve_identity(
+            &state,
+            "https://id.example.com",
+            "admin-subject",
+            "renamed@example.com",
+            "Renamed",
+        )
+        .await
+        .expect("known immutable identity");
+        assert_eq!(same_identity.id, admin.id);
+        assert_eq!(same_identity.email, "admin@example.com");
     }
 }

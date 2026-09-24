@@ -4,16 +4,36 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("keeps the application version synchronized across web and native manifests", async () => {
-  const [packageSource, tauriSource, cargoSource, cargoLockSource, readme] = await Promise.all([
-    read("package.json"), read("src-tauri/tauri.conf.json"), read("src-tauri/Cargo.toml"), read("src-tauri/Cargo.lock"), read("README.md"),
+test("keeps the application version synchronized across web, native and server manifests", async () => {
+  const [packageSource, tauriSource, cargoSource, cargoLockSource, authCargoSource, authCargoLockSource, readme] = await Promise.all([
+    read("package.json"),
+    read("src-tauri/tauri.conf.json"),
+    read("src-tauri/Cargo.toml"),
+    read("src-tauri/Cargo.lock"),
+    read("server/Cargo.toml"),
+    read("server/Cargo.lock"),
+    read("README.md"),
   ]);
   const packageVersion = JSON.parse(packageSource).version;
   assert.match(packageVersion, /^\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?$/);
   assert.equal(JSON.parse(tauriSource).version, packageVersion);
   assert.equal(cargoSource.match(/^version = "([^"]+)"/m)?.[1], packageVersion);
   assert.equal(cargoLockSource.match(/\[\[package\]\]\nname = "scalengi-views"\nversion = "([^"]+)"/)?.[1], packageVersion);
+  assert.equal(authCargoSource.match(/^version = "([^"]+)"/m)?.[1], packageVersion);
+  assert.equal(authCargoLockSource.match(/\[\[package\]\]\nname = "scalengi-views-auth"\nversion = "([^"]+)"/)?.[1], packageVersion);
   assert.equal(readme.match(/img\.shields\.io\/static\/v1\?label=version&message=v([^&]+)&color=blue/)?.[1], packageVersion);
+});
+
+test("runs pinned CodeQL security analysis for the Rust and TypeScript code", async () => {
+  const workflow = await read(".github/workflows/codeql.yml");
+  assert.match(workflow, /security-events: write/);
+  assert.match(workflow, /- javascript-typescript/);
+  assert.match(workflow, /- rust/);
+  assert.match(workflow, /build-mode: none/);
+  assert.match(workflow, /queries: security-extended/);
+  assert.match(workflow, /github\/codeql-action\/init@[a-f0-9]{40}/);
+  assert.match(workflow, /github\/codeql-action\/analyze@[a-f0-9]{40}/);
+  assert.doesNotMatch(workflow, /pull_request_target/);
 });
 
 test("publishes tagged prereleases through the desktop workflow", async () => {

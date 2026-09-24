@@ -216,6 +216,66 @@ mod tests {
             .expect("request")
     }
 
+    struct TestSession {
+        cookie: String,
+        csrf: String,
+        user_id: String,
+    }
+
+    async fn response_json(response: axum::response::Response) -> serde_json::Value {
+        serde_json::from_slice(
+            &response
+                .into_body()
+                .collect()
+                .await
+                .expect("body")
+                .to_bytes(),
+        )
+        .expect("json")
+    }
+
+    async fn authenticated_session(response: axum::response::Response) -> TestSession {
+        assert_eq!(response.status(), StatusCode::OK);
+        let cookie = response
+            .headers()
+            .get("set-cookie")
+            .expect("session cookie")
+            .to_str()
+            .expect("cookie text")
+            .split(';')
+            .next()
+            .expect("cookie value")
+            .to_owned();
+        let body = response_json(response).await;
+        TestSession {
+            cookie,
+            csrf: body["csrfToken"].as_str().expect("csrf").to_owned(),
+            user_id: body["user"]["id"].as_str().expect("user id").to_owned(),
+        }
+    }
+
+    async fn register_user(
+        router: &Router,
+        display_name: &str,
+        email: &str,
+        password: &str,
+    ) -> TestSession {
+        let response = router
+            .clone()
+            .oneshot(json_request(
+                "POST",
+                "/api/auth/register",
+                serde_json::json!({
+                    "displayName": display_name,
+                    "email": email,
+                    "password": password
+                }),
+            ))
+            .await
+            .expect("registration response");
+        authenticated_session(response).await
+    }
+
     #[tokio::test]
     async fn first_account_is_admin_and_registration_closes() {
         let router = test_app().await;
@@ -396,5 +456,194 @@ mod tests {
             Some(cookie.as_str()),
             "authentication must rotate the pre-authentication session id"
         );
+    }
+
+    #[tokio::test]
+    async fn origin_and_csrf_checks_cannot_be_bypassed_with_forwarded_headers() {
+        let router = test_app().await;
+        let forged_registration = router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/api/auth/register")
+                    .header("content-type", "application/json")
+                    .header("origin", "https://attacker.example")
+                    .header("x-forwarded-host", "attacker.example")
+                    .body(Body::from(
+                        serde_json::json!({
+                            "displayName": "Attacker",
+                            "email": "attacker@example.com",
+                            "password": "Correct-Horse-42!"
+                        })
+                        .to_string(),
+                    ))
+                    .expect("forged request"),
+            )
+            .await
+            .expect("forged response");
+        assert_eq!(forged_registration.status(), StatusCode::FORBIDDEN);
+
+        let admin = register_user(
+            &router,
+            "Admin Test",
+            "admin@example.com",
+            "Correct-Horse-42!",
+        )
+        .await;
+        let without_csrf = router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("PATCH")
+                    .uri("/api/auth/me")
+                    .header("content-type", "application/json")
+                    .header("origin", "http://localhost:3000")
+                    .header("cookie", &admin.cookie)
+                    .body(Body::from(r#"{"displayName":"Updated Admin"}"#))
+                    .expect("missing CSRF request"),
+            )
+            .await
+            .expect("missing CSRF response");
+        assert_eq!(without_csrf.status(), StatusCode::FORBIDDEN);
+
+        let forged_origin = router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("PATCH")
+                    .uri("/api/auth/me")
+                    .header("content-type", "application/json")
+                    .header("origin", "https://attacker.example")
+                    .header("x-forwarded-host", "attacker.example")
+                    .header("cookie", &admin.cookie)
+                    .header("x-csrf-token", &admin.csrf)
+                    .body(Body::from(r#"{"displayName":"Updated Admin"}"#))
+                    .expect("forged origin request"),
+            )
+            .await
+            .expect("forged origin response");
+        assert_eq!(forged_origin.status(), StatusCode::FORBIDDEN);
+
+        let accepted = router
+            .oneshot(
+                Request::builder()
+                    .method("PATCH")
+                    .uri("/api/auth/me")
+                    .header("content-type", "application/json")
+                    .header("origin", "http://localhost:3000")
+                    .header("cookie", &admin.cookie)
+                    .header("x-csrf-token", &admin.csrf)
+                    .body(Body::from(r#"{"displayName":"Updated Admin"}"#))
+                    .expect("valid request"),
+            )
+            .await
+            .expect("valid response");
+        assert_eq!(accepted.status(), StatusCode::OK);
+        assert_eq!(accepted.headers()[header::CACHE_CONTROL], "no-store");
+        assert_eq!(
+            accepted.headers()[header::X_CONTENT_TYPE_OPTIONS],
+            "nosniff"
+        );
+    }
+
+    #[tokio::test]
+    async fn admin_changes_are_role_protected_and_invalidate_existing_sessions() {
+        let router = test_app().await;
+        let admin = register_user(
+            &router,
+            "Admin Test",
+            "admin@example.com",
+            "Correct-Horse-42!",
+        )
+        .await;
+        let created = router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/api/admin/users")
+                    .header("content-type", "application/json")
+                    .header("origin", "http://localhost:3000")
+                    .header("cookie", &admin.cookie)
+                    .header("x-csrf-token", &admin.csrf)
+                    .body(Body::from(
+                        serde_json::json!({
+                            "displayName": "Member Test",
+                            "email": "member@example.com",
+                            "password": "Granite-Bridge-42!",
+                            "role": "member",
+                            "authProvider": "local"
+                        })
+                        .to_string(),
+                    ))
+                    .expect("create member request"),
+            )
+            .await
+            .expect("create member response");
+        assert_eq!(created.status(), StatusCode::CREATED);
+        let member_id = response_json(created).await["id"]
+            .as_str()
+            .expect("member id")
+            .to_owned();
+
+        let member = authenticated_session(
+            router
+                .clone()
+                .oneshot(json_request(
+                    "POST",
+                    "/api/auth/login",
+                    serde_json::json!({
+                        "email": "member@example.com",
+                        "password": "Granite-Bridge-42!"
+                    }),
+                ))
+                .await
+                .expect("member login response"),
+        )
+        .await;
+        assert_eq!(member.user_id, member_id);
+
+        let forbidden = router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/admin/users")
+                    .header("cookie", &member.cookie)
+                    .body(Body::empty())
+                    .expect("member admin request"),
+            )
+            .await
+            .expect("member admin response");
+        assert_eq!(forbidden.status(), StatusCode::FORBIDDEN);
+
+        let deactivated = router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("PATCH")
+                    .uri(format!("/api/admin/users/{member_id}"))
+                    .header("content-type", "application/json")
+                    .header("origin", "http://localhost:3000")
+                    .header("cookie", &admin.cookie)
+                    .header("x-csrf-token", &admin.csrf)
+                    .body(Body::from(r#"{"isActive":false}"#))
+                    .expect("deactivate member request"),
+            )
+            .await
+            .expect("deactivate member response");
+        assert_eq!(deactivated.status(), StatusCode::OK);
+
+        let stale_session = router
+            .oneshot(
+                Request::builder()
+                    .uri("/api/auth/me")
+                    .header("cookie", &member.cookie)
+                    .body(Body::empty())
+                    .expect("stale session request"),
+            )
+            .await
+            .expect("stale session response");
+        assert_eq!(stale_session.status(), StatusCode::UNAUTHORIZED);
     }
 }

@@ -4,6 +4,17 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 ## [Unreleased]
 
+### Added
+
+- added a dedicated Rust authentication service with local accounts, server-side sessions, administrator account management, and provider-neutral OIDC SSO;
+- added CodeQL security analysis for Rust and JavaScript/TypeScript on pull requests, the default branch, and a weekly schedule.
+
+### Security
+
+- added Argon2 password hashing, login throttling, CSRF and origin validation, session rotation, secure cookie settings, and last-administrator safeguards;
+- added OIDC authorization code flow with PKCE, state and nonce validation, exact issuer/domain controls, explicit account linking, and conservative JIT provisioning;
+- pinned the CodeQL workflow actions to immutable commits and enabled the extended security query suite.
+
 ## [1.0.1] - 2026-09-23
 
 ### Added
