@@ -10,6 +10,11 @@ readonly PID_FILE="/tmp/scalengi-views-dev.pid"
 readonly AUTH_LOG_FILE="/tmp/scalengi-views-auth.log"
 readonly AUTH_PID_FILE="/tmp/scalengi-views-auth.pid"
 
+export SCALENGI_INSTALLATION_PROFILE="demo"
+export SCALENGI_DEMO_ADMIN_EMAIL="admin@scalengi.demo"
+export SCALENGI_DEMO_ADMIN_DISPLAY_NAME="Administrateur démo"
+export SCALENGI_DEMO_ADMIN_PASSWORD_FILE="$(pwd)/data/demo-admin-password"
+
 app_is_ready() {
   node -e "fetch('$APP_URL').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
 }
@@ -57,6 +62,8 @@ for attempt in $(seq 1 60); do
     echo "  Scalengi Views"
     echo "======================================"
     echo "Application disponible sur http://localhost:3000"
+    echo "Compte démo : admin@scalengi.demo"
+    echo "Mot de passe : cat data/demo-admin-password"
     echo "Le port 3000 s’ouvre automatiquement dans le navigateur."
     exit 0
   fi

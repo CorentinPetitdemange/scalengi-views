@@ -27,6 +27,7 @@ const CSRF_SESSION_KEY: &str = "csrf_token";
 pub struct BootstrapResponse {
     pub has_accounts: bool,
     pub registration_enabled: bool,
+    pub installation_profile: crate::config::InstallationProfile,
     pub oidc: PublicOidcConfig,
 }
 
@@ -35,6 +36,7 @@ pub struct BootstrapResponse {
 pub struct SessionResponse {
     pub user: PublicUser,
     pub csrf_token: String,
+    pub installation_profile: crate::config::InstallationProfile,
 }
 
 pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<BootstrapResponse>, ApiError> {
@@ -47,6 +49,7 @@ pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<BootstrapRe
     Ok(Json(BootstrapResponse {
         has_accounts,
         registration_enabled,
+        installation_profile: state.config.installation_profile,
         oidc: PublicOidcConfig::from_state(&state).await,
     }))
 }
@@ -117,7 +120,7 @@ pub async fn register(
             .map_err(session_error)?;
     }
     auth_session.login(&user).await.map_err(auth_error)?;
-    session_response(&auth_session, user).await
+    session_response(&state, &auth_session, user).await
 }
 
 pub async fn login(
@@ -143,12 +146,15 @@ pub async fn login(
             .map_err(session_error)?;
     }
     auth_session.login(&user).await.map_err(auth_error)?;
-    session_response(&auth_session, user).await
+    session_response(&state, &auth_session, user).await
 }
 
-pub async fn me(auth_session: AuthSession<AuthBackend>) -> Result<Json<SessionResponse>, ApiError> {
+pub async fn me(
+    State(state): State<AppState>,
+    auth_session: AuthSession<AuthBackend>,
+) -> Result<Json<SessionResponse>, ApiError> {
     let user = authenticated_user(&auth_session)?;
-    session_response(&auth_session, user).await
+    session_response(&state, &auth_session, user).await
 }
 
 pub async fn logout(
@@ -181,7 +187,7 @@ pub async fn update_profile(
     let user = find_user_by_id(&state.pool, &current.id)
         .await?
         .ok_or_else(ApiError::not_found)?;
-    session_response(&auth_session, user).await
+    session_response(&state, &auth_session, user).await
 }
 
 pub async fn change_password(
@@ -224,7 +230,7 @@ pub async fn change_password(
         .await
         .map_err(session_error)?;
     auth_session.login(&user).await.map_err(auth_error)?;
-    session_response(&auth_session, user).await
+    session_response(&state, &auth_session, user).await
 }
 
 pub async fn authenticate_mutation(
@@ -300,12 +306,14 @@ pub fn require_allowed_origin(state: &AppState, headers: &HeaderMap) -> Result<(
 }
 
 async fn session_response(
+    state: &AppState,
     auth_session: &AuthSession<AuthBackend>,
     user: UserRecord,
 ) -> Result<Json<SessionResponse>, ApiError> {
     Ok(Json(SessionResponse {
         user: user.into(),
         csrf_token: ensure_csrf_token(auth_session).await?,
+        installation_profile: state.config.installation_profile,
     }))
 }
 

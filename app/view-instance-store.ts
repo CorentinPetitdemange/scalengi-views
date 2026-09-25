@@ -1,4 +1,6 @@
 import { migrateLegacyPartition, normalizeDataset, sampleDataset, validateConfiguration, type ViewConfiguration, type ViewDataset } from "../library/src";
+import { catalogBootstrapAction } from "./catalog-bootstrap";
+import type { InstallationProfile } from "./auth-client";
 
 export interface ViewInstance {
   id: string;
@@ -18,6 +20,8 @@ export type ViewSource =
 const LEGACY_DATABASE = "scalengi-views-local";
 const LEGACY_OWNER_KEY = "scalengi-views-legacy-owner-v1";
 const STORE = "view-instances";
+const METADATA_STORE = "metadata";
+const CATALOG_INITIALIZED_KEY = "catalog-initialized-v2";
 let activeOwnerId: string | null = null;
 // Retired instances stay untouched in IndexedDB so a downgrade can still recover them.
 const RETIRED_VIEW_TYPES = new Set(["si-layers"]);
@@ -70,13 +74,21 @@ function databaseName() {
 
 function openDatabase() {
   return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(databaseName(), 1);
+    const request = indexedDB.open(databaseName(), 2);
     request.onupgradeneeded = () => {
       if (!request.result.objectStoreNames.contains(STORE)) request.result.createObjectStore(STORE, { keyPath: "id" });
+      if (!request.result.objectStoreNames.contains(METADATA_STORE)) request.result.createObjectStore(METADATA_STORE);
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
     request.onblocked = () => reject(new Error("La base locale est ouverte dans une autre version de l’application."));
+  });
+}
+
+function requestResult<T>(request: IDBRequest<T>) {
+  return new Promise<T>((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
   });
 }
 
@@ -106,6 +118,35 @@ export async function listViewInstances() {
   }
   if (legacyIds.size) await Promise.all(normalizedInstances.filter((instance) => legacyIds.has(instance.id)).map(saveViewInstance));
   return normalizedInstances;
+}
+
+export async function initializeViewCatalog(
+  profile: InstallationProfile,
+  demoInstances: ViewInstance[],
+  legacyInitialized: boolean,
+) {
+  const normalizedDemos = demoInstances.map((instance) => {
+    const normalized = normalizeInstance(instance);
+    if (!normalized || (instance.configuration && !normalized.configuration)) throw new Error("Le catalogue de démonstration contient une vue invalide.");
+    return normalized;
+  });
+  const database = await openDatabase();
+  try {
+    const transaction = database.transaction([STORE, METADATA_STORE], "readwrite");
+    const instances = transaction.objectStore(STORE);
+    const metadata = transaction.objectStore(METADATA_STORE);
+    const [initialized, instanceCount] = await Promise.all([
+      requestResult(metadata.get(CATALOG_INITIALIZED_KEY)),
+      requestResult(instances.count()),
+    ]);
+    const action = catalogBootstrapAction(profile, initialized === true, legacyInitialized, instanceCount);
+    if (action === "seed-demo") normalizedDemos.forEach((instance) => instances.put(instance));
+    if (action !== "none") metadata.put(true, CATALOG_INITIALIZED_KEY);
+    await transactionDone(transaction);
+    return action;
+  } finally {
+    database.close();
+  }
 }
 
 export async function saveViewInstance(instance: ViewInstance) {

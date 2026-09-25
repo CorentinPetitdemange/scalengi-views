@@ -4,8 +4,10 @@ The Codespace installs the pinned Node.js and pnpm versions, restores the projec
 
 ## Test the application
 
-- No account or password is required.
-- Sample views and datasets are created locally in the browser.
+- The demonstration administrator is `admin@scalengi.demo`.
+- Read its generated password with `cat data/demo-admin-password` in the terminal.
+- The password is generated once with restricted file permissions; it is never committed or printed in logs.
+- Sample views and datasets are created once, locally in the browser, after this account signs in.
 - Imported Excel files remain in this browser's local storage.
 - The initial installation and build usually take a few minutes; subsequent restarts are faster.
 

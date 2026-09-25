@@ -165,7 +165,7 @@ export function VerbatimCloudView({ data, configuration }: ViewRendererProps) {
         <select value={category} onChange={(event) => { setCategory(event.target.value); setSelectedWord(null); }} aria-label={t("Filtrer par catégorie")}><option value="all">{t("Toutes les catégories")}</option>{categories.map((item) => <option key={item.id} value={String(item.id)}>{String(item.label ?? item.id)}</option>)}</select>
         <select value={team} onChange={(event) => { setTeam(event.target.value); setSelectedWord(null); }} aria-label={t("Filtrer par équipe")}><option value="all">{t("Toutes les équipes")}</option>{teams.map((item) => <option key={item}>{item}</option>)}</select>
         <select className="cloud-shape-select" value={shape} onChange={(event) => setShape(asCloudShape(event.target.value))} aria-label={t("Forme du nuage de mots")}>{cloudShapes.map((item) => <option key={item.value} value={item.value}>{t(item.label)}</option>)}</select>
-        <button className="icon-button" onClick={fullscreen} aria-label={t("Afficher en plein écran")}><Maximize2 size={17} /></button>
+        <button className="icon-button toolbar-icon-button" onClick={fullscreen} aria-label={t("Afficher en plein écran")} title={t("Afficher en plein écran")}><Maximize2 size={17} /></button>
       </div>
     </ViewToolbar>
 

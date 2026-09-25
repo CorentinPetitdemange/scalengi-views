@@ -55,9 +55,14 @@ test("builds and smoke-tests the Codespaces development environment", async () =
   assert.match(setupScript, /CI=true pnpm install --frozen-lockfile/);
   assert.match(setupScript, /pnpm version:check/);
   assert.match(setupScript, /cargo build --locked --manifest-path server\/Cargo\.toml/);
+  assert.match(setupScript, /openssl rand -base64 32 > data\/demo-admin-password/);
+  assert.match(setupScript, /chmod 600 data\/demo-admin-password/);
   assert.doesNotMatch(setupScript, /docker/);
   assert.match(startScript, /pnpm dev --hostname 0\.0\.0\.0/);
   assert.match(startScript, /cargo run --manifest-path server\/Cargo\.toml/);
+  assert.match(startScript, /SCALENGI_INSTALLATION_PROFILE="demo"/);
+  assert.match(startScript, /SCALENGI_DEMO_ADMIN_PASSWORD_FILE=/);
+  assert.doesNotMatch(startScript, /SCALENGI_DEMO_ADMIN_PASSWORD="[^"$]/);
   assert.doesNotMatch(startScript, /pnpm dev -- --hostname/);
   assert.match(startScript, /fetch\('\$APP_URL'\)/);
   assert.match(startScript, /nohup/);
@@ -82,6 +87,8 @@ test("publishes the persistent standalone application and Rust authentication co
   assert.match(composeSource, /restart: unless-stopped/);
   assert.match(composeSource, /ghcr\.io\/corentinpetitdemange\/scalengi-view:latest/);
   assert.match(composeSource, /SCALENGI_VIEWS_PORT:-3000/);
+  assert.match(composeSource, /SCALENGI_INSTALLATION_PROFILE:-standard/);
+  assert.doesNotMatch(composeSource, /TurboEA!2025|admin@turboea\.demo/);
   assert.match(composeSource, /scalengi-views-auth:\/app\/data/);
   assert.match(dockerfile, /FROM node:22\.19\.0-bookworm-slim AS runtime/);
   assert.match(dockerfile, /FROM rust:1\.88-bookworm AS auth-builder/);

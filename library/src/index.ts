@@ -4,6 +4,7 @@ export { SIMetamodelView } from "./SIMetamodelView";
 export { TogafTrackingView } from "./TogafTrackingView";
 export { VerbatimCloudView } from "./VerbatimCloudView";
 export { PartitionView } from "./PartitionView";
+export { ViewToolbar, ViewToolbarExtensionProvider } from "./ViewToolbar";
 export { collaboratorJourneyDefinition, verbatimCloudDefinition, partitionViewDefinition, urbanisationMaturityDefinition, siMetamodelDefinition, togafTrackingDefinition, viewRegistry } from "./builtin-views";
 export { createCapabilityPartitionConfiguration, createUrbanPartitionConfiguration, createBlankPartitionConfiguration, migrateLegacyPartition } from "./partition-model";
 export { ViewRegistry, VIEW_CATALOG_GROUPS } from "./view-registry";

@@ -1,5 +1,6 @@
 export type UserRole = "admin" | "member";
 export type AuthProvider = "local" | "oidc" | "both";
+export type InstallationProfile = "standard" | "demo";
 
 export type AuthUser = {
   id: string;
@@ -12,7 +13,7 @@ export type AuthUser = {
   createdAt: number;
 };
 
-export type Session = { user: AuthUser; csrfToken: string };
+export type Session = { user: AuthUser; csrfToken: string; installationProfile: InstallationProfile };
 export type OidcConfig = {
   enabled: boolean;
   providerName: string | null;
@@ -20,7 +21,7 @@ export type OidcConfig = {
   jitProvisioning: boolean;
   endSessionUrl: string | null;
 };
-export type BootstrapState = { hasAccounts: boolean; registrationEnabled: boolean; oidc: OidcConfig };
+export type BootstrapState = { hasAccounts: boolean; registrationEnabled: boolean; installationProfile: InstallationProfile; oidc: OidcConfig };
 export type RegistrationSetting = { enabled: boolean };
 export type OidcAdminSettings = {
   enabled: boolean;

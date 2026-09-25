@@ -40,6 +40,8 @@ pnpm dev
 
 The first local account becomes administrator. Public local registration is then closed unless an administrator enables it.
 
+For an evaluation installation, the explicit `demo` profile can create the first administrator during server initialization. It uses the same validation and Argon2id hashing path as normal registration and requires operator-supplied credentials. See [Installation profiles](INSTALLATION_PROFILES.md).
+
 Checks:
 
 ```bash
@@ -59,6 +61,11 @@ pnpm auth:test
 | `SCALENGI_AUTH_COOKIE_SECURE` | `false` | Must be `true` behind production HTTPS |
 | `SCALENGI_AUTH_SESSION_HOURS` | `8` | Inactivity lifetime, bounded from 1 to 168 hours |
 | `RUST_LOG` | service info logs | Rust log filter |
+| `SCALENGI_INSTALLATION_PROFILE` | `standard` | Immutable first-start profile: `standard` or `demo` |
+| `SCALENGI_DEMO_ADMIN_EMAIL` | unset | Required only for a fresh `demo` installation |
+| `SCALENGI_DEMO_ADMIN_DISPLAY_NAME` | `Administrateur démo` | Display name for the demo administrator |
+| `SCALENGI_DEMO_ADMIN_PASSWORD_FILE` | unset | Preferred owner-readable secret file for the demo password |
+| `SCALENGI_DEMO_ADMIN_PASSWORD` | unset | Environment fallback for the demo password; never set together with the file option |
 
 ## OIDC SSO configuration
 

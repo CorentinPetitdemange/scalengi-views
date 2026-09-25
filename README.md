@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinPetitdemange/scalengi-views/actions/workflows/ci.yml)
 [![License: PolyForm Shield 1.0.0](https://img.shields.io/badge/License-PolyForm_Shield_1.0.0-blue.svg)](LICENSE)
-[![Latest version](https://img.shields.io/static/v1?label=version&message=v1.2.0-alpha.1&color=blue)](CHANGELOG.md)
+[![Latest version](https://img.shields.io/static/v1?label=version&message=v1.2.1-alpha.1&color=blue)](CHANGELOG.md)
 
 Scalengi Views lets you create configurable views to analyse, explain, and steer an information system. Each view combines a structure, data, and a representation suited to an enterprise-architecture question.
 
@@ -17,6 +17,8 @@ The source code is publicly auditable under the PolyForm Shield 1.0.0 licence. S
 [![Download for Linux](https://img.shields.io/badge/Download-Linux-f59e0b?logo=linux&logoColor=white)](https://github.com/CorentinPetitdemange/scalengi-views/releases)
 
 Installers are available from [GitHub Releases](https://github.com/CorentinPetitdemange/scalengi-views/releases): `.dmg` for macOS, `.exe` for Windows, and `.AppImage` or `.deb` for Linux.
+
+New installations use the `standard` profile and start with no views. Evaluation environments can explicitly select the `demo` profile to provision an operator-defined administrator and the bundled example catalogue once. No demonstration password is shipped with the product. See [Installation profiles](docs/INSTALLATION_PROFILES.md).
 
 ## Try it online
 
@@ -67,6 +69,7 @@ pnpm module:package
 - [Create a view type](docs/CREATE_A_VIEW.md)
 - [Desktop application](docs/DESKTOP.md)
 - [Authentication and account administration](docs/AUTHENTICATION.md)
+- [Standard and demo installation profiles](docs/INSTALLATION_PROFILES.md)
 - [Platform module integration](docs/MODULE_INTEGRATION.md)
 - [Versioning and releases](docs/VERSIONING.md)
 - [Repository maintenance](docs/MAINTENANCE.md)
