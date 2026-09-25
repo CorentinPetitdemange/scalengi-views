@@ -1037,6 +1037,8 @@ mod tests {
                 session_lifetime_seconds: 3600,
                 oidc: Some(oidc_config.clone()),
                 oidc_client_secret: Some(oidc_config.client_secret.clone()),
+                installation_profile: crate::config::InstallationProfile::Standard,
+                installation_profile_explicit: false,
             }),
             oidc: Arc::new(tokio::sync::RwLock::new(Some(Arc::new(
                 OidcService::for_test(oidc_config),
@@ -1114,6 +1116,8 @@ mod tests {
                 session_lifetime_seconds: 3600,
                 oidc: Some(oidc_config.clone()),
                 oidc_client_secret: Some(oidc_config.client_secret.clone()),
+                installation_profile: crate::config::InstallationProfile::Standard,
+                installation_profile_explicit: false,
             }),
             oidc: Arc::new(tokio::sync::RwLock::new(Some(Arc::new(
                 OidcService::for_test(oidc_config),

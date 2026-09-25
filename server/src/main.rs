@@ -4,6 +4,7 @@ mod backend;
 mod config;
 mod db;
 mod error;
+mod installation;
 mod models;
 mod oidc;
 mod security;
@@ -18,7 +19,7 @@ use axum::{
 };
 use axum_login::AuthManagerLayerBuilder;
 use backend::AuthBackend;
-use config::Config;
+use config::{Config, DemoAdminConfig};
 use state::AppState;
 use time::Duration;
 use tokio::sync::RwLock;
@@ -31,6 +32,7 @@ use tower_sessions::{
     cookie::SameSite, session_store::ExpiredDeletion, Expiry, SessionManagerLayer,
 };
 use tower_sessions_sqlx_store::SqliteStore;
+use zeroize::Zeroize;
 
 #[tokio::main]
 async fn main() {
@@ -40,10 +42,36 @@ async fn main() {
                 .unwrap_or_else(|_| "scalengi_views_auth=info,tower_http=info".into()),
         )
         .init();
-    let config = Config::from_env().unwrap_or_else(|error| panic!("configuration error: {error}"));
+    let mut config =
+        Config::from_env().unwrap_or_else(|error| panic!("configuration error: {error}"));
+    let demo_admin = DemoAdminConfig::from_env(config.installation_profile)
+        .unwrap_or_else(|error| panic!("configuration error: {error}"));
+    let mut demo_admin_password = config::demo_admin_password_from_env()
+        .unwrap_or_else(|error| panic!("configuration error: {error}"));
+    if demo_admin.is_some() != demo_admin_password.is_some() {
+        panic!("configuration error: SCALENGI_DEMO_ADMIN_EMAIL et un mot de passe de démonstration doivent être configurés ensemble");
+    }
+    if config.installation_profile != config::InstallationProfile::Demo
+        && demo_admin_password.is_some()
+    {
+        panic!("configuration error: les identifiants SCALENGI_DEMO_ADMIN_* sont réservés au profil demo");
+    }
     let pool = db::connect(&config.database_path)
         .await
         .unwrap_or_else(|error| panic!("database error: {error}"));
+    config.installation_profile = installation::initialize(
+        &pool,
+        &config,
+        demo_admin.as_ref(),
+        demo_admin_password.as_deref(),
+    )
+    .await
+    .unwrap_or_else(|error| panic!("installation configuration: {error}"));
+    drop(demo_admin);
+    if let Some(password) = demo_admin_password.as_mut() {
+        password.zeroize();
+    }
+    drop(demo_admin_password);
     let oidc = oidc::initialize_service(
         &pool,
         config.oidc.clone(),
@@ -161,6 +189,8 @@ mod tests {
             session_lifetime_seconds: 3600,
             oidc: None,
             oidc_client_secret: None,
+            installation_profile: config::InstallationProfile::Standard,
+            installation_profile_explicit: false,
         };
         let pool = db::connect(&database_path).await.expect("test database");
         app(AppState {
@@ -198,6 +228,8 @@ mod tests {
             session_lifetime_seconds: 3600,
             oidc: Some(oidc_config),
             oidc_client_secret: Some(security::random_token()),
+            installation_profile: config::InstallationProfile::Standard,
+            installation_profile_explicit: false,
         };
         let pool = db::connect(&database_path).await.expect("test database");
         app(AppState {

@@ -4,6 +4,24 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 ## [Unreleased]
 
+## [1.2.1-alpha.1] - 2026-09-25
+
+### Added
+
+- added immutable `standard` and `demo` installation profiles for standalone and hosted-module deployments;
+- added secure, operator-configured provisioning of a demonstration administrator through the existing Rust authentication and Argon2id pipeline;
+- added a durable, transactional IndexedDB marker so the bundled demonstration catalogue is seeded once and deleted examples never reappear.
+
+### Changed
+
+- made new standard installations start with an empty catalogue instead of creating example views automatically;
+- configured the Codespaces evaluation environment to generate its own restricted demonstration password rather than shipping shared credentials;
+- moved view export out of the tab strip and compacted renderer toolbar actions to accessible, tooltip-labelled icons.
+
+### Security
+
+- rejected demo activation on initialized installations, prevented profile switching, kept demo secrets out of API responses and logs, zeroized the provisioning secret after use, and supported owner-readable password files for secret injection.
+
 ## [1.2.0-alpha.1] - 2026-09-24
 
 ### Added

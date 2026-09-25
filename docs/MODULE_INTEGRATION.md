@@ -34,6 +34,7 @@ The module exports `ScalengiViewsApp`, `viewRegistry`, and `ViewRegistry`. The f
 <ScalengiViewsApp
   host={{
     session: { user: platformUser },
+    installationProfile: "standard", // or "demo" for an evaluation install
     openAccount: () => navigate("/account"),
     openAdministration: () => navigate("/administration"),
     signOut,
@@ -42,6 +43,8 @@ The module exports `ScalengiViewsApp`, `viewRegistry`, and `ViewRegistry`. The f
 ```
 
 In host mode, Views does not display or call its standalone login, account, administration, or logout flows. Identity remains owned by the platform. Views still namespaces local IndexedDB data by an opaque, stable authenticated user id limited to letters, digits, dots, underscores, colons, and hyphens.
+
+`installationProfile` defaults to `standard`, which starts with an empty catalogue. A platform installer may explicitly pass `demo` to create the bundled examples once for each new browser-local workspace. The module never receives or creates platform credentials; account provisioning remains a platform responsibility.
 
 React and React DOM are peer runtime dependencies of the ESM module. The standalone web and desktop distributions continue to bundle their own shell and Rust authentication service.
 

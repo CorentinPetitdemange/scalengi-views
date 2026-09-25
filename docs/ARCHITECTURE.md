@@ -42,6 +42,8 @@ The `module/` entry point packages that same application and registry as an ESM 
 
 Authentication is a separate Rust service under `server/`. It stores identities, password hashes, sessions, roles, and the registration setting, but never view configurations or datasets. The shell consumes its `/api` contract and partitions IndexedDB by authenticated user id. See `docs/AUTHENTICATION.md`.
 
+The installation profile is a one-time deployment decision. `standard` creates no catalogue content; `demo` provisions an explicitly configured local administrator in Rust and lets the shared shell atomically seed the existing bounded examples in IndexedDB. A durable marker lives beside the views so deleted examples do not return on restart. See `docs/INSTALLATION_PROFILES.md`.
+
 The product boundaries remain explicit: Views and the future Inventory product are independently releasable free modules; the future Scalengi platform owns module activation and paid cross-product capabilities such as process or enterprise-system management. No platform feature or Inventory dependency is implemented in this repository.
 
 The reverse dependency is forbidden: a view knows nothing about the shell, IndexedDB, or another view.
@@ -107,7 +109,7 @@ The XLSX template is generated in the browser from the active configuration. Imp
 
 ## Storage and security
 
-- IndexedDB stores instances in a database partitioned by authenticated user; localStorage stores only theme, colour, language, catalogue preferences, and the owner of the legacy local database.
+- IndexedDB stores instances and the one-shot catalogue marker in a database partitioned by authenticated user; localStorage stores only theme, colour, language, catalogue preferences, and the owner of the legacy local database.
 - No file or business content is sent to a server.
 - The enabled sample comes from the current configuration; when absent, the application offers the complete standard model.
 - YAML, Excel, and IndexedDB are untrusted boundaries.

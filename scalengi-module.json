@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "id": "com.scalengi.views",
   "name": "Scalengi Views",
-  "version": "1.2.0-alpha.1",
+  "version": "1.2.1-alpha.1",
   "kind": "feature",
   "description": "Créer des représentations spécialisées pour analyser, expliquer et piloter un système d’information.",
   "compatibility": {
@@ -26,6 +26,7 @@
   ],
   "capabilities": [
     "views.catalog",
+    "views.installation-profiles",
     "views.instances.local",
     "views.import.excel",
     "views.export.image"

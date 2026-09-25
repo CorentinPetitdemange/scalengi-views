@@ -2,15 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Braces, CheckCircle2, CircleHelp, Cloud, Database, Download, FileCode2, FileSpreadsheet, GalleryVerticalEnd, Grid2X2, Layers3, LayoutDashboard, List, MapPinned, Network, PanelLeftOpen, Pencil, Plus, Radar as RadarIcon, RotateCcw, Route, Save, SlidersHorizontal, Star, Trash2, Upload, Users, X } from "lucide-react";
-import { configurationFromYaml, configurationToYaml, createConfigurationItem, downloadWorkbookTemplate, I18nProvider, isDatasetEmpty, localizeConfiguration, MAX_YAML_BYTES, normalizeDataset, upgradeConfigurationSchema, useI18n, validateConfiguration, VIEW_CATALOG_GROUPS, viewRegistry, type ViewConfiguration, type ViewDefinition } from "../library/src";
+import { configurationFromYaml, configurationToYaml, createConfigurationItem, downloadWorkbookTemplate, I18nProvider, isDatasetEmpty, localizeConfiguration, MAX_YAML_BYTES, normalizeDataset, upgradeConfigurationSchema, useI18n, validateConfiguration, VIEW_CATALOG_GROUPS, ViewToolbarExtensionProvider, viewRegistry, type ViewConfiguration, type ViewDefinition } from "../library/src";
 import packageMetadata from "../package.json";
 import { ApplicationSidebar } from "./application-sidebar";
 import { AccountScreen } from "./account-screen";
 import { AdminScreen } from "./admin-screen";
-import { ApiClientError, authApi, type BootstrapState, type Session } from "./auth-client";
+import { ApiClientError, authApi, type BootstrapState, type InstallationProfile, type Session } from "./auth-client";
 import { AuthScreen } from "./auth-screen";
 import { InterconnectionsScreen } from "./interconnections-screen";
-import { configureViewStorage, deleteViewInstance, listViewInstances, saveViewInstance, type ViewInstance } from "./view-instance-store";
+import { configureViewStorage, deleteViewInstance, initializeViewCatalog, listViewInstances, saveViewInstance, type ViewInstance } from "./view-instance-store";
 import { ViewExportMenu } from "./view-export-menu";
 
 type Screen = "catalog" | "create" | "instance" | "interconnections" | "account" | "admin";
@@ -45,6 +45,7 @@ function demoInstances(definitions = viewRegistry.list()): ViewInstance[] {
 
 export type ScalengiViewsHost = {
   session: Pick<Session, "user">;
+  installationProfile?: InstallationProfile;
   openAccount?: () => void;
   openAdministration?: () => void;
   signOut?: () => void | Promise<void>;
@@ -52,7 +53,7 @@ export type ScalengiViewsHost = {
 
 export function ScalengiViewsApp({ host }: { host?: ScalengiViewsHost } = {}) {
   return <I18nProvider>{host
-    ? <ScalengiViewsShell session={host.session} onSessionChange={() => undefined} onSignedOut={() => undefined} host={host}/>
+    ? <ScalengiViewsShell session={host.session} installationProfile={host.installationProfile ?? "standard"} onSessionChange={() => undefined} onSignedOut={() => undefined} host={host}/>
     : <AuthenticatedApplication />}</I18nProvider>;
 }
 
@@ -92,12 +93,12 @@ function AuthenticatedApplication() {
   }, []);
   if (checking) return <div className="auth-loading"><span className="auth-brand-mark"/><strong>Scalengi Views</strong><small>Vérification de la session…</small></div>;
   if (serviceError) return <main className="auth-service-error"><span className="auth-brand-mark"/><h1>Connexion au service impossible</h1><p>{serviceError}</p><code>cargo run --manifest-path server/Cargo.toml</code><button type="button" onClick={() => void retrySession()}>Réessayer</button></main>;
-  if (!session) return <AuthScreen bootstrap={bootstrap ?? { hasAccounts: true, registrationEnabled: false, oidc: { enabled: false, providerName: null, localLoginEnabled: true, jitProvisioning: false, endSessionUrl: null } }} onAuthenticated={setSession}/>;
+  if (!session) return <AuthScreen bootstrap={bootstrap ?? { hasAccounts: true, registrationEnabled: false, installationProfile: "standard", oidc: { enabled: false, providerName: null, localLoginEnabled: true, jitProvisioning: false, endSessionUrl: null } }} onAuthenticated={setSession}/>;
   configureViewStorage(session.user.id);
-  return <ScalengiViewsShell session={session} onSessionChange={setSession} onSignedOut={() => { setSession(null); void authApi.bootstrap().then(setBootstrap); }}/>;
+  return <ScalengiViewsShell session={session} installationProfile={session.installationProfile} onSessionChange={setSession} onSignedOut={() => { setSession(null); void authApi.bootstrap().then(setBootstrap); }}/>;
 }
 
-function ScalengiViewsShell({ session, onSessionChange, onSignedOut, host }: { session: Pick<Session, "user">; onSessionChange: (session: Session) => void; onSignedOut: () => void; host?: ScalengiViewsHost }) {
+function ScalengiViewsShell({ session, installationProfile, onSessionChange, onSignedOut, host }: { session: Pick<Session, "user">; installationProfile: InstallationProfile; onSessionChange: (session: Session) => void; onSignedOut: () => void; host?: ScalengiViewsHost }) {
   const { locale, t } = useI18n();
   const [screen, setScreen] = useState<Screen>("catalog");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -133,6 +134,13 @@ function ScalengiViewsShell({ session, onSessionChange, onSignedOut, host }: { s
           }
         } catch { /* Les préférences sont facultatives. */ }
         let stored = await listViewInstances();
+        const legacyCatalogWasInitialized = localStorage.getItem(catalogInitializedKey) === "true";
+        const bootstrapAction = await initializeViewCatalog(
+          installationProfile,
+          installationProfile === "demo" ? demoInstances() : [],
+          legacyCatalogWasInitialized,
+        );
+        if (bootstrapAction === "seed-demo") stored = await listViewInstances();
         const demoKeys = new Set<string>();
         const duplicateDemoIds: string[] = [];
         stored = stored.filter((instance) => {
@@ -142,11 +150,7 @@ function ScalengiViewsShell({ session, onSessionChange, onSignedOut, host }: { s
           demoKeys.add(key); return true;
         });
         if (duplicateDemoIds.length) await Promise.all(duplicateDemoIds.map(deleteViewInstance));
-        const catalogWasInitialized = localStorage.getItem(catalogInitializedKey) === "true";
-        if (!stored.length && !catalogWasInitialized) {
-          stored = demoInstances();
-          await Promise.all(stored.map(saveViewInstance));
-        } else {
+        if (stored.length) {
           const renamedDemos = stored.map((instance) => {
             const definition = viewRegistry.get(instance.type);
             if (!definition) return instance;
@@ -175,7 +179,7 @@ function ScalengiViewsShell({ session, onSessionChange, onSignedOut, host }: { s
         setInstances(stored);
       } finally { setReady(true); }
     })();
-  }, [catalogInitializedKey, settingsKey]);
+  }, [catalogInitializedKey, installationProfile, settingsKey]);
 
   useEffect(() => {
     if (ready) localStorage.setItem(settingsKey, JSON.stringify({ theme, accent, catalogLayout, favoriteIds, sidebarCollapsed: collapsed }));
@@ -297,8 +301,8 @@ function InstanceWorkspace({ instance, definition, tab, onTab, onSave, onDelete,
   const ViewComponent = definition.component;
   const configuration = instance.configuration ?? definition.createDefaultConfiguration();
   return <div className="instance-workspace">
-    <div className="instance-tabs"><div className="instance-tab-title"><button className="icon-button mobile-menu-button" type="button" onClick={onOpenMenu} aria-label={t("Ouvrir le menu")}><PanelLeftOpen size={18}/></button><button className="icon-button" type="button" onClick={onBack} aria-label={t("Retour aux vues")}><ArrowLeft size={17}/></button><span className={`mini-view-icon view-${definition.accent}`}>{renderViewIcon(definition, 15)}</span><strong>{instance.name}</strong></div><div className="instance-tab-controls"><nav aria-label={t("Menu de la vue")}><button className={tab === "view" ? "active" : ""} onClick={() => onTab("view")}><LayoutDashboard size={15} /> {t("Vue")}</button><button className={tab === "structure" ? "active" : ""} onClick={() => onTab("structure")}><SlidersHorizontal size={15} /> {t("Structure")}</button><button className={tab === "data" ? "active" : ""} onClick={() => onTab("data")}><Database size={15} /> {t("Données")}</button><button className={tab === "guide" ? "active" : ""} onClick={() => onTab("guide")}><CircleHelp size={15} /> {t("Comment ça fonctionne")}</button></nav>{tab === "view" && <ViewExportMenu targetRef={exportTargetRef} filename={instance.name} onExported={onFlash} />}</div></div>
-    {tab === "view" && <div className="view-export-surface" ref={exportTargetRef}><ViewComponent data={instance.data} configuration={configuration} /></div>}
+    <div className="instance-tabs"><div className="instance-tab-title"><button className="icon-button mobile-menu-button" type="button" onClick={onOpenMenu} aria-label={t("Ouvrir le menu")}><PanelLeftOpen size={18}/></button><button className="icon-button" type="button" onClick={onBack} aria-label={t("Retour aux vues")}><ArrowLeft size={17}/></button><span className={`mini-view-icon view-${definition.accent}`}>{renderViewIcon(definition, 15)}</span><strong>{instance.name}</strong></div><div className="instance-tab-controls"><nav aria-label={t("Menu de la vue")}><button className={tab === "view" ? "active" : ""} onClick={() => onTab("view")}><LayoutDashboard size={15} /> {t("Vue")}</button><button className={tab === "structure" ? "active" : ""} onClick={() => onTab("structure")}><SlidersHorizontal size={15} /> {t("Structure")}</button><button className={tab === "data" ? "active" : ""} onClick={() => onTab("data")}><Database size={15} /> {t("Données")}</button><button className={tab === "guide" ? "active" : ""} onClick={() => onTab("guide")}><CircleHelp size={15} /> {t("Comment ça fonctionne")}</button></nav></div></div>
+    {tab === "view" && <div className="view-export-surface" ref={exportTargetRef}><ViewToolbarExtensionProvider action={<ViewExportMenu targetRef={exportTargetRef} filename={instance.name} onExported={onFlash} />}><ViewComponent data={instance.data} configuration={configuration} /></ViewToolbarExtensionProvider></div>}
     {tab === "structure" && <InstanceStructureScreen key={instance.id} instance={instance} definition={definition} onSave={onSave} onDelete={onDelete} onFlash={onFlash} />}
     {tab === "data" && <InstanceDataScreen instance={instance} definition={definition} onSave={onSave} onFlash={onFlash} />}
     {tab === "guide" && <ViewGuideScreen definition={definition} configuration={configuration} />}

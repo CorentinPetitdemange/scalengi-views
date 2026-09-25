@@ -7,6 +7,11 @@ services:
     init: true
     ports:
       - "${SCALENGI_VIEWS_PORT:-3000}:3000"
+    environment:
+      SCALENGI_INSTALLATION_PROFILE: "${SCALENGI_INSTALLATION_PROFILE:-standard}"
+      SCALENGI_DEMO_ADMIN_EMAIL: "${SCALENGI_DEMO_ADMIN_EMAIL:-}"
+      SCALENGI_DEMO_ADMIN_DISPLAY_NAME: "${SCALENGI_DEMO_ADMIN_DISPLAY_NAME:-Administrateur démo}"
+      SCALENGI_DEMO_ADMIN_PASSWORD: "${SCALENGI_DEMO_ADMIN_PASSWORD:-}"
     volumes:
       - scalengi-views-auth:/app/data
 

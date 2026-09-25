@@ -20,7 +20,7 @@ test("server-renders the protected Scalengi Views entry point", async () => {
 });
 
 test("keeps data, guides and Excel contracts scoped per view", async () => {
-  const [app, sidebar, i18n, exportMenu, exportView, registry, builtins, builtinConfigurations, configuration, dataset, storage, collaboratorView, partitionView, urbanisationView, metamodelView, togafView, verbatimView, excelImport, agents, architecture, createViewGuide, viewToolbar] = await Promise.all([
+  const [app, sidebar, i18n, exportMenu, exportView, registry, builtins, builtinConfigurations, configuration, dataset, storage, catalogBootstrap, collaboratorView, partitionView, urbanisationView, metamodelView, togafView, verbatimView, excelImport, agents, architecture, createViewGuide, viewToolbar] = await Promise.all([
     readFile(new URL("../app/scalengi-views-app.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/application-sidebar.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/i18n.tsx", import.meta.url), "utf8"),
@@ -32,6 +32,7 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
     readFile(new URL("../library/src/configuration.ts", import.meta.url), "utf8"),
     readFile(new URL("../library/src/dataset.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/view-instance-store.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/catalog-bootstrap.ts", import.meta.url), "utf8"),
     readFile(new URL("../library/src/CollaboratorJourneyView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/PartitionView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../library/src/UrbanisationRadarView.tsx", import.meta.url), "utf8"),
@@ -51,6 +52,8 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(sidebar, /sidebar-hover-highlight/);
   assert.match(sidebar, /event\.key\.toLowerCase\(\) === "b"/);
   assert.match(viewToolbar, /common-view-toolbar/);
+  assert.match(viewToolbar, /ViewToolbarExtensionProvider/);
+  assert.match(viewToolbar, /common-view-toolbar-extension/);
   for (const renderer of [collaboratorView, partitionView, urbanisationView, metamodelView, togafView, verbatimView]) assert.match(renderer, /ViewToolbar/);
   assert.doesNotMatch(app, /type Screen = .*settings/);
   assert.doesNotMatch(app, /language-quick-switch/);
@@ -92,6 +95,12 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.doesNotMatch(app, /aria-label="Changer de thème"/);
   assert.match(exportMenu, /Image \(PNG\)/);
   assert.match(exportMenu, /Vecteur \(SVG\)/);
+  assert.match(exportMenu, /aria-label=\{t\("Exporter"\)\}/);
+  assert.match(exportMenu, /title=\{t\("Exporter"\)\}/);
+  assert.match(app, /ViewToolbarExtensionProvider action=\{<ViewExportMenu/);
+  assert.doesNotMatch(app, /<\/nav>\}\{tab === "view" && <ViewExportMenu/);
+  for (const renderer of [collaboratorView, partitionView, urbanisationView, metamodelView, togafView, verbatimView]) assert.match(renderer, /title=\{t\(/);
+  for (const renderer of [collaboratorView, partitionView, urbanisationView, metamodelView, togafView]) assert.doesNotMatch(renderer, /rf-fullscreen-button[^>]*>[^<]*\{fullscreen \?[^<]*<Minimize2[^>]*\/> : <Maximize2[^>]*\/>\}<span>/);
   assert.match(exportView, /toBlob/);
   assert.match(exportView, /toSvg/);
   assert.match(exportView, /createReactFlowExportSurface/);
@@ -116,6 +125,11 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.match(builtins, /title: "Vue en découpage"/);
   assert.match(builtins, /title: "POS urbain"/);
   assert.match(storage, /indexedDB\.open/);
+  assert.match(storage, /catalog-initialized-v2/);
+  assert.match(storage, /database\.transaction\(\[STORE, METADATA_STORE\], "readwrite"\)/);
+  assert.match(catalogBootstrap, /profile === "standard"/);
+  assert.match(catalogBootstrap, /return "seed-demo"/);
+  assert.match(app, /installationProfile === "demo" \? demoInstances\(\) : \[\]/);
   assert.match(storage, /normalizeDataset/);
   assert.match(storage, /ViewSource/);
   assert.match(storage, /value\.source\.kind === "demo"/);
@@ -147,8 +161,8 @@ test("keeps data, guides and Excel contracts scoped per view", async () => {
   assert.doesNotMatch(metamodelView, /showCardinalities/);
   assert.match(metamodelView, /label: relation\.label/);
   assert.match(metamodelView, /ReactFlow/);
-  assert.match(metamodelView, /Au focus/);
-  assert.match(metamodelView, /Masquées/);
+  assert.match(metamodelView, /Afficher uniquement les relations du type sélectionné/);
+  assert.match(metamodelView, /Masquer les relations/);
   assert.match(metamodelView, /hiddenLayerIds/);
   assert.match(metamodelView, /metamodel-density/);
   assert.match(metamodelView, /min="1" max="10"/);

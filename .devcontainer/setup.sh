@@ -17,7 +17,16 @@ cargo build --locked --manifest-path server/Cargo.toml
 echo "Vérification de la configuration desktop..."
 pnpm version:check
 
+mkdir -p data
+if [[ ! -s data/demo-admin-password ]]; then
+  umask 077
+  openssl rand -base64 32 > data/demo-admin-password
+fi
+chmod 600 data/demo-admin-password
+
 echo ""
 echo "======================================"
 echo "  Environnement prêt"
 echo "======================================"
+echo "Compte démo : admin@scalengi.demo"
+echo "Mot de passe : cat data/demo-admin-password"

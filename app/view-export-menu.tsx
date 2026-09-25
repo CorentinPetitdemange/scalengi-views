@@ -55,8 +55,8 @@ export function ViewExportMenu({ targetRef, filename, onExported }: ViewExportMe
   };
 
   return <div className="view-export-menu" ref={rootRef}>
-    <button className="view-export-trigger" type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => { setOpen((value) => !value); setError(null); }}>
-      <Download size={15} /> {t("Exporter")}
+    <button className="view-export-trigger toolbar-icon-button" type="button" aria-label={t("Exporter")} title={t("Exporter")} aria-haspopup="menu" aria-expanded={open} onClick={() => { setOpen((value) => !value); setError(null); }}>
+      <Download size={16} />
     </button>
     {open && <div className="view-export-popover" role="menu" aria-label={t("Formats d’export")}>
       <div className="view-export-popover-title"><Download size={14} /><strong>{t("Exporter la vue")}</strong></div>
