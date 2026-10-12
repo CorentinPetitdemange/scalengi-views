@@ -27,6 +27,10 @@ jobs:
         shell: bash
         run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
 
+      - name: Require the tag to match the package version
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const version=JSON.parse(fs.readFileSync("package.json")).version; if(process.env.GITHUB_REF_NAME !== "v"+version) process.exit(1);'
+
   build:
     name: ${{ matrix.label }}
     needs: validate-release
