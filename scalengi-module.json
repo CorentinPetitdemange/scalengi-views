@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "id": "com.scalengi.views",
   "name": "Scalengi Views",
-  "version": "1.2.1-alpha.1",
+  "version": "1.2.1-alpha.2",
   "kind": "feature",
   "description": "Créer des représentations spécialisées pour analyser, expliquer et piloter un système d’information.",
   "compatibility": {
@@ -17,19 +17,24 @@
   },
   "entrypoints": {
     "module": "scalengi-views.mjs",
-    "stylesheet": "scalengi-views.css"
+    "stylesheet": "scalengi-views.css",
+    "renderer": "scalengi-views-renderer.mjs",
+    "rendererStylesheet": "scalengi-views-renderer.css"
   },
   "exports": [
     "ScalengiViewsApp",
     "viewRegistry",
-    "ViewRegistry"
+    "ViewRegistry",
+    "ViewReport",
+    "prepareViewReport"
   ],
   "capabilities": [
     "views.catalog",
     "views.installation-profiles",
     "views.instances.local",
     "views.import.excel",
-    "views.export.image"
+    "views.export.image",
+    "views.reports.controlled"
   ],
   "permissions": {
     "businessDataNetworkAccess": false,

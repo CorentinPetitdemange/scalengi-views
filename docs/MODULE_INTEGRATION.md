@@ -53,3 +53,17 @@ React and React DOM are peer runtime dependencies of the ESM module. The standal
 Business datasets remain browser-local unless a future connector is explicitly installed. The module manifest declares that it requires no business-data network access. A platform must not grant broader permissions implicitly.
 
 The module archive is a transport format, not a trust decision. A production platform should accept only allowlisted module ids, compatible manifest versions, HTTPS release sources, and artifacts verified against release provenance or a signature policy.
+
+## Renderer-only platform reports — 12 October 2026
+
+For shared Scalengi data, use `entrypoints.renderer` (`scalengi-views-renderer.mjs`) and `entrypoints.rendererStylesheet`. The existing `module` entry remains compatible with the local standalone feature, but is not the entry selected by Scalengi. The new entry contains no login, identity client, IndexedDB, preferences, Structure/Data screens or dataset loading. It exports `ViewReport`, `prepareViewReport`, `viewRegistry` and `ViewRegistry`. It is currently a local candidate; release and platform consumption remain pending.
+
+The host selects a definition and supplies authorized, validated `ViewDataset`, a controlled locale, optional toolbar actions, and a configuration derived from its repository when needed. `onOpenItem` optionally navigates from a partition detail to an authorized host object screen. The renderer never determines access rights or fetches data. On an organisation/permission change, the host must discard the old projection and remount by organisation/report identity. An empty result stays empty; configuration examples are never activated.
+
+`ViewDefinition.report` declares whether configuration is automatic or must be provided. Collaborator, verbatim and TOGAF defaults describe display grammar, without loading sample data. Partition views, SI metamodel and radar require host-provided repository structure or explicit analysis choices. The host first tries to derive them from typed metadata. Guided advanced controls appear only for choices that cannot be inferred; a missing mapping must not silently fall back to a demonstration structure. Definitions without report metadata require explicit configuration.
+
+Scalengi owns filters, element selection and saved recipes. A saved recipe stores intent and stable references, not copied rows or extra credentials; each reopen reprojects under current rights. Renderer exploration (camera, temporary selection, legend) does not change business data.
+
+Renderer styles are shared with standalone, scoped to `.scalengi-views-surface` / `.app-shell`. Public embedding tokens accept resolved CSS colours: `--scalengi-views-background`, `--scalengi-views-surface`, `--scalengi-views-secondary`, `--scalengi-views-foreground`, `--scalengi-views-muted`, `--scalengi-views-border`, `--scalengi-views-primary`. Host logo, sidebar, account and organisation controls are never recreated in the report. React remains external to avoid a second runtime.
+
+Validation: `pnpm test` builds both entries and checks renderer behavior and the final bundle for standalone identity/storage. Platform CRUD, saved recipe persistence, authorised projections and browser parity are separate completion criteria, not implied by a successful package build.

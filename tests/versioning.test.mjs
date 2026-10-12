@@ -50,7 +50,7 @@ test("publishes tagged prereleases through the desktop workflow", async () => {
   assert.match(workflow, /--target aarch64-apple-darwin --bundles dmg/);
   assert.match(workflow, /--target x86_64-apple-darwin --bundles dmg/);
   assert.match(workflow, /pnpm module:package/);
-  assert.match(workflow, /gh release upload "\$GITHUB_REF_NAME" dist-module\/\*\.zip --clobber/);
+  assert.match(workflow, /gh release upload "\$GITHUB_REF_NAME" dist-module\/\*\.zip dist-module\/\*\.tgz/);
   assert.doesNotMatch(workflow, /version prioritaire|à valider/);
 });
 

@@ -1,0 +1,11 @@
+import "../library/src/views.css";
+export { ViewReport } from "../library/src/ViewReport";
+export type { ViewReportProps } from "../library/src/ViewReport";
+export { prepareViewReport } from "../library/src/report";
+export { viewRegistry } from "../library/src/builtin-views";
+export { ViewRegistry } from "../library/src/view-registry";
+export type { ViewDefinition, ViewRendererProps } from "../library/src/view-registry";
+export type { ViewConfiguration } from "../library/src/configuration";
+export type { ViewDataset } from "../library/src/types";
+export type { AppLocale } from "../library/src/i18n";
+export { createEmptyDataset } from "../library/src/dataset";

@@ -1,10 +1,11 @@
+import { scopedFlowStyles } from "../build/scoped-flow-css.ts";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig({
   root: "desktop",
   base: "./",
-  plugins: [react()],
+  plugins: [scopedFlowStyles(), react()],
   build: {
     outDir: "../dist-desktop",
     emptyOutDir: true,
