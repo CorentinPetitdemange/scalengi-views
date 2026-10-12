@@ -33,6 +33,8 @@ export interface ViewImportResult {
 export interface ViewRendererProps {
   data: ViewDataset;
   configuration?: ViewConfiguration;
+  /** Optional navigation to the host's authorized object detail. */
+  onOpenItem?: ((id: string) => void) | undefined;
 }
 
 export interface ViewPreset {
@@ -56,6 +58,8 @@ export interface ViewDefinition<TType extends string = string> {
   presets?: ViewPreset[];
   guide: ViewGuide;
   component: ComponentType<ViewRendererProps>;
+  /** Platform reports use repository data, never the standalone instance lifecycle. */
+  report?: { configuration: "automatic" | "provided"; reason?: string };
   createEmptyData: () => ViewDataset;
   createDemoData: () => ViewDataset;
   createDefaultConfiguration: () => ViewConfiguration;

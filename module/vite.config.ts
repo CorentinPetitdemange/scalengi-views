@@ -1,10 +1,12 @@
+import { scopedFlowStyles } from "../build/scoped-flow-css.ts";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, esmExternalRequirePlugin } from "vite";
 
 export default defineConfig({
   root: ".",
   publicDir: false,
-  plugins: [react()],
+  plugins: [scopedFlowStyles(), react(), esmExternalRequirePlugin({ external: ["react", "react-dom", "react/jsx-runtime"] })],
+  define: { "process.env.NODE_ENV": JSON.stringify("production") },
   build: {
     outDir: "dist-module/package",
     emptyOutDir: true,
@@ -16,7 +18,6 @@ export default defineConfig({
       fileName: () => "scalengi-views.mjs",
     },
     rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime"],
       output: {
         assetFileNames: (asset) => asset.name?.endsWith(".css") ? "scalengi-views.css" : "assets/[name]-[hash][extname]",
       },

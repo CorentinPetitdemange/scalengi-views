@@ -74,6 +74,7 @@ const english = {
   "Configuration YAML": "YAML configuration",
   "YAML valide": "Valid YAML",
   "Oui": "Yes",
+  "Ouvrir l’objet": "Open object",
   "Non": "No",
   "Paramètres généraux": "General settings",
   "Valeurs qui modifient le comportement de la vue sans ajouter de données.": "Values that change view behavior without adding data.",
@@ -575,4 +576,11 @@ export function useI18n() {
   const value = useContext(I18nContext);
   if (!value) throw new Error("useI18n must be used inside I18nProvider.");
   return value;
+}
+
+/** Host-owned locale, with no preference storage or document mutation. */
+export function ControlledI18nProvider({ children, locale }: { children: ReactNode; locale: AppLocale }) {
+  const t = useCallback((text: string) => translate(locale, text), [locale]);
+  const value = useMemo(() => ({ locale, setLocale: () => {}, t }), [locale, t]);
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

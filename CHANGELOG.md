@@ -4,6 +4,20 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 ## [Unreleased]
 
+## [1.2.1-alpha.2] - 2026-10-12
+
+### Added
+
+- controlled renderer entry and typed installable package, without identity, browser persistence or the standalone shell;
+- report metadata distinguishing automatic display grammar from repository-dependent structure;
+- controlled locale and public theme tokens shared with standalone renderers.
+
+### Fixed
+
+- prevented empty report projections from activating demonstration content;
+- kept React external in ESM artifacts;
+- adapted partition columns and card readability to the actual canvas width, including hosted and mobile panels.
+
 ## [1.2.1-alpha.1] - 2026-09-25
 
 ### Added

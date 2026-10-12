@@ -136,7 +136,7 @@ jobs:
 
   module:
     name: Platform module
-    needs: build
+    needs: validate-release
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -155,10 +155,20 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build the versioned platform module
-        run: pnpm module:package
+      - name: Validate and build the versioned platform module
+        run: pnpm exec tsc --noEmit && pnpm test && pnpm module:package
 
+      - name: Ensure the versioned release exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            args=()
+            if [[ "$GITHUB_REF_NAME" == *-* ]]; then args+=(--prerelease); fi
+            gh release create "$GITHUB_REF_NAME" --verify-tag --title "Scalengi module $GITHUB_REF_NAME" --generate-notes "${args[@]}"
+          fi
       - name: Attach the module to the GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "$GITHUB_REF_NAME" dist-module/*.zip --clobber
+        run: gh release upload "$GITHUB_REF_NAME" dist-module/*.zip dist-module/*.tgz
