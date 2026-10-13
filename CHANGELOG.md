@@ -4,6 +4,18 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 ## [Unreleased]
 
+## [1.2.1-alpha.4] - 2026-10-13
+
+### Added
+
+- public floating toolbar mode for integrated reports, shared by all six native renderers;
+- standalone toolbar behavior remains the default.
+
+### Fixed
+
+- embedded collaborator, metamodel and TOGAF canvases fill their content-sized container;
+- shared search and select controls carry their renderer styles in the controlled entry.
+
 ## [1.2.1-alpha.3] - 2026-10-13
 
 ### Fixed

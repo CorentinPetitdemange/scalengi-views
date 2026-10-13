@@ -15,16 +15,18 @@ export interface ViewReportProps {
   locale: AppLocale;
   /** Host supplies its own export/actions UI. */
   actions?: ReactNode;
+  /** Floating tools keep the report canvas free of horizontal page bars. */
+  toolbarMode?: "bar" | "floating";
   onOpenItem?: ((id: string) => void) | undefined;
 }
 
 /** Renderer only: no login, sidebar, Structure/Data screens, storage or data fetching. */
-export function ViewReport({ definition, data, configuration, locale, actions, onOpenItem }: ViewReportProps) {
+export function ViewReport({ definition, data, configuration, locale, actions, toolbarMode = "bar", onOpenItem }: ViewReportProps) {
   const report = useMemo(() => prepareViewReport(definition, data, configuration), [definition, data, configuration]);
   const Renderer = definition.component;
   return <section className="scalengi-views-surface" aria-label={configuration?.label ?? definition.title}>
     <ControlledI18nProvider locale={locale}>
-      <ViewToolbarExtensionProvider action={actions}>
+      <ViewToolbarExtensionProvider action={actions} mode={toolbarMode}>
         <Renderer key={definition.id} data={report.data} configuration={report.configuration} onOpenItem={onOpenItem} />
       </ViewToolbarExtensionProvider>
     </ControlledI18nProvider>
