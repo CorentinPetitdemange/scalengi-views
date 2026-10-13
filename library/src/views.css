@@ -407,16 +407,19 @@
   .view-workspace { position: relative; height: 100%; min-height: 0; }
   .common-view-toolbar.is-floating { position: absolute; inset: 12px 12px auto; z-index: 20; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; min-height: 0; height: auto; flex-basis: auto; padding: 0; border: 0; background: transparent; overflow: visible; pointer-events: none; }
   .is-floating .common-view-toolbar-title, .is-floating .common-view-toolbar-content, .is-floating .common-view-toolbar-extension { pointer-events: auto; padding: 6px 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); }
-  .is-floating .common-view-toolbar-title { max-width: 240px; }
-  .is-floating .common-view-toolbar-content { width: auto; flex: 1; min-width: 0; }
+  .is-floating .common-view-toolbar-title { max-width: 240px; min-width: 0; flex: 0 1 auto; }
+  .is-floating .common-view-toolbar-content { width: auto; flex: 0 1 auto; min-width: 0; margin-left: auto; }
   .is-floating .common-view-toolbar-extension { position: static; flex-shrink: 0; }
   .search-control { height: 32px; display: flex; align-items: center; gap: 6px; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--surface); }
   .search-control input { min-width: 0; width: 100%; border: 0; color: var(--foreground); background: transparent; font: inherit; outline-offset: 2px; }
+  .select-control { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .select-control > div { display: flex; align-items: center; gap: 4px; }
+  .select-control select { padding: 5px; border: 1px solid var(--border); border-radius: 6px; color: var(--foreground); background: var(--surface); }
   .filter-control select { max-width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; color: var(--foreground); background: var(--surface); font: inherit; }
   @media (max-width: 760px) {
     .common-view-toolbar.is-floating { gap: 6px; }
     .is-floating .common-view-toolbar-title { max-width: calc(100% - 80px); }
-    .is-floating .common-view-toolbar-content { order: 3; flex-basis: 100%; overflow-x: auto; }
+    .is-floating .common-view-toolbar-content { order: 3; flex-basis: auto; max-width: 100%; overflow-x: auto; margin-left: 0; }
     .is-floating .common-view-toolbar-extension { margin-left: auto; }
   }
 }
