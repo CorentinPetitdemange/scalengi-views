@@ -433,6 +433,6 @@
 
 /* Dependency controls share the embedded renderer's public theme tokens. */
 @scope (.scalengi-views-surface) {
-  .react-flow__controls-button { background: var(--surface); color: var(--foreground); fill: var(--foreground); border-color: var(--border); }
-  .react-flow__controls-button:hover { background: var(--surface-soft); }
+  :scope .react-flow__controls-button { background: var(--surface); color: var(--foreground); fill: var(--foreground); border-color: var(--border); }
+  :scope .react-flow__controls-button:hover { background: var(--surface-soft); }
 }
