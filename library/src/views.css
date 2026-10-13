@@ -405,11 +405,18 @@
 
 @scope (.scalengi-views-surface) {
   .view-workspace { position: relative; height: 100%; min-height: 0; }
-  .common-view-toolbar.is-floating { position: absolute; inset: 12px 12px auto; z-index: 20; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; min-height: 0; height: auto; flex-basis: auto; padding: 0; border: 0; background: transparent; overflow: visible; pointer-events: none; }
+  .common-view-toolbar.is-floating { position: absolute; inset: 12px 12px auto; z-index: 20; display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 8px; min-height: 0; height: auto; flex-basis: auto; padding: 0; border: 0; background: transparent; overflow: visible; pointer-events: none; }
   .is-floating .common-view-toolbar-title, .is-floating .common-view-toolbar-content, .is-floating .common-view-toolbar-extension { pointer-events: auto; padding: 6px 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); }
-  .is-floating .common-view-toolbar-title { max-width: 240px; min-width: 0; flex: 0 1 auto; }
-  .is-floating .common-view-toolbar-content { width: auto; flex: 0 1 auto; min-width: 0; margin-left: auto; }
+  .is-floating .common-view-toolbar-title { max-width: 240px; min-width: 0; flex: 0 1 auto; margin-right: auto; }
+  .is-floating .common-view-toolbar-content { position: absolute; top: 48px; right: 0; width: auto; max-width: 100%; flex: 0 1 auto; min-width: 0; margin: 0; overflow-x: auto; }
   .is-floating .common-view-toolbar-extension { position: static; flex-shrink: 0; }
+  .view-workspace:has(> .common-view-toolbar.is-floating) .view-flow-frame,
+  .view-workspace:has(> .common-view-toolbar.is-floating) .partition-flow-frame { top: 102px; }
+  .common-view-toolbar.is-floating + .verbatim-layout,
+  .common-view-toolbar.is-floating + .urbanisation-body { margin-top: 112px; }
+  .verbatim-filters select, .verbatim-search, .verbatim-search input { font-size: 12px; }
+  .verbatim-quote-list blockquote { font-size: 13px; }
+  .verbatim-quote-list span, .verbatim-quote-list em, .verbatim-quote-list small { font-size: 11px; }
   .search-control { height: 32px; display: flex; align-items: center; gap: 6px; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--surface); }
   .search-control input { min-width: 0; width: 100%; border: 0; color: var(--foreground); background: transparent; font: inherit; outline-offset: 2px; }
   .select-control { display: flex; align-items: center; gap: 8px; font-size: 12px; }
@@ -418,8 +425,8 @@
   .filter-control select { max-width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; color: var(--foreground); background: var(--surface); font: inherit; }
   @media (max-width: 760px) {
     .common-view-toolbar.is-floating { gap: 6px; }
-    .is-floating .common-view-toolbar-title { max-width: calc(100% - 80px); }
-    .is-floating .common-view-toolbar-content { order: 3; flex-basis: auto; max-width: 100%; overflow-x: auto; margin-left: 0; }
+    .is-floating .common-view-toolbar-title { max-width: calc(100% - 195px); }
+    .is-floating .common-view-toolbar-content { max-width: 100%; }
     .is-floating .common-view-toolbar-extension { margin-left: auto; }
   }
 }
