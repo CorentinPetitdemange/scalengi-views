@@ -1,6 +1,6 @@
 [package]
 name = "scalengi-views"
-version = "1.2.1-alpha.4"
+version = "1.2.1-alpha.5"
 description = "Vues spécialisées pour l'architecture d'entreprise"
 authors = ["Corentin Petitdemange <corentin@scalengi.com>"]
 license-file = "../LICENSE"

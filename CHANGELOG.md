@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1-alpha.5
+
+- Keep embedded native canvas controls readable in light and dark host themes using the renderer public tokens.
+
+
 All notable changes to Scalengi Views are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
