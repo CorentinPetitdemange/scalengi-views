@@ -67,3 +67,7 @@ Scalengi owns filters, element selection and saved recipes. A saved recipe store
 Renderer styles are shared with standalone, scoped to `.scalengi-views-surface` / `.app-shell`. Public embedding tokens accept resolved CSS colours: `--scalengi-views-background`, `--scalengi-views-surface`, `--scalengi-views-secondary`, `--scalengi-views-foreground`, `--scalengi-views-muted`, `--scalengi-views-border`, `--scalengi-views-primary`. Host logo, sidebar, account and organisation controls are never recreated in the report. React remains external to avoid a second runtime.
 
 Validation: `pnpm test` builds both entries and checks renderer behavior and the final bundle for standalone identity/storage. Platform CRUD, saved recipe persistence, authorised projections and browser parity are separate completion criteria, not implied by a successful package build.
+
+## Floating report tools — 13 October 2026
+
+`ViewReport` accepts `toolbarMode="floating"` to show the existing native toolbar as compact floating controls over the report. Host `actions` use the same toolbar extension and remain part of the renderer surface. The default `toolbarMode="bar"` preserves the standalone layout. The renderer owns toolbar and canvas styling; hosts do not override internal classes. Flow-based reports fill the available host surface even when the parent height is resolved by flex layout.

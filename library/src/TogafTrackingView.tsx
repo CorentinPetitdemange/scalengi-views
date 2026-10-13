@@ -111,11 +111,11 @@ function AdmCanvas({ phases, items, typeLabel, selectedId, onSelect, fullscreen,
     return { nodes: nextNodes, edges: nextEdges };
   }, [items, phases, progress, selectedId, typeLabel]);
 
-  return <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} onNodeClick={(_, node) => { if (node.id !== "__adm-ring") onSelect(node.id); }} nodesDraggable={false} nodesConnectable={false} elementsSelectable fitView fitViewOptions={{ padding: .12, maxZoom: 1 }} minZoom={.32} maxZoom={1.35} proOptions={{ hideAttribution: true }}>
+  return <div className="view-flow-frame"><ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} onNodeClick={(_, node) => { if (node.id !== "__adm-ring") onSelect(node.id); }} nodesDraggable={false} nodesConnectable={false} elementsSelectable fitView fitViewOptions={{ padding: .12, maxZoom: 1 }} minZoom={.32} maxZoom={1.35} proOptions={{ hideAttribution: true }}>
     <Background gap={32} size={1} color="var(--rf-grid)" />
     <Controls position="bottom-left" showInteractive={false} />
     <AdmFitController signature={`${nodes.map((node) => node.id).join("|")}-${items.length}`} fullscreen={fullscreen} />
-  </ReactFlow>;
+  </ReactFlow></div>;
 }
 
 export function TogafTrackingView({ data, configuration }: { data: ViewDataset; configuration?: ViewConfiguration }) {

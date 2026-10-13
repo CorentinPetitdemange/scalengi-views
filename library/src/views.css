@@ -25,7 +25,7 @@
 .rf-canvas-area { position: relative; flex: 1 1 auto; width: 100%; height: calc(100vh - 144px); min-height: 0; background: var(--background); }
 .rf-view-workspace:fullscreen .rf-canvas-area { height: calc(100vh - 86px); }
 .rf-canvas-area .react-flow { width: 100%; height: 100%; background: var(--background); }
-.partition-flow-frame { position: absolute; inset: 0; }
+.partition-flow-frame, .view-flow-frame { position: absolute; inset: 0; }
 .rf-canvas-area .react-flow__node { cursor: default; }
 .rf-canvas-area .react-flow__node.selected { box-shadow: none; }
 .rf-canvas-area .react-flow__controls { overflow: hidden; border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow); }
@@ -401,4 +401,32 @@
   .partition-attribute strong { font-size: 13px; }
   .partition-detail-description, .partition-breadcrumb span, .partition-related-row { font-size: 13px; }
   .partition-related-row small { font-size: 12px; }
+}
+
+@scope (.scalengi-views-surface) {
+  .view-workspace { position: relative; height: 100%; min-height: 0; }
+  .common-view-toolbar.is-floating { position: absolute; inset: 12px 12px auto; z-index: 20; display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 8px; min-height: 0; height: auto; flex-basis: auto; padding: 0; border: 0; background: transparent; overflow: visible; pointer-events: none; }
+  .is-floating .common-view-toolbar-title, .is-floating .common-view-toolbar-content, .is-floating .common-view-toolbar-extension { pointer-events: auto; padding: 6px 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); }
+  .is-floating .common-view-toolbar-title { max-width: 240px; min-width: 0; flex: 0 1 auto; margin-right: auto; }
+  .is-floating .common-view-toolbar-content { position: absolute; top: 48px; right: 0; width: auto; max-width: 100%; flex: 0 1 auto; min-width: 0; margin: 0; overflow-x: auto; }
+  .is-floating .common-view-toolbar-extension { position: static; flex-shrink: 0; }
+  .view-workspace:has(> .common-view-toolbar.is-floating) .view-flow-frame,
+  .view-workspace:has(> .common-view-toolbar.is-floating) .partition-flow-frame { top: 102px; }
+  .common-view-toolbar.is-floating + .verbatim-layout,
+  .common-view-toolbar.is-floating + .urbanisation-body { margin-top: 112px; }
+  .verbatim-filters select, .verbatim-search, .verbatim-search input { font-size: 12px; }
+  .verbatim-quote-list blockquote { font-size: 13px; }
+  .verbatim-quote-list span, .verbatim-quote-list em, .verbatim-quote-list small { font-size: 11px; }
+  .search-control { height: 32px; display: flex; align-items: center; gap: 6px; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--surface); }
+  .search-control input { min-width: 0; width: 100%; border: 0; color: var(--foreground); background: transparent; font: inherit; outline-offset: 2px; }
+  .select-control { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .select-control > div { display: flex; align-items: center; gap: 4px; }
+  .select-control select { padding: 5px; border: 1px solid var(--border); border-radius: 6px; color: var(--foreground); background: var(--surface); }
+  .filter-control select { max-width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; color: var(--foreground); background: var(--surface); font: inherit; }
+  @media (max-width: 760px) {
+    .common-view-toolbar.is-floating { gap: 6px; }
+    .is-floating .common-view-toolbar-title { max-width: none; flex: 1 1 0; }
+    .is-floating .common-view-toolbar-content { max-width: 100%; }
+    .is-floating .common-view-toolbar-extension { margin-left: auto; }
+  }
 }
