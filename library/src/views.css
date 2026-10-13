@@ -425,7 +425,7 @@
   .filter-control select { max-width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; color: var(--foreground); background: var(--surface); font: inherit; }
   @media (max-width: 760px) {
     .common-view-toolbar.is-floating { gap: 6px; }
-    .is-floating .common-view-toolbar-title { max-width: calc(100% - 195px); }
+    .is-floating .common-view-toolbar-title { max-width: none; flex: 1 1 0; }
     .is-floating .common-view-toolbar-content { max-width: 100%; }
     .is-floating .common-view-toolbar-extension { margin-left: auto; }
   }
