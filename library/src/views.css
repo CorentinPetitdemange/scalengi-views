@@ -391,3 +391,13 @@
   .rf-view-workspace, .metamodel-workspace, .togaf-adm-workspace, .verbatim-cloud-workspace { height: 100%; min-height: 0; }
   .rf-canvas-area, .metamodel-canvas { height: auto; flex: 1; min-height: 280px; }
 }
+
+/* Embedded reports use normal reading sizes; dense standalone canvases retain their existing scale. */
+@scope (.scalengi-views-surface) {
+  .partition-element-heading > strong { font-size: 14px; }
+  .partition-element-heading > span { font-size: 11px; }
+  .partition-element-heading > small, .partition-attribute small { font-size: 12px; }
+  .partition-attribute strong { font-size: 13px; }
+  .partition-detail-description, .partition-breadcrumb span, .partition-related-row { font-size: 13px; }
+  .partition-related-row small { font-size: 12px; }
+}

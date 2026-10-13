@@ -4,6 +4,13 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 
 ## [Unreleased]
 
+## [1.2.1-alpha.3] - 2026-10-13
+
+### Fixed
+
+- restored pointer and keyboard interactions on partition cards when native node selection is disabled; nested item controls select once;
+- used readable typography in embedded reports while preserving dense standalone canvas styling.
+
 ## [1.2.1-alpha.2] - 2026-10-12
 
 ### Added
