@@ -9,7 +9,8 @@ All notable changes to Scalengi Views are documented here. The format follows [K
 ### Fixed
 
 - restored pointer and keyboard interactions on partition cards when native node selection is disabled; nested item controls select once;
-- used readable typography in embedded reports while preserving dense standalone canvas styling.
+- used readable typography in embedded reports while preserving dense standalone canvas styling;
+- kept the flow canvas stretched inside mobile report panels even when their height is inferred from content.
 
 ## [1.2.1-alpha.2] - 2026-10-12
 
