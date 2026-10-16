@@ -224,7 +224,7 @@ export function buildVerbatimTemplate(configuration: ViewConfiguration): Workboo
       { key: "verbatim", label: "verbatim", width: 72 },
       { key: "categorie", label: "categorie", width: 24, values: categoryLabels },
       { key: "equipe", label: "equipe", width: 28 },
-      { key: "sentiment", label: "sentiment", width: 16, values: ["Positif", "Neutre", "Négatif"] },
+      { key: "sentiment", label: "sentiment", width: 16, values: ["Positif", "Neutre", "Négatif", "Non renseigné"] },
       { key: "poids", label: "poids", width: 12, type: "number" },
     ] },
     { ...guide("Les catégories viennent de la structure YAML. Le poids permet de renforcer un verbatim particulièrement représentatif."), rows: [

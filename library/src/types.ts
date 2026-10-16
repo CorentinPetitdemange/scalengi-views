@@ -136,7 +136,7 @@ export interface TogafItem {
 }
 
 export type VerbatimCategory = string;
-export type VerbatimSentiment = "Positif" | "Neutre" | "Négatif";
+export type VerbatimSentiment = "Positif" | "Neutre" | "Négatif" | "Non renseigné";
 
 export interface Verbatim {
   id: string;
