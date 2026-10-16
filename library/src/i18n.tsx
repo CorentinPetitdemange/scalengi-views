@@ -359,6 +359,8 @@ const english = {
   "Relations masquées": "Relations hidden",
   "Sélectionnez un type pour afficher ses relations": "Select a type to show its relations",
   "Sélectionnez au moins une couche contenant des types d’objets.": "Select at least one layer containing object types.",
+  "Non renseigné": "Not specified",
+  "Ouvrir le feedback": "Open feedback",
   "Analyse des verbatims": "Feedback analysis",
   "Les mots dominants révèlent irritants, besoins et attentes": "Dominant words reveal pain points, needs, and expectations",
   "Rechercher un verbatim": "Search feedback",

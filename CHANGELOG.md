@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1-alpha.6
+
+- Verbatims : sentiment non renseigné explicite, citations ouvrables via le contrat hôte, totalité des citations accessible par chargement progressif et compteur exact sans équipe inventée.
+
 ## 1.2.1-alpha.5
 
 - Keep embedded native canvas controls readable in light and dark host themes using the renderer public tokens.

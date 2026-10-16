@@ -398,7 +398,7 @@ export async function importVerbatimExcel(file: File, configuration?: ViewConfig
     categoryLookup.set(String(category.id).toLocaleLowerCase("fr"), String(category.id));
     categoryLookup.set(String(category.label ?? category.id).toLocaleLowerCase("fr"), String(category.id));
   }
-  const sentiments: Verbatim["sentiment"][] = ["Positif", "Neutre", "Négatif"];
+  const sentiments: Verbatim["sentiment"][] = ["Positif", "Neutre", "Négatif", "Non renseigné"];
   const verbatims: Verbatim[] = rows.map((row, index) => {
     const text = asText(row.verbatim);
     if (!text) throw new Error(`Verbatims : le texte de la ligne ${index + 2} est obligatoire.`);

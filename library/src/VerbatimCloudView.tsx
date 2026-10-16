@@ -106,12 +106,13 @@ const normalizeWord = (value: string) => {
 };
 const tokensOf = (value: string) => value.replace(/[’']/g, " ").match(/[\p{L}\p{N}][\p{L}\p{N}-]*/gu) ?? [];
 
-export function VerbatimCloudView({ data, configuration }: ViewRendererProps) {
+export function VerbatimCloudView({ data, configuration, onOpenItem }: ViewRendererProps) {
   const { locale, t } = useI18n();
   const [category, setCategory] = useState("all");
   const [team, setTeam] = useState("all");
   const [query, setQuery] = useState("");
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [visibleQuotes, setVisibleQuotes] = useState(12);
   const [shape, setShape] = useState<CloudShape>(() => asCloudShape(optionOf(configuration, "cloudShape", "cloud")));
   const categories = useMemo(() => sectionOf(configuration, "categories")?.items ?? [], [configuration]);
   const categoryById = useMemo(() => new Map(categories.map((item) => [String(item.id), { label: String(item.label ?? item.id), color: String(item.color ?? "#2563eb") }])), [categories]);
@@ -147,8 +148,8 @@ export function VerbatimCloudView({ data, configuration }: ViewRendererProps) {
   }, [categoryById, filtered, maxWords, minWordLength, stopWords]);
 
   const selectedVerbatims = useMemo(() => {
-    if (!selectedWord) return filtered.slice(0, 10);
-    return filtered.filter((item) => tokensOf(item.text).some((token) => normalizeWord(token) === selectedWord)).slice(0, 12);
+    if (!selectedWord) return filtered;
+    return filtered.filter((item) => tokensOf(item.text).some((token) => normalizeWord(token) === selectedWord));
   }, [filtered, selectedWord]);
   const maxScore = words[0]?.score ?? 1;
   const placedWords = useMemo(() => layoutCloudWords(words, maxScore, shape), [maxScore, shape, words]);
@@ -159,11 +160,11 @@ export function VerbatimCloudView({ data, configuration }: ViewRendererProps) {
   return <div className="verbatim-cloud-workspace">
     <ViewToolbar className="verbatim-toolbar" title={t("Analyse des verbatims")} icon={<Cloud size={16} />}>
       <div className="word-cloud-legend">{categories.map((item) => <span key={item.id}><i style={{ background: String(item.color ?? "#2563eb") }} />{String(item.label ?? item.id)}</span>)}</div>
-      <div className="verbatim-kpis"><span><MessageSquareText size={14} /><strong>{filtered.length}</strong> {t("verbatims")}</span><span><Users size={14} /><strong>{new Set(filtered.map((item) => item.team)).size}</strong> {t("équipes")}</span><span><Cloud size={14} /><strong>{words.length}</strong> {t("termes significatifs")}</span></div>
+      <div className="verbatim-kpis"><span><MessageSquareText size={14} /><strong>{filtered.length}</strong> {t("verbatims")}</span><span><Users size={14} /><strong>{new Set(filtered.map((item) => item.team).filter(Boolean)).size}</strong> {t("équipes")}</span><span><Cloud size={14} /><strong>{words.length}</strong> {t("termes significatifs")}</span></div>
       <div className="verbatim-filters">
-        <label className="verbatim-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("Rechercher un verbatim")} /></label>
-        <select value={category} onChange={(event) => { setCategory(event.target.value); setSelectedWord(null); }} aria-label={t("Filtrer par catégorie")}><option value="all">{t("Toutes les catégories")}</option>{categories.map((item) => <option key={item.id} value={String(item.id)}>{String(item.label ?? item.id)}</option>)}</select>
-        <select value={team} onChange={(event) => { setTeam(event.target.value); setSelectedWord(null); }} aria-label={t("Filtrer par équipe")}><option value="all">{t("Toutes les équipes")}</option>{teams.map((item) => <option key={item}>{item}</option>)}</select>
+        <label className="verbatim-search"><Search size={15} /><input value={query} onChange={(event) => { setQuery(event.target.value); setVisibleQuotes(12); }} placeholder={t("Rechercher un verbatim")} /></label>
+        <select value={category} onChange={(event) => { setCategory(event.target.value); setSelectedWord(null); setVisibleQuotes(12); }} aria-label={t("Filtrer par catégorie")}><option value="all">{t("Toutes les catégories")}</option>{categories.map((item) => <option key={item.id} value={String(item.id)}>{String(item.label ?? item.id)}</option>)}</select>
+        <select value={team} onChange={(event) => { setTeam(event.target.value); setSelectedWord(null); setVisibleQuotes(12); }} aria-label={t("Filtrer par équipe")}><option value="all">{t("Toutes les équipes")}</option>{teams.map((item) => <option key={item}>{item}</option>)}</select>
         <select className="cloud-shape-select" value={shape} onChange={(event) => setShape(asCloudShape(event.target.value))} aria-label={t("Forme du nuage de mots")}>{cloudShapes.map((item) => <option key={item.value} value={item.value}>{t(item.label)}</option>)}</select>
         <button className="icon-button toolbar-icon-button" onClick={fullscreen} aria-label={t("Afficher en plein écran")} title={t("Afficher en plein écran")}><Maximize2 size={17} /></button>
       </div>
@@ -179,13 +180,15 @@ export function VerbatimCloudView({ data, configuration }: ViewRendererProps) {
       <aside className="verbatim-details">
         <header><div><p className="eyebrow">{t("Verbatims associés")}</p><h2>{selectedLabel ? `« ${selectedLabel} »` : t("Retours du terrain")}</h2></div>{selectedWord && <button className="icon-button" onClick={() => setSelectedWord(null)} aria-label={t("Effacer la sélection")}><X size={16} /></button>}</header>
         <p>{selectedLabel ? locale === "fr" ? `${selectedVerbatims.length} retour${selectedVerbatims.length > 1 ? "s" : ""} contient ce terme.` : `${selectedVerbatims.length} feedback entr${selectedVerbatims.length === 1 ? "y contains" : "ies contain"} this term.` : t("Sélectionnez un mot pour retrouver immédiatement les commentaires qui l’expliquent.")}</p>
-        <div className="verbatim-quote-list">{selectedVerbatims.map((item) => <VerbatimQuote key={item.id} item={item} category={categoryById.get(item.category)} />)}</div>
+        <p aria-live="polite">{Math.min(visibleQuotes, selectedVerbatims.length)} / {selectedVerbatims.length} {t("verbatims")}</p>
+        <div className="verbatim-quote-list">{selectedVerbatims.slice(0, visibleQuotes).map((item) => <VerbatimQuote key={item.id} item={item} category={categoryById.get(item.category)} onOpenItem={onOpenItem} />)}</div>
+        {selectedVerbatims.length > visibleQuotes && <button className="secondary-button" onClick={() => setVisibleQuotes((count) => count + 12)}>{locale === "fr" ? "Afficher plus" : "Show more"}</button>}
       </aside>
     </main>
   </div>;
 }
 
-function VerbatimQuote({ item, category }: { item: Verbatim; category?: { label: string; color: string } }) {
+function VerbatimQuote({ item, category, onOpenItem }: { item: Verbatim; category?: { label: string; color: string }; onOpenItem?: ((id: string) => void) | undefined }) {
   const { t } = useI18n();
-  return <article><div><span style={{ color: category?.color, borderColor: `${category?.color}40`, background: `${category?.color}10` }}>{category?.label ?? item.category}</span><em>{item.sentiment}</em></div><blockquote>« {item.text} »</blockquote><small>{item.team} · {t("poids")} {item.weight}</small></article>;
+  return <article><div><span style={{ color: category?.color, borderColor: `${category?.color}40`, background: `${category?.color}10` }}>{category?.label ?? item.category}</span><em>{item.sentiment}</em></div><blockquote>« {item.text} »</blockquote><small>{item.team ? `${item.team} · ` : ""}{t("poids")} {item.weight}</small>{onOpenItem && <button type="button" className="secondary-button" onClick={() => onOpenItem(item.id)}>{t("Ouvrir le feedback")}</button>}</article>;
 }

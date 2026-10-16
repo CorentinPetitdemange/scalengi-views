@@ -71,3 +71,7 @@ Validation: `pnpm test` builds both entries and checks renderer behavior and the
 ## Floating report tools — 13 October 2026
 
 `ViewReport` accepts `toolbarMode="floating"` to show the existing native toolbar as compact floating controls over the report. Host `actions` use the same toolbar extension and remain part of the renderer surface. The default `toolbarMode="bar"` preserves the standalone layout. The renderer owns toolbar and canvas styling; hosts do not override internal classes. Flow-based reports fill the available host surface even when the parent height is resolved by flex layout.
+
+## Feedback citations — alpha.6
+
+Verbatims forwards citation IDs through `ViewReport.onOpenItem`. The host rechecks current rights before opening a discussion. The renderer accepts `Non renseigné` for unclassified sentiment without inferring polarity from votes. Blank teams do not count as a team. Matching-citation totals cover the full supplied corpus; quotes render progressively in batches of twelve. The host bounds and validates its authorized corpus; this renderer has no data loading or storage.
