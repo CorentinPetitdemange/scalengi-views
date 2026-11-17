@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "incremental": false,
+    "outDir": "dist-module/package/types"
+  },
+  "include": ["module/renderer.ts"],
+  "exclude": ["node_modules", "dist-module"]
+}

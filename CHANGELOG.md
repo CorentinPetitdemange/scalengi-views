@@ -1,8 +1,47 @@
 # Changelog
 
+## 1.2.1-alpha.5
+
+- Keep embedded native canvas controls readable in light and dark host themes using the renderer public tokens.
+
+
 All notable changes to Scalengi Views are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+## [1.2.1-alpha.4] - 2026-10-13
+
+### Added
+
+- public floating toolbar mode for integrated reports, shared by all six native renderers;
+- standalone toolbar behavior remains the default.
+
+### Fixed
+
+- embedded collaborator, metamodel and TOGAF canvases fill their content-sized container;
+- shared search and select controls carry their renderer styles in the controlled entry.
+
+## [1.2.1-alpha.3] - 2026-10-13
+
+### Fixed
+
+- restored pointer and keyboard interactions on partition cards when native node selection is disabled; nested item controls select once;
+- used readable typography in embedded reports while preserving dense standalone canvas styling;
+- kept the flow canvas stretched inside mobile report panels even when their height is inferred from content.
+
+## [1.2.1-alpha.2] - 2026-10-12
+
+### Added
+
+- controlled renderer entry and typed installable package, without identity, browser persistence or the standalone shell;
+- report metadata distinguishing automatic display grammar from repository-dependent structure;
+- controlled locale and public theme tokens shared with standalone renderers.
+
+### Fixed
+
+- prevented empty report projections from activating demonstration content;
+- kept React external in ESM artifacts;
+- adapted partition columns and card readability to the actual canvas width, including hosted and mobile panels.
 
 ## [1.2.1-alpha.1] - 2026-09-25
 

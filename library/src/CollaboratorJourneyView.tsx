@@ -136,7 +136,7 @@ function CollaboratorCanvas({ data, current, selectedProcessId, onSelectProcess,
   }, [current, data, labels, onSelectProcess, radius, selectedProcessId, visibility]);
 
   return <><div className="journey-summary rf-summary"><span><BriefcaseBusiness size={15} /> {processCount} {t("processus")}</span><span><Users size={15} /> {colleagueCount} {t("collaborateurs liés")}</span><span><MessageSquareText size={15} /> {feedbackCount} {t("retours")}</span></div>
-    <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} nodesDraggable={false} nodesConnectable={false} elementsSelectable fitView fitViewOptions={{ padding: .12, maxZoom: 1 }} minZoom={.18} maxZoom={1.35} proOptions={{ hideAttribution: true }}><Background gap={25} size={1} color="var(--rf-grid)" /><Controls position="bottom-left" showInteractive={false} /><FitController signature={`${current.id}-${nodes.length}-${selectedProcessId ?? ""}-${radius}-${Object.values(visibility).join("")}`} fullscreen={fullscreen} /></ReactFlow>
+    <div className="view-flow-frame"><ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} nodesDraggable={false} nodesConnectable={false} elementsSelectable fitView fitViewOptions={{ padding: .12, maxZoom: 1 }} minZoom={.18} maxZoom={1.35} proOptions={{ hideAttribution: true }}><Background gap={25} size={1} color="var(--rf-grid)" /><Controls position="bottom-left" showInteractive={false} /><FitController signature={`${current.id}-${nodes.length}-${selectedProcessId ?? ""}-${radius}-${Object.values(visibility).join("")}`} fullscreen={fullscreen} /></ReactFlow></div>
     <GalaxyDisplayToolbar visibility={visibility} onToggle={onToggle} radius={radius} onRadius={onRadius} labels={labels} available={available} />
   </>;
 }

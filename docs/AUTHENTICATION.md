@@ -20,7 +20,7 @@ SQLite (users, OIDC identities, sessions and settings only)
 
 View structures and imported business data are not sent to this service. They remain in IndexedDB, partitioned by authenticated user id.
 
-The product behavior was informed by a functional review of Turbo EA: first-user bootstrap, closed registration by default, explicit roles, account deactivation, last-administrator safeguards, generic OIDC configuration and local fallback. No Turbo EA frontend component or backend code was copied.
+The authentication behavior includes first-user bootstrap, closed registration by default, explicit roles, account deactivation, last-administrator safeguards, generic OIDC configuration and local fallback.
 
 The protocol and session primitives deliberately come from maintained crates instead of local implementations:
 

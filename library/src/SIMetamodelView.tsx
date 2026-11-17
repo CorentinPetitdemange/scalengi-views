@@ -169,10 +169,10 @@ function MetamodelCanvas({ layers, objects, relations, selected, onSelect, onCle
   }), [displayedRelations, layerById, layerOrder, objectById, relationMode, selected]);
   const relationStatus = relationMode === "hidden" ? t("Relations masquées") : relationMode === "all" ? locale === "fr" ? `${edges.length} relations affichées` : `${edges.length} displayed relation${edges.length === 1 ? "" : "s"}` : selected ? locale === "fr" ? `${edges.length} relation${edges.length > 1 ? "s" : ""} au focus` : `${edges.length} focused relation${edges.length === 1 ? "" : "s"}` : t("Sélectionnez un type pour afficher ses relations");
 
-  return <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView minZoom={.35} maxZoom={1.65} nodesConnectable={false} nodesDraggable onNodeClick={(_, node) => { if (node.type === "metamodelObject") onSelect({ kind: "object", id: node.id }); }} onEdgeClick={(_, edge) => onSelect({ kind: "relation", id: edge.id })} onPaneClick={onClearSelection} proOptions={{ hideAttribution: true }}>
+  return <div className="view-flow-frame"><ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView minZoom={.35} maxZoom={1.65} nodesConnectable={false} nodesDraggable onNodeClick={(_, node) => { if (node.type === "metamodelObject") onSelect({ kind: "object", id: node.id }); }} onEdgeClick={(_, edge) => onSelect({ kind: "relation", id: edge.id })} onPaneClick={onClearSelection} proOptions={{ hideAttribution: true }}>
     <Background gap={24} size={1} color="var(--rf-grid)" /><Controls position="bottom-left" showInteractive={false} /><FitController signature={`${density}:${nodes.map((node) => node.id).join("|")}:${edges.map((edge) => edge.id).join("|")}`} fullscreen={fullscreen} />
     <div className="metamodel-reading-status"><Focus size={13} /><span>{relationStatus}</span></div>{!objects.length && <div className="rf-empty-overlay">{t("Sélectionnez au moins une couche contenant des types d’objets.")}</div>}
-  </ReactFlow>;
+  </ReactFlow></div>;
 }
 
 export function SIMetamodelView({ configuration }: ViewRendererProps) {

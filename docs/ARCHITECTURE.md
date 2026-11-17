@@ -134,3 +134,7 @@ Planned connectivity extensions include:
 - database adapters for using another repository type.
 
 Regardless of transport, a connector supplies the view configuration and data through the shared contract without introducing a specific dependency into rendering engines.
+
+## Controlled platform reports — 12 October 2026
+
+The separate renderer entry `module/renderer.ts` bypasses the standalone shell entirely. `ViewReport` receives authorized host projections, a controlled locale and a definition. `prepareViewReport` removes distributable examples and requires repository structures for dependent views. Shared styles live in `library/src/views.css`; the standalone shell imports them. [Integration contract](MODULE_INTEGRATION.md). The existing full-feature entry retains its original local lifecycle.

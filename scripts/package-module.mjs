@@ -1,4 +1,5 @@
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile, copyFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 import { basename, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { zipSync } from "fflate";
@@ -46,3 +47,15 @@ const output = new URL(`../dist-module/${manifest.distribution.assetPattern.repl
 await writeFile(output, zipSync(files, { level: 9 }));
 const outputPath = fileURLToPath(output);
 console.log(`Module créé : ${relative(root, outputPath)} (${basename(outputPath)})`);
+
+// A separate installable renderer package never mounts the standalone entry.
+await writeFile(join(packageDirectory, "package.json"), `${JSON.stringify({
+  name: "@corentinpetitdemange/views", version: manifest.version, private: true,
+  type: "module", license: "PolyForm-Shield-1.0.0",
+  exports: { ".": { types: "./types/module/renderer.d.ts", import: "./scalengi-views-renderer.mjs" }, "./style.css": "./scalengi-views-renderer.css" },
+  peerDependencies: {react: ">=19.2.0 <20", "react-dom": ">=19.2.0 <20"},
+}, null, 2)}\n`);
+await copyFile(join(root, "LICENSE"), join(packageDirectory, "LICENSE"));
+const packed = spawnSync("tar", ["-czf", `scalengi-views-renderer-v${manifest.version}.tgz`, "package/package.json", "package/LICENSE", "package/scalengi-views-renderer.mjs", "package/scalengi-views-renderer.css", "package/types"], {cwd: join(root,"dist-module"), stdio:"inherit"});
+if (packed.error) throw packed.error;
+if (packed.status !== 0) throw new Error("Renderer package creation failed");

@@ -1,3 +1,4 @@
+import { scopedFlowStyles } from "./build/scoped-flow-css.ts";
 import vinext from "vinext";
 import { defineConfig } from "vite";
 
@@ -61,7 +62,7 @@ export default defineConfig(async () => {
 
   return {
     server: Object.keys(server).length > 0 ? server : undefined,
-    plugins: [
+    plugins: [scopedFlowStyles(),
       vinext(),
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
